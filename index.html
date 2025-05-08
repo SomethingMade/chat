@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login / Signup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Animation for spinning the loader */
+    .animate-spin-slow {
+      animation: spin 4s linear infinite;
+    }
+
+    /* Keyframe for spinning animation */
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loader-container {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body class="bg-black text-white h-screen flex flex-col items-center justify-center px-4">
+
+  <!-- 🔹 Loader Overlay -->
+  <div id="loader-overlay" class="loader-container">
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin-slow">
+      <circle cx="60" cy="60" r="50" stroke="white" stroke-width="6" stroke-linecap="round" stroke-dasharray="240" stroke-dashoffset="60">
+        <animate attributeName="stroke-dashoffset" values="60;300" dur="2s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  </div>
+
+  <!-- 🔹 User Profile Display -->
+  <div id="user-profile" class="hidden bg-white text-black shadow-md p-4 rounded-xl w-full max-w-md mb-6 flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <img id="user-pic" class="w-12 h-12 rounded-full border border-gray-300" src="" alt="Profile Pic" />
+      <div>
+        <p id="user-name" class="font-semibold"></p>
+        <p id="user-email" class="text-sm text-gray-600"></p>
+      </div>
+    </div>
+    <button id="sign-out" class="ml-4 text-sm text-red-600 hover:underline">Sign Out</button>
+  </div>
+
+  <!-- 🔹 Login / Signup Form -->
+  <div class="bg-white text-black p-8 rounded-xl shadow-lg w-full max-w-md">
+    <h2 class="text-3xl font-bold mb-6 text-center" id="form-title">Login</h2>
+    <div class="space-y-4">
+      <input type="email" id="email" placeholder="Email" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-black" />
+      <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-black" />
+      <button id="submit-btn" class="w-full bg-black text-white py-3 rounded-md hover:bg-gray-900 transition">Login</button>
+      <button id="google-btn" class="w-full border border-black text-black py-3 rounded-md hover:bg-black hover:text-white transition">Sign in with Google</button>
+      <p id="toggle-form" class="text-sm text-center text-gray-700 cursor-pointer hover:underline">Don't have an account? Sign up</p>
+      <p id="error-message" class="text-sm text-red-600 text-center"></p>
+    </div>
+  </div>
+
+  <!-- 🔹 Firebase and Auth Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.firebasestorage.app",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+      measurementId: "G-V4W97VMSKL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const formTitle = document.getElementById("form-title");
+    const submitBtn = document.getElementById("submit-btn");
+    const toggleForm = document.getElementById("toggle-form");
+    const googleBtn = document.getElementById("google-btn");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const errorMessage = document.getElementById("error-message");
+
+    const userProfile = document.getElementById("user-profile");
+    const userPic = document.getElementById("user-pic");
+    const userName = document.getElementById("user-name");
+    const userEmail = document.getElementById("user-email");
+    const signOutBtn = document.getElementById("sign-out");
+
+    const loaderOverlay = document.getElementById("loader-overlay");
+
+    let isLogin = true;
+
+    toggleForm.addEventListener("click", () => {
+      isLogin = !isLogin;
+      formTitle.textContent = isLogin ? "Login" : "Sign Up";
+      submitBtn.textContent = isLogin ? "Login" : "Sign Up";
+      toggleForm.textContent = isLogin
+        ? "Don't have an account? Sign up"
+        : "Already have an account? Login";
+      errorMessage.textContent = "";
+    });
+
+    submitBtn.addEventListener("click", async () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      errorMessage.textContent = "";
+
+      loaderOverlay.style.display = 'flex'; // Show loader
+
+      try {
+        let userCredential;
+        if (isLogin) {
+          userCredential = await signInWithEmailAndPassword(auth, email, password);
+        } else {
+          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        }
+
+        const user = userCredential.user;
+        await saveUserData(user);
+        window.location.href = "home.html";
+      } catch (error) {
+        errorMessage.textContent = error.message.replace("Firebase:", "").trim();
+      } finally {
+        loaderOverlay.style.display = 'none'; // Hide loader
+      }
+    });
+
+    googleBtn.addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+      loaderOverlay.style.display = 'flex'; // Show loader
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        await saveUserData(user);
+        window.location.href = "home.html";
+      } catch (error) {
+        errorMessage.textContent = error.message.replace("Firebase:", "").trim();
+      } finally {
+        loaderOverlay.style.display = 'none'; // Hide loader
+      }
+    });
+
+    signOutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      userProfile.classList.add("hidden");
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userProfile.classList.remove("hidden");
+        userPic.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
+        userName.textContent = user.displayName || "Unnamed User";
+        userEmail.textContent = user.email;
+      }
+    });
+
+    async function saveUserData(user) {
+      const userRef = ref(db, 'users/' + user.uid);
+      await set(userRef, {
+        name: user.displayName || "Unnamed User",
+        email: user.email,
+        photoURL: user.photoURL || "https://www.gravatar.com/avatar?d=mp"
+      });
+    }
+  </script>
+</body>
+</html>
+
+
+
