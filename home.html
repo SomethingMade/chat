@@ -275,6 +275,7 @@ function loadPosts() {
               </div>
               <p class="text-gray-800 mb-2">${post.text}</p>
               ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
+              <br>
               <button class="btn text-xs like-btn" data-id="${postId}">
                 ❤️ ${post.likes || 0}
               </button>
