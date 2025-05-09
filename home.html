@@ -224,6 +224,32 @@ function savePost(postId, postData) {
   });
 }
 
+  function repost(originalPostId) {
+  const postRef = ref(db, 'posts/' + originalPostId);
+  get(postRef).then((snapshot) => {
+    if (snapshot.exists()) {
+      const originalPost = snapshot.val();
+      const newPostId = push(ref(db, 'posts')).key;
+
+      const repostData = {
+        text: `Reposted: ${originalPost.text}`,
+        imageURL: originalPost.imageURL || '',
+        userId: auth.currentUser.uid,
+        originalUserId: originalPost.userId,
+        timestamp: Date.now(),
+        likes: 0,
+      };
+
+      savePost(newPostId, repostData);
+    }
+  });
+}
+
+
+
+
+  
+
 // Event listener for the post form submission
 document.getElementById("postForm").addEventListener("submit", (e) => {
   e.preventDefault(); // Prevent the default form submission behavior
