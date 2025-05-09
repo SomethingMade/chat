@@ -303,14 +303,15 @@ function loadPosts() {
   userCard.addEventListener("click", () => {
     document.getElementById("modalPhoto").src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
     document.getElementById("modalName").textContent = user.name;
-    document.getElementById("modalAccountType").textContent = user.accountType || "Standard User";// optional
+    document.getElementById("modalEmail").textContent = user.email || "No email available"; // optional
     document.getElementById("profileModal").classList.remove("hidden");
-    document.getElementById("profileModal").classList.add("hidden");
+    
   });
 
   usersContainer.appendChild(userCard);
   shownUsers.add(post.userId);
 }
+
 
 
 
