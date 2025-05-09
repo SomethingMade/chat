@@ -283,13 +283,14 @@ function loadPosts() {
   userCard.className = "min-w-[100px] bg-white rounded-xl shadow-md p-2 text-center";
 
   userCard.innerHTML = ` 
-    <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-full h-20 object-cover rounded-md" />
+    <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-16 h-16 rounded-full mx-auto border-2 border-gray-300 object-cover" />
     <p class="text-sm font-medium mt-2">${user.name}</p>
   `;
 
   usersContainer.appendChild(userCard);
   shownUsers.add(post.userId);
 }
+
 
 
             const postCard = document.createElement("div");
