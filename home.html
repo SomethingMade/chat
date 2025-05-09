@@ -436,10 +436,19 @@ function loadComments(postId) {
   });
 }
 
-document.getElementById("modalOkButton").addEventListener("click", () => {
-  document.getElementById("profileModal").classList.add("hidden");
-});
+// Ensure the event listener is attached after DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("closeModal").addEventListener("click", () => {
+      document.getElementById("profileModal").classList.add("hidden");
+    });
 
+    // Optional: Close modal when clicking outside the card
+    document.getElementById("profileModal").addEventListener("click", (e) => {
+      if (e.target.id === "profileModal") {
+        document.getElementById("profileModal").classList.add("hidden");
+      }
+    });
+  });
   
 
 
