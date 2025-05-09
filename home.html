@@ -145,7 +145,7 @@
           const data = snapshot.val();
           userPic.src = data.photoURL || "https://www.gravatar.com/avatar?d=mp";
           userName.textContent = data.name || "Unnamed User";
-          userEmail.textContent = data.email || user.email;
+          document.getElementById("user-type").textContent = data.accountType || "Standard User";
         }
       });
       loadPosts();
