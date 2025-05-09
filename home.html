@@ -282,7 +282,7 @@ function loadPosts() {
               <button class="btn text-xs like-btn" data-id="${postId}">
                 ❤️ ${post.likes || 0}
               </button>
-              
+              <button class="btn px-4 py-1" onclick="repost('${postId}')">Repost</button>
               
               
               <!-- Comment Section -->
