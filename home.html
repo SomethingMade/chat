@@ -90,12 +90,6 @@
     <h2 id="modalName" class="text-xl font-semibold text-center mt-4"></h2>
     <p id="modalEmail" class="text-sm text-center text-gray-500 mt-1"></p>
     <!-- Add more user info here if needed -->
-<button id="closeModal" class="mt-4 px-6 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition">
-  OK
-</button>
-
-
-    
   </div>
 </div>
 
@@ -309,7 +303,8 @@ function loadPosts() {
   userCard.addEventListener("click", () => {
     document.getElementById("modalPhoto").src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
     document.getElementById("modalName").textContent = user.name;
-    document.getElementById("modalEmail").textContent = user.email || "No email available"; // optional
+    document.getElementById("modalEmail").textContent = user.accountType || "No account type available";
+ // optional
     document.getElementById("profileModal").classList.remove("hidden");
     
   });
