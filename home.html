@@ -421,6 +421,33 @@ function loadPosts() {
 
             // Load and display comments for this post
             loadComments(postId);
+            
+if (post.likes) {
+  const likeUserIds = Object.keys(post.likes);
+  const likeNames = [];
+
+  Promise.all(
+    likeUserIds.map(uid =>
+      firebase.database().ref('users/' + uid).once('value').then(snapshot => {
+        const userData = snapshot.val();
+        if (userData && userData.name) likeNames.push(userData.name);
+      })
+    )
+  ).then(() => {
+    const displayCount = 2; // number of names to show
+    const displayed = likeNames.slice(0, displayCount);
+    const remaining = likeNames.length - displayCount;
+
+    const text = displayed.join(', ') + (remaining > 0 ? ` and ${remaining} more` : '');
+    document.getElementById(`liked-users-${postId}`).textContent = likeNames.length
+      ? `Liked by: ${text}`
+      : 'No likes yet';
+  });
+} else {
+  document.getElementById(`liked-users-${postId}`).textContent = 'No likes yet';
+}
+
+            
           }
         }).catch(error => {
           console.error("Error fetching user data:", error);
