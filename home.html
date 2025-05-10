@@ -238,25 +238,33 @@ function savePost(postId, postData) {
 }
 
   function repost(originalPostId) {
-  const postRef = ref(db, 'posts/' + originalPostId);
-  get(postRef).then((snapshot) => {
-    if (snapshot.exists()) {
-      const originalPost = snapshot.val();
-      const newPostId = push(ref(db, 'posts')).key;
+  const user = firebase.auth().currentUser;
+  if (!user) return alert("You must be logged in to repost.");
 
-      const repostData = {
-        text: `Reposted: ${originalPost.text}`,
-        imageURL: originalPost.imageURL || '',
-        userId: auth.currentUser.uid,
-        originalUserId: originalPost.userId,
-        timestamp: Date.now(),
-        likes: 0,
-      };
+  const postRef = firebase.database().ref(`posts/${originalPostId}`);
+  postRef.once("value", (snapshot) => {
+    const originalPost = snapshot.val();
+    if (!originalPost) return alert("Original post not found.");
 
-      savePost(newPostId, repostData);
-    }
+    const newPost = {
+      text: originalPost.text,
+      imageURL: originalPost.imageURL || null,
+      timestamp: Date.now(),
+      userId: user.uid,
+      originalPostId: originalPostId, // Optional: track the source
+      likes: 0,
+      likesList: [],
+    };
+
+    firebase.database().ref("posts").push(newPost)
+      .then(() => alert("Reposted successfully!"))
+      .catch(err => {
+        console.error("Repost failed:", err);
+        alert("Error reposting.");
+      });
   });
 }
+
 
 
 
@@ -354,11 +362,12 @@ function loadPosts() {
 
               <div class="flex justify-end mt-2">
   <button class="btn px-4 py-1 flex items-center gap-1" onclick="repost('${postId}')">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 1l4 4-4 4M3 11v1a9 9 0 0015.9 5.66M21 13v-1a9 9 0 00-15.9-5.66" />
-    </svg>
-    Repost
-  </button>
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 1l4 4-4 4M3 11v1a9 9 0 0015.9 5.66M21 13v-1a9 9 0 00-15.9-5.66" />
+  </svg>
+  Repost
+</button>
+
 </div>
 
               
