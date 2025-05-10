@@ -359,6 +359,7 @@ function loadPosts() {
               <button class="btn text-xs like-btn flex items-center gap-1" data-id="${postId}">
   <i class="fas fa-thumbs-up text-white-600"></i> ${post.likes || 0}
 </button>
+<div class="text-xs text-gray-500 mt-1" id="liked-users-${postId}">Loading likes...</div>
 
               <div class="flex justify-end mt-2">
   <button class="btn px-4 py-1 flex items-center gap-1" onclick="repost('${postId}')">
