@@ -379,9 +379,15 @@ function loadPosts() {
                 <div class="mt-2">
                   <input type="text" id="commentInput-${postId}" class="w-full p-2 border border-gray-300 rounded" placeholder="Write a comment..."/>
                   <div class="flex items-center gap-2 mt-2">
-  <button class="btn text-xs" onclick="addComment('${postId}')">Post Comment</button>
-  ${user.accountType === 'business' ? `<button class="btn text-xs bg-green-600 text-white hover:bg-green-700" onclick="startOrder('${postId}')">Start Order Now</button>` : ''}
+  <button class="btn text-xs flex items-center gap-1" onclick="addComment('${postId}')">
+    <i class="fas fa-comment"></i> Post Comment
+  </button>
+  ${user.accountType === 'business' ? `
+    <button class="btn text-xs bg-green-600 text-white hover:bg-green-700 flex items-center gap-1" onclick="startOrder('${postId}')">
+      <i class="fas fa-shopping-cart"></i> Start Order Now
+    </button>` : ''}
 </div>
+
 
                 </div>
               </div>
