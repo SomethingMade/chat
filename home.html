@@ -321,52 +321,55 @@ function loadPosts() {
             const postCard = document.createElement("div");
             postCard.className = "card p-4";
             postCard.innerHTML = ` 
-
-  <div class="hidden absolute right-2 top-10 bg-white shadow-md rounded-md p-2 space-y-2 z-10" style="min-width: 120px;">
-  <button class="w-full text-left hover:bg-gray-100 px-2 py-1 text-sm">Edit</button>
-  ${post.userId === currentUser.uid ? `
-    <button onclick="deletePost('${postId}')" class="w-full text-left hover:bg-gray-100 px-2 py-1 text-sm text-red-600">Delete</button>
-  ` : ''}
-</div>
-
-            
-              <div class="flex items-center space-x-3 mb-2">
-                <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full"/>
-                <div>
-                  <p class="font-semibold text-gray-800">${user.name} 
-  <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2">${user.accountType || 'User'}</span>
-</p>
-<p class="text-sm text-gray-600">${timeAgo(post.timestamp)}</p>
-
-                </div>
-              </div>
-              <p class="text-gray-800 mb-2">${post.text}</p>
-              ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
-              <br>
-              <button class="btn text-xs like-btn" data-id="${postId}">
-                ❤️ ${post.likes || 0}
-              </button>
-              <div class="flex justify-end mt-2">
-  <button class="btn px-4 py-1 flex items-center gap-1" onclick="repost('${postId}')">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 1l4 4-4 4M3 11v1a9 9 0 0015.9 5.66M21 13v-1a9 9 0 00-15.9-5.66" />
-    </svg>
-    Repost
+postCard.innerHTML = ` 
+  <button class="absolute top-2 right-2 text-gray-600 hover:text-black" onclick="toggleMenu(this)">
+    <i class="fas fa-ellipsis-v"></i>
   </button>
-</div>
+  <div class="hidden absolute right-2 top-10 bg-white shadow-md rounded-md p-2 space-y-2 z-10" style="min-width: 120px;">
+    <button class="w-full text-left hover:bg-gray-100 px-2 py-1 text-sm">Edit</button>
+    ${post.userId === currentUser.uid ? `
+      <button onclick="deletePost('${postId}')" class="w-full text-left hover:bg-gray-100 px-2 py-1 text-sm text-red-600">Delete</button>
+    ` : ''}
+  </div>
 
-              
-              <!-- Comment Section -->
-              <div class="comment-section mt-4">
-                <div id="comments-${postId}">
-                  <!-- Comments will be dynamically loaded here -->
-                </div>
-                <div class="mt-2">
-                  <input type="text" id="commentInput-${postId}" class="w-full p-2 border border-gray-300 rounded" placeholder="Write a comment..."/>
-                  <button class="btn text-xs mt-2" onclick="addComment('${postId}')">Post Comment</button>
-                </div>
-              </div>
-            `;
+  <div class="flex items-center space-x-3 mb-2">
+    <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full"/>
+    <div>
+      <p class="font-semibold text-gray-800">${user.name} 
+        <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2">${user.accountType || 'User'}</span>
+      </p>
+      <p class="text-sm text-gray-600">${timeAgo(post.timestamp)}</p>
+    </div>
+  </div>
+
+  <p class="text-gray-800 mb-2">${post.text}</p>
+  ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
+
+  <br>
+  <button class="btn text-xs like-btn" data-id="${postId}">
+    ❤️ ${post.likes || 0}
+  </button>
+
+  <div class="flex justify-end mt-2">
+    <button class="btn px-4 py-1 flex items-center gap-1" onclick="repost('${postId}')">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 1l4 4-4 4M3 11v1a9 9 0 0015.9 5.66M21 13v-1a9 9 0 00-15.9-5.66" />
+      </svg>
+      Repost
+    </button>
+  </div>
+
+  <div class="comment-section mt-4">
+    <div id="comments-${postId}">
+      <!-- Comments will be dynamically loaded here -->
+    </div>
+    <div class="mt-2">
+      <input type="text" id="commentInput-${postId}" class="w-full p-2 border border-gray-300 rounded" placeholder="Write a comment..."/>
+      <button class="btn text-xs mt-2" onclick="addComment('${postId}')">Post Comment</button>
+    </div>
+  </div>
+`;
+
             feedContainer.appendChild(postCard); // Add the post to the feed
 
             // Load and display comments for this post
