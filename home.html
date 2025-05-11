@@ -364,8 +364,9 @@ function loadPosts() {
   <p id="postText-${postId}" class="line-clamp-3 overflow-hidden transition-all duration-300">
     ${highlightHashtags(post.text)}
   </p>
-  <button class="text-black-600 text-sm mt-1" onclick="toggleSeeMore('${postId}')">See more</button>
+  <button id="seeMoreBtn-${postId}" class="text-blue-600 text-sm mt-1 hidden" onclick="toggleSeeMore('${postId}')">See more</button>
 </div>
+
 
               ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
               <br>
@@ -407,6 +408,16 @@ function loadPosts() {
               </div>
             `;
             feedContainer.appendChild(postCard); // Add the post to the feed
+            
+const postTextEl = document.getElementById(`postText-${postId}`);
+const seeMoreBtn = document.getElementById(`seeMoreBtn-${postId}`);
+
+// Wait for the next repaint to calculate layout
+requestAnimationFrame(() => {
+  if (postTextEl.scrollHeight > postTextEl.clientHeight) {
+    seeMoreBtn.classList.remove('hidden');
+  }
+});
 
           
 
