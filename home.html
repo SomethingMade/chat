@@ -446,7 +446,19 @@ function highlightHashtags(text) {
   return text.replace(hashtagRegex, `<span class="text-blue-600">#$1</span>`);
 }
 
-  
+  function toggleSeeMore(postId) {
+  const textEl = document.getElementById(`postText-${postId}`);
+  const button = textEl.nextElementSibling;
+
+  if (textEl.classList.contains('line-clamp-3')) {
+    textEl.classList.remove('line-clamp-3');
+    button.textContent = 'See less';
+  } else {
+    textEl.classList.add('line-clamp-3');
+    button.textContent = 'See more';
+  }
+}
+
 
 
 function toggleMenu(btn) {
