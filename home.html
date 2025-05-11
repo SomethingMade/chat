@@ -368,6 +368,7 @@ function loadPosts() {
 </div>
 
 
+
               ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
               <br>
               <button class="btn text-xs like-btn flex items-center gap-1" data-id="${postId}">
@@ -412,12 +413,13 @@ function loadPosts() {
 const postTextEl = document.getElementById(`postText-${postId}`);
 const seeMoreBtn = document.getElementById(`seeMoreBtn-${postId}`);
 
-// Wait for the next repaint to calculate layout
+// Wait for DOM paint to measure height
 requestAnimationFrame(() => {
-  if (postTextEl.scrollHeight > postTextEl.clientHeight) {
+  if (postTextEl.scrollHeight > postTextEl.clientHeight + 5) {
     seeMoreBtn.classList.remove('hidden');
   }
 });
+
 
           
 
@@ -466,7 +468,7 @@ function highlightHashtags(text) {
 
   function toggleSeeMore(postId) {
   const textEl = document.getElementById(`postText-${postId}`);
-  const button = textEl.nextElementSibling;
+  const button = document.getElementById(`seeMoreBtn-${postId}`);
 
   if (textEl.classList.contains('line-clamp-3')) {
     textEl.classList.remove('line-clamp-3');
@@ -476,6 +478,7 @@ function highlightHashtags(text) {
     button.textContent = 'See more';
   }
 }
+
 
 
 
