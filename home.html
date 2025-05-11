@@ -108,6 +108,18 @@
   </div>
 </div>
 
+<!-- Likes Modal -->
+<div id="likesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl p-6 w-80 relative max-h-[80vh] overflow-y-auto">
+    <button id="closeLikesModal" class="absolute top-2 right-2 text-gray-600 text-lg">&times;</button>
+    <h2 class="text-xl font-semibold mb-4 text-center">Liked By</h2>
+    <ul id="likesList" class="space-y-3"></ul>
+  </div>
+</div>
+
+
+  
+
 <!-- Bottom Nav -->
 
 <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white w-[90%] max-w-md mx-auto rounded-full shadow-lg flex justify-around items-center py-3 px-4 z-50">
@@ -581,6 +593,41 @@ function loadComments(postId) {
     });
   });
   
+// Open Likes Modal
+function showLikesModal(postId) {
+  const postRef = ref(db, `posts/${postId}/likedBy`);
+  get(postRef).then(snapshot => {
+    const likedUserIds = snapshot.val() || [];
+    const likesList = document.getElementById('likesList');
+    likesList.innerHTML = '';
+
+    likedUserIds.forEach(uid => {
+      const userRef = ref(db, 'users/' + uid);
+      get(userRef).then(userSnap => {
+        if (userSnap.exists()) {
+          const user = userSnap.val();
+          const li = document.createElement('li');
+          li.className = "flex items-center space-x-3";
+          li.innerHTML = `
+            <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full" />
+            <div>
+              <p class="font-semibold">${user.name || 'Unnamed User'}</p>
+              <p class="text-sm text-gray-500">${user.email || ''}</p>
+            </div>
+          `;
+          likesList.appendChild(li);
+        }
+      });
+    });
+
+    document.getElementById('likesModal').classList.remove('hidden');
+  });
+}
+
+// Close Modal
+document.getElementById('closeLikesModal').addEventListener('click', () => {
+  document.getElementById('likesModal').classList.add('hidden');
+});
 
 
 
