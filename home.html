@@ -329,6 +329,7 @@ function loadPosts() {
   userCard.innerHTML = ` 
     <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-16 h-16 rounded-full mx-auto border-2 border-gray-300 object-cover" />
     <p class="text-sm font-medium mt-2">${user.name}</p>
+    <button class="btn mt-2 text-xs follow-btn" data-id="${userId}">Follow</button>
   `;
 
   userCard.addEventListener("click", () => {
