@@ -419,7 +419,7 @@ if (post.likes) {
     const text = displayed.join(', ') + (remaining > 0 ? ` and ${remaining} more` : '');
     document.getElementById(`liked-users-${postId}`).textContent = likeNames.length
       ? `Liked by: ${text}`
-      : 'No likes yet';
+      : '';
   });
 } else {
   document.getElementById(`liked-users-${postId}`).textContent = 'No likes yet';
