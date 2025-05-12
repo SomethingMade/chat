@@ -1,0 +1,326 @@
+<!-- Full HTML code updated with complete field hiding -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<style>
+
+.card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+.card:hover {
+  transform: scale(1.02);
+}
+
+    </style>
+<body class="bg-gray-100 min-h-screen">
+
+  <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-lg mt-10">
+    <!-- Cover -->
+    <div class="relative h-60 bg-gray-300">
+      <img src="https://1.bp.blogspot.com/-IXHehIwDksI/UkJafk_J1EI/AAAAAAAAA1c/WN1JAkzJsy0/s1600/Amazing+sunset+Fb+Covers+(1).jpg" alt="Cover Photo" class="w-full h-full object-cover" />
+      <div class="absolute -bottom-16 left-6 flex items-center space-x-4">
+        <img id="profile-img" class="w-32 h-32 rounded-full border-4 border-white object-cover bg-white" src="https://www.gravatar.com/avatar?d=mp" alt="Profile Picture" />
+        <div>
+  <h2 id="name-label" class="text-2xl font-bold text-white">User Name</h2>
+  <p id="account-label" class="text-sm text-white">Account Type</p>
+  <p id="bio-label" class="text-sm text-white mt-1"></p>
+ <div id="follow-container" class="mt-2 flex items-center space-x-4">
+<button id="follow-btn" class="bg-black text-white px-6 py-1 rounded-full text-sm hover:bg-gray-800 transition hidden">
+  Follow
+</button>
+  <p id="followers-count" class="text-sm text-gray-600"></p>
+</div>
+
+</div>
+
+      </div>
+    </div>
+
+<!-- Tab Bar -->
+<div class="px-6 py-4 flex space-x-4 border-t mt-10">
+  <button id="profile-tab" class="text-lg text-gray-700 font-semibold hover:text-gray-900 focus:outline-none border-b-2 border-black">Profile</button>
+  <button id="photos-tab" class="text-lg text-gray-700 font-semibold hover:text-gray-900 focus:outline-none">View Photos</button>
+</div>
+
+<!-- Profile Section -->
+<div id="profile-section" class="px-6 pb-10">
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="space-y-4" id="edit-section">
+      <!-- Name -->
+      <label class="block">
+        <span class="text-sm text-gray-700">Full Name</span>
+        <input type="text" id="name" class="w-full px-4 py-2 border rounded mt-1" placeholder="Full Name" />
+      </label>
+
+      <!-- Email - Will be removed if not owner -->
+      <label class="block" id="email-wrapper">
+        <span class="text-sm text-gray-700">Email</span>
+        <input type="email" id="email" class="w-full px-4 py-2 border rounded mt-1" placeholder="Email" readonly />
+      </label>
+
+      <!-- Photo URL - Will be removed if not owner -->
+      <label class="block" id="photo-wrapper">
+        <span class="text-sm text-gray-700">Photo URL</span>
+        <input type="text" id="photo-url" class="w-full px-4 py-2 border rounded mt-1" placeholder="Photo URL" />
+      </label>
+
+      <!-- Bio -->
+      <label class="block">
+        <span class="text-sm text-gray-700">Bio</span>
+        <textarea id="bio" class="w-full px-4 py-2 border rounded mt-1" placeholder="Write something about yourself..."></textarea>
+      </label>
+
+      <!-- Account Type -->
+      <label class="block">
+        <span class="text-sm text-gray-700">Account Type</span>
+        <select id="account-type" class="w-full px-4 py-2 border rounded mt-1">
+          <option value="personal">Personal</option>
+          <option value="business">Business</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Business Section -->
+  <div id="business-section" class="mt-6 p-4 bg-yellow-100 border border-yellow-400 rounded hidden">
+    <h3 class="font-semibold mb-2 text-yellow-800">Business Features</h3>
+    <p class="text-sm text-yellow-700">Add restaurant details, manage your menu, and handle orders here.</p>
+  </div>
+
+  <!-- Save Button -->
+  <button id="save-btn" class="mt-6 bg-black text-white py-2 px-6 rounded hover:bg-gray-800 transition hidden">
+    Save Changes
+  </button>
+
+  <!-- Error Message -->
+  <p id="error-message" class="text-red-500 text-sm mt-2"></p>
+</div>
+
+<!-- View Photos Section -->
+<div id="photos-section" class="hidden px-6 pb-10">
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <img src="https://source.unsplash.com/200x200/?food" class="rounded-lg object-cover w-full h-40" alt="Photo 1" />
+    <img src="https://source.unsplash.com/200x200/?restaurant" class="rounded-lg object-cover w-full h-40" alt="Photo 2" />
+    <img src="https://source.unsplash.com/200x200/?chef" class="rounded-lg object-cover w-full h-40" alt="Photo 3" />
+    <img src="https://source.unsplash.com/200x200/?meal" class="rounded-lg object-cover w-full h-40" alt="Photo 4" />
+  </div>
+</div>
+
+<!-- Go Back Button -->
+<div class="px-6 pb-10">
+  <button onclick="window.location.href='home.html'" class="mt-4 bg-gray-200 text-gray-800 py-2 px-6 rounded hover:bg-gray-300 transition">
+    ← Go Back
+  </button>
+</div>
+```
+
+  </div>
+
+  <!-- Firebase + Script -->
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
+    import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.appspot.com",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+      measurementId: "G-V4W97VMSKL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const profileImg = document.getElementById("profile-img");
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+    const photoInput = document.getElementById("photo-url");
+    const bioInput = document.getElementById("bio");
+    const accountType = document.getElementById("account-type");
+    const saveBtn = document.getElementById("save-btn");
+    const errorMessage = document.getElementById("error-message");
+    const businessSection = document.getElementById("business-section");
+    const nameLabel = document.getElementById("name-label");
+    const accountLabel = document.getElementById("account-label");
+    const bioLabel = document.getElementById("bio-label");
+
+    const profileTab = document.getElementById("profile-tab");
+    const photosTab = document.getElementById("photos-tab");
+    const profileSection = document.getElementById("profile-section");
+    const photosSection = document.getElementById("photos-section");
+
+    const emailWrapper = document.getElementById("email-wrapper");
+    const photoWrapper = document.getElementById("photo-wrapper");
+
+    function toggleBusiness(type) {
+      if (type === "business") {
+        businessSection.classList.remove("hidden");
+      } else {
+        businessSection.classList.add("hidden");
+      }
+    }
+
+    function getQueryParam(param) {
+      return new URLSearchParams(window.location.search).get(param);
+    }
+
+    onAuthStateChanged(auth, async (currentUser) => {
+      const uid = getQueryParam("uid");
+      if (!uid) {
+        errorMessage.textContent = "User ID not provided.";
+        return;
+      }
+
+      try {
+        const userRef = ref(db, "users/" + uid);
+        const snapshot = await get(userRef);
+        if (!snapshot.exists()) {
+          errorMessage.textContent = "User profile not found.";
+          return;
+        }
+
+        const data = snapshot.val();
+
+        nameInput.value = data.name || "";
+        emailInput.value = data.email || "";
+        photoInput.value = data.photoURL || "";
+        bioInput.value = data.bio || "";
+        profileImg.src = data.photoURL || "https://www.gravatar.com/avatar?d=mp";
+        accountType.value = data.accountType || "personal";
+
+        nameLabel.textContent = data.name || "User";
+        accountLabel.textContent = data.accountType || "Personal";
+        bioLabel.textContent = data.bio || "";
+
+        toggleBusiness(data.accountType);
+
+        const isOwner = currentUser && currentUser.uid === uid;
+
+const followBtn = document.getElementById("follow-btn");
+const followersCount = document.getElementById("followers-count");
+const followContainer = document.getElementById("follow-container");
+
+const followersRef = ref(db, "followers/" + uid);
+
+if (!isOwner) {
+  followBtn.classList.remove("hidden");
+
+  const currentUserId = currentUser.uid;
+
+  // Load current follow state
+  const followersSnap = await get(followersRef);
+  const followers = followersSnap.exists() ? followersSnap.val() : {};
+  const isFollowing = !!followers[currentUserId];
+
+  followBtn.textContent = isFollowing ? "Unfollow" : "Follow";
+  followersCount.textContent = `${Object.keys(followers).length} follower${Object.keys(followers).length === 1 ? '' : 's'}`;
+
+  followBtn.addEventListener("click", async () => {
+    const newFollowState = !isFollowing;
+    const updates = {};
+
+    updates[`followers/${uid}/${currentUserId}`] = newFollowState ? true : null;
+
+    try {
+      await set(ref(db), updates);
+      location.reload(); // Reload to reflect UI change
+    } catch (err) {
+      errorMessage.textContent = err.message;
+    }
+  });
+} else {
+  // If profile owner, still show count
+  const followersSnap = await get(followersRef);
+  const followers = followersSnap.exists() ? followersSnap.val() : {};
+  followersCount.textContent = `${Object.keys(followers).length} follower${Object.keys(followers).length === 1 ? '' : 's'}`;
+}
+
+
+
+
+
+        if (!isOwner) {
+          nameInput.disabled = true;
+          bioInput.disabled = true;
+          accountType.disabled = true;
+
+          // REMOVE email and photo fields entirely
+          emailWrapper.remove();
+          photoWrapper.remove();
+           document.getElementById("follow-btn").classList.remove("hidden");
+        } else {
+          saveBtn.classList.remove("hidden");
+        }
+
+        saveBtn.addEventListener("click", async () => {
+          const updatedName = nameInput.value.trim();
+          const updatedPhoto = photoInput.value.trim();
+          const updatedType = accountType.value;
+          const updatedBio = bioInput.value.trim();
+
+          if (!updatedName) {
+            errorMessage.textContent = "Name cannot be empty.";
+            return;
+          }
+
+          try {
+            await updateProfile(currentUser, {
+              displayName: updatedName,
+              photoURL: updatedPhoto
+            });
+
+            await set(userRef, {
+              name: updatedName,
+              email: currentUser.email,
+              photoURL: updatedPhoto,
+              accountType: updatedType,
+              bio: updatedBio
+            });
+
+            window.location.href = "home.html";
+          } catch (err) {
+            errorMessage.textContent = err.message;
+          }
+        });
+
+      } catch (err) {
+        console.error(err);
+        errorMessage.textContent = "Something went wrong.";
+      }
+    });
+
+    // Tab switching
+    profileTab.addEventListener("click", () => {
+      profileSection.classList.remove("hidden");
+      photosSection.classList.add("hidden");
+      profileTab.classList.add("border-b-2", "border-black");
+      photosTab.classList.remove("border-b-2", "border-black");
+    });
+
+    photosTab.addEventListener("click", () => {
+      profileSection.classList.add("hidden");
+      photosSection.classList.remove("hidden");
+      photosTab.classList.add("border-b-2", "border-black");
+      profileTab.classList.remove("border-b-2", "border-black");
+    });
+  </script>
+
+</body>
+</html>
