@@ -331,11 +331,7 @@ function loadPosts() {
   `;
 
   userCard.addEventListener("click", () => {
-    document.getElementById("modalPhoto").src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-    document.getElementById("modalName").textContent = user.name;
-    document.getElementById("modalEmail").textContent = user.accountType || "No account type available";
- // optional
-    document.getElementById("profileModal").classList.remove("hidden");
+   window.location.href = `prof.html?uid=${post.userId}`;
     
   });
 
@@ -364,32 +360,29 @@ function loadPosts() {
 
 
 
-            
+            <a href="prof.html?uid=${user.name}">
               <div class="flex items-center space-x-3 mb-2">
                 <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full"/>
                 <div>
                   <p class="font-semibold text-gray-800">${user.name} 
   <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2">${user.accountType || 'User'}</span>
-</p>
+</p></a>
 <p class="text-sm text-gray-600">${timeAgo(post.timestamp)}</p>
 
                 </div>
               </div>
-              <div class="text-gray-800 mb-2 relative">
+
+ <div class="text-gray-800 mb-2 relative">
   <p id="postText-${postId}" class="line-clamp-3 overflow-hidden transition-all duration-300">
     ${highlightHashtags(post.text)}
   </p>
-  <button id="seeMoreBtn-${postId}" class="text-blue-600 text-sm mt-1 hidden" onclick="toggleSeeMore('${postId}')">See more</button>
 </div>
-
-
 
               ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
               <br>
               <button class="btn text-xs like-btn flex items-center gap-1" data-id="${postId}">
   <i class="fas fa-thumbs-up text-white-600"></i> ${post.likes || 0}
 </button>
-<div class="text-xs text-gray-500 mt-1" id="liked-users-${postId}">Loading likes...</div>
 
               <div class="flex justify-start mt-2">
   <button class="btn px-4 py-1 flex items-center gap-1" onclick="repost('${postId}')">
@@ -424,19 +417,6 @@ function loadPosts() {
               </div>
             `;
             feedContainer.appendChild(postCard); // Add the post to the feed
-            
-const postTextEl = document.getElementById(`postText-${postId}`);
-const seeMoreBtn = document.getElementById(`seeMoreBtn-${postId}`);
-
-// Wait for DOM paint to measure height
-requestAnimationFrame(() => {
-  if (postTextEl.scrollHeight > postTextEl.clientHeight + 5) {
-    seeMoreBtn.classList.remove('hidden');
-  }
-});
-
-
-          
 
             // Load and display comments for this post
             loadComments(postId);
@@ -481,18 +461,6 @@ function highlightHashtags(text) {
   return text.replace(hashtagRegex, `<span class="text-blue-600">#$1</span>`);
 }
 
-  function toggleSeeMore(postId) {
-  const textEl = document.getElementById(`postText-${postId}`);
-  const button = document.getElementById(`seeMoreBtn-${postId}`);
-
-  if (textEl.classList.contains('line-clamp-3')) {
-    textEl.classList.remove('line-clamp-3');
-    button.textContent = 'See less';
-  } else {
-    textEl.classList.add('line-clamp-3');
-    button.textContent = 'See more';
-  }
-}
 
 
 
