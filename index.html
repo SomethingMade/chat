@@ -150,7 +150,7 @@
 
         const user = userCredential.user;
         await saveUserData(user);
-        window.location.href = "home.html";
+        window.location.href = "profile.html";
       } catch (error) {
         errorMessage.textContent = error.message.replace("Firebase:", "").trim();
       } finally {
@@ -165,7 +165,7 @@
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         await saveUserData(user);
-        window.location.href = "home.html";
+        window.location.href = "proile.html";
       } catch (error) {
         errorMessage.textContent = error.message.replace("Firebase:", "").trim();
       } finally {
@@ -178,14 +178,23 @@
       userProfile.classList.add("hidden");
     });
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userProfile.classList.remove("hidden");
-        userPic.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
-        userName.textContent = user.displayName || "Unnamed User";
-        userEmail.textContent = user.email;
-      }
-    });
+   onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const userRef = ref(db, 'users/' + user.uid);
+    const snapshot = await get(userRef);
+
+    // If user data already exists, redirect to home.html
+    if (snapshot.exists()) {
+      window.location.href = "home.html";
+    } else {
+      userProfile.classList.remove("hidden");
+      userPic.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
+      userName.textContent = user.displayName || "Unnamed User";
+      userEmail.textContent = user.email;
+    }
+  }
+});
+
 
     async function saveUserData(user) {
       const userRef = ref(db, 'users/' + user.uid);
@@ -198,6 +207,4 @@
   </script>
 </body>
 </html>
-
-
 
