@@ -130,7 +130,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
     import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
     import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
-
+import { update } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
@@ -181,6 +182,8 @@
 
     onAuthStateChanged(auth, async (currentUser) => {
       const uid = getQueryParam("uid");
+      const sanitizedUid = uid.replace(/[.#$[\]]/g, "_");
+
       if (!uid) {
         errorMessage.textContent = "User ID not provided.";
         return;
@@ -241,7 +244,7 @@ if (!isOwner) {
     const sanitizedUid = uid.replace(/[.#$[\]]/g, "_");
     updates[`followers/${sanitizedUid}/${sanitizedCurrentUserId}`] = isFollowingNow ? null : true;
 
-    await set(ref(db), updates);
+    await update(ref(db), updates);
     location.reload();
   } catch (err) {
     errorMessage.textContent = err.message;
