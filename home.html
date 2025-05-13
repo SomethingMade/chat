@@ -487,64 +487,39 @@ function toggleMenu(btn) {
 
 // Function to add a comment to a post
 function addComment(postId) {
-  const commentInput = document.getElementById(`commentInput-${postId}`);
-  const commentText = commentInput.value.trim();
+  const input = document.getElementById(`commentInput-${postId}`);
+  const commentText = input.value.trim();
+  if (commentText === '') return;
 
-  if (commentText === "") {
-    alert("Please enter a comment.");
-    return;
-  }
-
-  // Push the comment to Firebase under the post's comments section
-  const commentsRef = ref(db, `posts/${postId}/comments`);
-  const newCommentRef = push(commentsRef);
-  set(newCommentRef, {
-    userId: currentUser.uid, // Use the current user's ID
-    text: commentText, // Store the comment text
-    timestamp: Date.now(), // Store the current timestamp
+  const commentRef = push(ref(db, `posts/${postId}/comments`));
+  set(commentRef, {
+    text: commentText,
+    userId: currentUser.uid,
+    timestamp: Date.now()
   }).then(() => {
-    commentInput.value = ""; // Clear the input field
-    loadComments(postId); // Reload the comments for the post
-  }).catch(error => {
-    console.error("Error adding comment:", error);
+    input.value = '';
   });
 }
 
+
 // Function to load and display comments for a post
 function loadComments(postId) {
+  const commentsContainer = document.getElementById(`comments-${postId}`);
   const commentsRef = ref(db, `posts/${postId}/comments`);
-  onValue(commentsRef, (snapshot) => {
+  onValue(commentsRef, snapshot => {
+    commentsContainer.innerHTML = '';
     const comments = snapshot.val();
-    const commentsContainer = document.getElementById(`comments-${postId}`);
-    commentsContainer.innerHTML = ''; // Clear previous comments
-
     if (comments) {
-      Object.keys(comments).forEach(commentId => {
-        const comment = comments[commentId];
-        const userRef = ref(db, 'users/' + comment.userId);
-
-        get(userRef).then(userSnap => {
-          if (userSnap.exists()) {
-            const user = userSnap.val();
-
-            const commentElement = document.createElement("div");
-            commentElement.className = "flex items-center space-x-3 mb-3";
-            commentElement.innerHTML = `
-              <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-8 h-8 rounded-full"/>
-              <div>
-                <p class="font-semibold">${user.name}</p>
-                <p class="text-sm text-gray-500">${comment.text}</p>
-              </div>
-            `;
-            commentsContainer.appendChild(commentElement); // Add comment to the container
-          }
-        }).catch(error => {
-          console.error("Error fetching user data for comment:", error);
-        });
+      Object.values(comments).forEach(comment => {
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'text-sm bg-gray-100 p-2 rounded mb-2';
+        commentDiv.textContent = comment.text;
+        commentsContainer.appendChild(commentDiv);
       });
     }
   });
 }
+
 
 // Ensure the event listener is attached after DOM is loaded
   document.addEventListener("DOMContentLoaded", () => {
