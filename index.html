@@ -150,7 +150,7 @@
 
         const user = userCredential.user;
         await saveUserData(user);
-        window.location.href = "profile.html";
+        window.location.href = "prof.html";
       } catch (error) {
         errorMessage.textContent = error.message.replace("Firebase:", "").trim();
       } finally {
