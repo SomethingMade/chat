@@ -360,7 +360,7 @@ function loadPosts() {
 
 
 
-            <a href="prof.html?uid=${user.name}">
+            <a href="prof.html?uid=${post.userId}">
               <div class="flex items-center space-x-3 mb-2">
                 <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full"/>
                 <div>
@@ -373,7 +373,7 @@ function loadPosts() {
               </div>
 
  <div class="text-gray-800 mb-2 relative">
-  <p id="postText-${postId}" class="line-clamp-3 overflow-hidden transition-all duration-300">
+  <p id="postText-${postId}" class="line-clamp-3 overflow-hidden transition-all duration-3000">
     ${highlightHashtags(post.text)}
   </p>
 </div>
