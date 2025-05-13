@@ -168,8 +168,8 @@
 
     const emailWrapper = document.getElementById("email-wrapper");
     const photoWrapper = document.getElementById("photo-wrapper");
-
     function toggleBusiness(type) {
+      
       if (type === "business") {
         businessSection.classList.remove("hidden");
       } else {
@@ -212,6 +212,7 @@
         toggleBusiness(data.accountType);
 
         const isOwner = currentUser && currentUser.uid === uid;
+const sanitizedCurrentUserId = currentUser.uid.replace(/[.#$[\]]/g, "_");
 
 const followBtn = document.getElementById("follow-btn");
 const followersCount = document.getElementById("followers-count");
