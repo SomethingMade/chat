@@ -233,18 +233,21 @@ if (!isOwner) {
   followersCount.textContent = `${Object.keys(followers).length} follower${Object.keys(followers).length === 1 ? '' : 's'}`;
 
   followBtn.addEventListener("click", async () => {
-    const newFollowState = !isFollowing;
+  try {
+    const updatedSnap = await get(followersRef);
+    const updatedFollowers = updatedSnap.exists() ? updatedSnap.val() : {};
+    const isFollowingNow = !!updatedFollowers[sanitizedCurrentUserId];
+
     const updates = {};
+    updates[`followers/${sanitizedUid}/${sanitizedCurrentUserId}`] = isFollowingNow ? null : true;
 
-    updates[`followers/${uid}/${currentUserId}`] = newFollowState ? true : null;
+    await set(ref(db), updates);
+    location.reload();
+  } catch (err) {
+    errorMessage.textContent = err.message;
+  }
+});
 
-    try {
-      await set(ref(db), updates);
-      location.reload(); // Reload to reflect UI change
-    } catch (err) {
-      errorMessage.textContent = err.message;
-    }
-  });
 } else {
   // If profile owner, still show count
   const followersSnap = await get(followersRef);
