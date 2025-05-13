@@ -1,7 +1,5 @@
 <!-- Full HTML code updated with complete field hiding -->
-
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -240,6 +238,7 @@ if (!isOwner) {
     const isFollowingNow = !!updatedFollowers[sanitizedCurrentUserId];
 
     const updates = {};
+    const sanitizedUid = uid.replace(/[.#$[\]]/g, "_");
     updates[`followers/${sanitizedUid}/${sanitizedCurrentUserId}`] = isFollowingNow ? null : true;
 
     await set(ref(db), updates);
