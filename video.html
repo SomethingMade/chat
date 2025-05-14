@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Status Stories</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+
+<style>
+
+#progressBar {
+  height: 3px;
+  background-color: #ffffff;
+  width: 0%;
+  transition: none; /* Remove transition for smoother animation */
+}
+
+
+
+  </style>
+<body class="bg-gray-100 text-gray-900">
+
+  <!-- Floating Button -->
+  <button onclick="document.getElementById('postModal').classList.remove('hidden')" 
+    class="fixed bottom-6 right-6 bg-green-500 text-white w-16 h-16 rounded-full text-3xl shadow-lg">＋</button>
+
+  <!-- Post Modal -->
+  <div id="postModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-xl w-full max-w-md">
+      <h2 class="text-xl font-bold mb-2">Post a Status</h2>
+      <textarea id="statusText" class="w-full border p-2 mb-2" placeholder="Write something..."></textarea>
+      <input type="file" id="statusMedia" class="mb-2" />
+      <div class="flex justify-between">
+        <button onclick="document.getElementById('postModal').classList.add('hidden')" class="text-gray-600">Cancel</button>
+        <button onclick="postStatus()" class="bg-green-500 text-white px-4 py-2 rounded">Post</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Story Viewer Modal -->
+  <div id="storyViewer" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+    <div class="relative w-full h-full">
+      <div id="storyContent" class="text-white text-center p-4 flex items-center justify-center h-full">
+        <!-- The statuses will be displayed inside the cards here -->
+        <div id="statusCard" class="bg-white text-black rounded-xl p-4 w-full max-w-full h-full flex items-center justify-center"></div>
+      </div>
+      <div class="absolute inset-0 flex justify-between items-center px-4 z-10">
+  <button id="prevStory" class="w-10 h-10 flex items-center justify-center bg-black bg-opacity-50 text-white rounded-full text-2xl hover:bg-opacity-70 transition">‹</button>
+  <button id="nextStory" class="w-10 h-10 flex items-center justify-center bg-black bg-opacity-50 text-white rounded-full text-2xl hover:bg-opacity-70 transition">›</button>
+</div>
+
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gray-700">
+        <div id="progressBar" class="h-1 bg-green-500 w-0 transition-all duration-300"></div>
+      </div>
+      <button id="closeStory" class="absolute top-4 right-4 text-white text-xl">✕</button>
+    </div>
+  </div>
+
+  <script>
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+  authDomain: "fire-b-a8878.firebaseapp.com",
+  databaseURL: "https://fire-b-a8878.firebaseio.com",
+  projectId: "fire-b-a8878",
+  storageBucket: "fire-b-a8878.appspot.com",
+  messagingSenderId: "658673187627",
+  appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const storage = firebase.storage();
+
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) window.location.href = "index.html";
+  else loadStatuses(user.uid);
+});
+
+function postStatus() {
+  const text = document.getElementById("statusText").value;
+  const media = document.getElementById("statusMedia").files[0];
+  const user = firebase.auth().currentUser;
+
+  if (!text && !media) return alert("Add text or media!");
+
+  const statusRef = db.ref("statuses").push();
+  const id = statusRef.key;
+
+  if (media) {
+    const fileRef = storage.ref(`statuses/${id}/${media.name}`);
+    fileRef.put(media).then(snapshot => {
+      snapshot.ref.getDownloadURL().then(url => {
+        statusRef.set({
+          uid: user.uid,
+          text,
+          mediaURL: url,
+          mediaType: media.type,
+          createdAt: Date.now()
+        });
+      });
+    });
+  } else {
+    statusRef.set({
+      uid: user.uid,
+      text,
+      createdAt: Date.now()
+    });
+  }
+
+  document.getElementById("statusText").value = "";
+  document.getElementById("statusMedia").value = "";
+  document.getElementById("postModal").classList.add("hidden");
+}
+
+function loadStatuses(currentUserUid) {
+  db.ref("statuses").orderByChild("createdAt").on("value", snapshot => {
+    const allStatuses = [];
+    const fetchUsernames = [];
+
+    snapshot.forEach(child => {
+      const status = { id: child.key, ...child.val() };
+      fetchUsernames.push(
+        firebase.database().ref(`users/${status.uid}/name`).once('value').then(nameSnap => {
+          status.ownerName = nameSnap.val() || "Unknown";
+          allStatuses.push(status);
+        })
+      );
+    });
+
+    Promise.all(fetchUsernames).then(() => {
+      if (allStatuses.length > 0) {
+        currentStoryIndex = 0;
+        stories = allStatuses;
+        showStory(currentStoryIndex, currentUserUid); // Pass currentUserUid to showStory
+        document.getElementById("storyViewer").classList.remove("hidden");
+      }
+    });
+  });
+}
+
+// Story Viewer
+let stories = [], currentStoryIndex = 0, storyTimer = null;
+
+function showStory(index, currentUserUid) {
+  const story = stories[index];
+  const container = document.getElementById("statusCard");
+  const progress = document.getElementById("progressBar");
+
+  if (!story) return;
+
+  container.innerHTML = '';  // Clear previous story
+  container.className = "w-full h-full relative flex items-center justify-center bg-black";
+
+  // Media content
+  const mediaContainer = document.createElement("div");
+  mediaContainer.className = "flex items-center justify-center w-full h-full";
+
+  if (story.mediaURL) {
+    if (story.mediaType.startsWith("image")) {
+      const img = document.createElement("img");
+      img.src = story.mediaURL;
+      img.className = "w-auto h-auto max-w-full max-h-full object-contain";
+      mediaContainer.appendChild(img);
+    } else if (story.mediaType.startsWith("video")) {
+      const video = document.createElement("video");
+      video.src = story.mediaURL;
+      video.controls = true;
+      video.autoplay = true;
+      video.className = "w-auto h-auto max-w-full max-h-full";
+      mediaContainer.appendChild(video);
+    }
+  } else {
+    const text = document.createElement("p");
+    text.textContent = story.text || '';
+    text.className = "text-2xl text-center text-white";
+    mediaContainer.appendChild(text);
+  }
+
+  container.appendChild(mediaContainer);
+
+  // Owner name at bottom-left
+  const nameTag = document.createElement("div");
+  nameTag.className = "absolute bottom-4 left-4 flex items-center space-x-2 bg-black bg-opacity-50 text-white text-sm px-3 py-1 rounded";
+
+  // Add profile image if available
+  if (story.ownerPhoto) {
+    const img = document.createElement("img");
+    img.src = story.ownerPhoto;
+    img.alt = "Profile Picture";
+    img.className = "w-6 h-6 rounded-full object-cover";
+    nameTag.appendChild(img);
+  }
+
+  // Add username text
+  const nameText = document.createElement("span");
+  nameText.textContent = `Posted by: ${story.ownerName || "Unknown"}`;
+  nameTag.appendChild(nameText);
+
+  container.appendChild(nameTag);
+
+  // Delete Button (only visible to the owner)
+  if (story.uid === currentUserUid) {
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full flex items-center space-x-2";
+    
+    // Add trash icon
+    const icon = document.createElement("i");
+    icon.className = "fas fa-trash"; // FontAwesome Trash icon
+    
+    deleteButton.appendChild(icon);
+    deleteButton.textContent = " Delete"; // Text to accompany the icon
+    deleteButton.onclick = () => deleteStatus(story.id);  // Trigger delete function when clicked
+    
+    container.appendChild(deleteButton);
+  }
+
+  // Countdown animation for progress bar
+  let progressValue = 0;
+  const progressDuration = 30000; // 30 seconds
+  const incrementTime = 50; // Update every 50ms
+  const incrementValue = 100 * (incrementTime / progressDuration); // Percentage increase per interval
+
+  function updateProgressBar() {
+    progressValue += incrementValue;
+    progress.style.width = `${progressValue}%`;
+
+    if (progressValue < 100) {
+      requestAnimationFrame(updateProgressBar);
+    }
+  }
+
+  requestAnimationFrame(updateProgressBar);
+
+  clearTimeout(storyTimer);
+  storyTimer = setTimeout(() => {
+    nextStory();
+  }, progressDuration);  // Change to the next story after 30 seconds
+}
+
+function nextStory() {
+  if (currentStoryIndex < stories.length - 1) {
+    showStory(++currentStoryIndex, firebase.auth().currentUser.uid);
+  } else {
+    closeStoryViewer();
+  }
+}
+
+function prevStory() {
+  if (currentStoryIndex > 0) {
+    showStory(--currentStoryIndex, firebase.auth().currentUser.uid);
+  }
+}
+
+function closeStoryViewer() {
+  clearTimeout(storyTimer);
+  document.getElementById("storyViewer").classList.add("hidden");
+}
+
+// Delete Status Function
+function deleteStatus(statusId) {
+  const statusRef = db.ref(`statuses/${statusId}`);
+  const status = stories.find(story => story.id === statusId);
+
+  // Delete media if exists
+  if (status && status.mediaURL) {
+    const mediaRef = storage.refFromURL(status.mediaURL);
+    mediaRef.delete().then(() => {
+      console.log("Media deleted successfully");
+    }).catch(err => {
+      console.error("Error deleting media:", err);
+    });
+  }
+
+  // Remove from database
+  statusRef.remove().then(() => {
+    console.log("Status deleted successfully");
+    loadStatuses(firebase.auth().currentUser.uid);  // Reload statuses after deletion
+  }).catch(err => {
+    console.error("Error deleting status:", err);
+  });
+
+  closeStoryViewer();
+}
+
+document.getElementById("closeStory").onclick = closeStoryViewer;
+document.getElementById("nextStory").onclick = nextStory;
+document.getElementById("prevStory").onclick = prevStory;
+
+
+
+
+  </script>
+</body>
+</html>
+
