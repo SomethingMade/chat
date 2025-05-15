@@ -1,0 +1,96 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Friend Requests</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script>
+      const firebaseConfig = {
+    apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+    authDomain: "fire-b-a8878.firebaseapp.com",
+    databaseURL: "https://fire-b-a8878.firebaseio.com",
+    projectId: "fire-b-a8878",
+    storageBucket: "fire-b-a8878.firebasestorage.app",
+    messagingSenderId: "658673187627",
+    appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+  };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+  <h1 class="text-2xl font-bold mb-4">Friend Requests</h1>
+  <div id="requestsContainer" class="space-y-4"></div>
+
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) return location.href = 'login.html';
+      loadFriendRequests(user.uid);
+    });
+
+    function loadFriendRequests(uid) {
+      const container = document.getElementById("requestsContainer");
+      db.ref(`friend_requests/${uid}`).on("value", snapshot => {
+        container.innerHTML = "";
+
+        if (!snapshot.exists()) {
+          container.innerHTML = "<p class='text-gray-500'>No friend requests.</p>";
+          return;
+        }
+
+        snapshot.forEach(child => {
+          const req = child.val();
+          const senderUid = child.key;
+
+          const card = document.createElement("div");
+          card.className = "bg-white p-4 rounded shadow flex items-center justify-between";
+
+          card.innerHTML = `
+            <div class="flex items-center gap-4">
+              <img src="https://i.pravatar.cc/150?u=${senderUid}" class="w-12 h-12 rounded-full">
+              <div>
+                <p class="font-semibold">${req.name || "Unknown"}</p>
+                <p class="text-sm text-gray-500">${req.email || ""}</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="accept-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" data-sender="${senderUid}">Accept</button>
+              <button class="decline-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" data-sender="${senderUid}">Decline</button>
+            </div>
+          `;
+
+          container.appendChild(card);
+        });
+
+        document.querySelectorAll(".accept-btn").forEach(btn =>
+          btn.addEventListener("click", () => handleFriendRequest(uid, btn.dataset.sender, true))
+        );
+
+        document.querySelectorAll(".decline-btn").forEach(btn =>
+          btn.addEventListener("click", () => handleFriendRequest(uid, btn.dataset.sender, false))
+        );
+      });
+    }
+
+    function handleFriendRequest(currentUid, senderUid, accept) {
+      const requestRef = db.ref(`friend_requests/${currentUid}/${senderUid}`);
+      if (accept) {
+        // Add each other to friends list
+        const updates = {};
+        updates[`friends/${currentUid}/${senderUid}`] = true;
+        updates[`friends/${senderUid}/${currentUid}`] = true;
+        updates[`friend_requests/${currentUid}/${senderUid}`] = null;
+        db.ref().update(updates);
+      } else {
+        // Just remove the request
+        requestRef.remove();
+      }
+    }
+  </script>
+</body>
+</html>
