@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Friend Requests Inbox</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <title>Friend Requests</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script>
-    // Firebase config
    const firebaseConfig = {
     apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
     authDomain: "fire-b-a8878.firebaseapp.com",
@@ -19,81 +18,79 @@
     appId: "1:658673187627:web:6e4c29af661785f0afa36e"
   };
     firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
   </script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-white text-black min-h-screen p-4">
+<body class="bg-gray-100 min-h-screen p-4">
 
   <h1 class="text-2xl font-bold mb-4 text-center">Friend Requests</h1>
   
-  <div id="requests" class="space-y-4">
-    <!-- Requests will be added here -->
-  </div>
+  <div id="requestsContainer" class="space-y-4"></div>
 
   <script>
-    const auth = firebase.auth();
-    const db = firebase.database();
-
     auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
+      if (!user) return location.href = 'login.html';
+      loadFriendRequests(user.uid);
+    });
 
-      const userId = user.uid;
-      const requestsRef = db.ref(`friendRequests/${userId}`);
-
-      requestsRef.on("value", snapshot => {
-        const container = document.getElementById("requests");
+    function loadFriendRequests(uid) {
+      const container = document.getElementById("requestsContainer");
+      db.ref(`friend_requests/${uid}`).on("value", snapshot => {
         container.innerHTML = "";
 
-        const data = snapshot.val();
-        if (!data) {
-          container.innerHTML = `<p class="text-center text-gray-500">No friend requests.</p>`;
+        if (!snapshot.exists()) {
+          container.innerHTML = "<p class='text-center text-gray-500'>No friend requests.</p>";
           return;
         }
 
-        Object.entries(data).forEach(([senderUid, req]) => {
+        snapshot.forEach(child => {
+          const req = child.val();
+          const senderUid = child.key;
+
           const card = document.createElement("div");
-          card.className = "flex items-center justify-between p-4 rounded-xl border border-gray-200 shadow-sm bg-gray-50";
+          card.className = "bg-white p-4 rounded-xl shadow flex flex-col sm:flex-row sm:items-center justify-between gap-4";
 
           card.innerHTML = `
-            <div class="flex items-center gap-3 w-2/3">
-              <img src="https://i.pravatar.cc/150?u=${senderUid}" class="w-12 h-12 rounded-full" />
-              <div class="truncate">
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+              <img src="https://i.pravatar.cc/150?u=${senderUid}" class="w-12 h-12 rounded-full">
+              <div class="min-w-0">
                 <p class="font-semibold truncate">${req.name || "Unknown"}</p>
                 <p class="text-sm text-gray-500 truncate">${req.email || ""}</p>
               </div>
             </div>
-            <div class="flex flex-col gap-2 w-1/3 text-right">
-              <button class="accept-btn bg-black hover:bg-gray-800 text-white px-4 py-1 rounded-full text-sm" data-sender="${senderUid}">Accept</button>
-              <button class="decline-btn bg-black hover:bg-gray-800 text-white px-4 py-1 rounded-full text-sm" data-sender="${senderUid}">Decline</button>
+            <div class="flex gap-2 justify-end sm:justify-start w-full sm:w-auto">
+              <button class="accept-btn bg-black text-white px-4 py-1 rounded-full text-sm" data-sender="${senderUid}">Accept</button>
+              <button class="decline-btn bg-black text-white px-4 py-1 rounded-full text-sm" data-sender="${senderUid}">Decline</button>
             </div>
           `;
+
           container.appendChild(card);
         });
 
-        // Accept / Decline event listeners
-        document.querySelectorAll(".accept-btn").forEach(btn => {
-          btn.onclick = () => {
-            const senderUid = btn.dataset.sender;
-            // Add to friends
-            db.ref(`friends/${userId}/${senderUid}`).set(true);
-            db.ref(`friends/${senderUid}/${userId}`).set(true);
-            // Remove request
-            db.ref(`friendRequests/${userId}/${senderUid}`).remove();
-          };
-        });
+        document.querySelectorAll(".accept-btn").forEach(btn =>
+          btn.addEventListener("click", () => handleFriendRequest(uid, btn.dataset.sender, true))
+        );
 
-        document.querySelectorAll(".decline-btn").forEach(btn => {
-          btn.onclick = () => {
-            const senderUid = btn.dataset.sender;
-            db.ref(`friendRequests/${userId}/${senderUid}`).remove();
-          };
-        });
+        document.querySelectorAll(".decline-btn").forEach(btn =>
+          btn.addEventListener("click", () => handleFriendRequest(uid, btn.dataset.sender, false))
+        );
       });
-    });
-  </script>
+    }
 
+    function handleFriendRequest(currentUid, senderUid, accept) {
+      const requestRef = db.ref(`friend_requests/${currentUid}/${senderUid}`);
+      if (accept) {
+        const updates = {};
+        updates[`friends/${currentUid}/${senderUid}`] = true;
+        updates[`friends/${senderUid}/${currentUid}`] = true;
+        updates[`friend_requests/${currentUid}/${senderUid}`] = null;
+        db.ref().update(updates);
+      } else {
+        requestRef.remove();
+      }
+    }
+  </script>
 </body>
 </html>
