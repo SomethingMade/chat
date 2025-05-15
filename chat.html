@@ -1,13 +1,15 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NeuFela Watch Party Chat</title>
+  <title>Loopa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
+
 </head>
 <body class="bg-gray-100 text-black">
 
@@ -29,10 +31,75 @@
 <!-- Main Chat Area -->
 <div class="max-w-2xl mx-auto p-4 sm:p-6">
   <div id="messages" class="bg-white rounded-lg p-3 h-[70vh] overflow-y-auto shadow mb-4 space-y-2"></div>
+<!--vid and voice button -->
+<div id="callButtons" class="flex gap-6 mb-4 justify-center">
+  <button id="videoCallBtn" class="bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-full flex items-center gap-3 shadow-md">
+    <!-- Video Camera Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14" />
+      <rect x="3" y="7" width="12" height="10" rx="2" ry="2" stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <button id="voiceCallBtn" class="bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-full flex items-center gap-3 shadow-md">
+    <!-- Phone Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.5 4.5a1 1 0 01-.217 1.09l-2.2 2.2a11.042 11.042 0 005.516 5.516l2.2-2.2a1 1 0 011.09-.217l4.5 1.5a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+    </svg>
+  </button>
+</div>
+
+
+
+
   <form id="messageForm" class="flex gap-2">
-    <input id="messageInput" type="text" placeholder="Type your message…" class="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring focus:border-black text-sm">
-    <button type="submit" class="bg-black text-white px-4 py-2 rounded-full hover:opacity-90 text-sm">Send</button>
-  </form>
+  <div class="relative flex items-center p-2 bg-white rounded-full shadow-md w-full max-w-md">
+    <!-- Emoji Button on the left -->
+    <button
+      type="button"
+      class="absolute left-3 text-gray-500 hover:text-black focus:outline-none"
+      aria-label="Open emoji picker"
+      id="emojiButton"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <line x1="9" y1="9" x2="9.01" y2="9" />
+        <line x1="15" y1="9" x2="15.01" y2="9" />
+      </svg>
+    </button>
+
+    <!-- Input with padding-left to avoid overlap -->
+    <input
+      id="messageInput"
+      type="text"
+      placeholder="Type your message…"
+      class="flex-1 pl-10 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-0 text-sm"
+    />
+
+    <!-- Send Button on the right -->
+    <button
+      type="submit"
+      class="bg-black text-white p-2 rounded-full hover:bg-gray-800 flex items-center justify-center ml-2"
+      id="sendButton"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+</form>
+
+<!-- Video Call UI -->
+<div id="callContainer" class="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center hidden z-50">
+  <video id="localVideo" autoplay muted playsinline class="w-1/2 rounded-lg mb-4"></video>
+  <video id="remoteVideo" autoplay playsinline class="w-1/2 rounded-lg"></video>
+  <button id="endCallBtn" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-full">End Call</button>
+</div>
+
+
+
+
 </div>
 
 <script>
@@ -104,22 +171,46 @@
     msgRef.on("child_added", snapshot => displayMessage(snapshot.val()));
   }
 
-  function displayMessage(msg) {
-    const messagesDiv = document.getElementById("messages");
-    const isMe = msg.uid === currentUser.uid;
-    const bubble = document.createElement("div");
+function displayMessage(msg) {
+  const messagesDiv = document.getElementById("messages");
+  const isMe = msg.uid === currentUser.uid;
 
-    bubble.className = `flex items-start ${isMe ? 'justify-end' : 'justify-start'}`;
-    bubble.innerHTML = `
-      <div class="max-w-[80%] ${isMe ? 'bg-black text-white' : 'bg-gray-200 text-gray-900'} p-3 rounded-2xl shadow relative">
-        <div class="text-sm font-medium">${msg.name}</div>
-        <div class="text-sm">${msg.text}</div>
-        <div class="text-xs absolute bottom-1 right-2 text-gray-300">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+  const bubble = document.createElement("div");
+  bubble.className = `flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`;
+
+  const avatar = `<img src="${msg.avatar || `https://i.pravatar.cc/150?u=${msg.uid}`}" class="w-8 h-8 rounded-full object-cover">`;
+
+  bubble.innerHTML = isMe
+    ? `
+      <div class="flex flex-col items-end max-w-[90%] min-w-[12rem]">
+        <div class="bg-black text-white p-3 rounded-2xl shadow relative text-left w-full">
+          <div class="text-sm font-medium">${msg.name}</div>
+          <div class="text-sm">${msg.text}</div>
+          <div class="text-xs text-gray-300 mt-1 text-right">
+            ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+      </div>
+      ${avatar}
+    `
+    : `
+      ${avatar}
+      <div class="flex flex-col items-start max-w-[90%] min-w-[12rem]">
+        <div class="bg-gray-200 text-gray-900 p-3 rounded-2xl shadow relative text-left w-full">
+          <div class="text-sm font-medium">${msg.name}</div>
+          <div class="text-sm">${msg.text}</div>
+          <div class="text-xs text-gray-400 mt-1 text-right">
+            ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
       </div>
     `;
-    messagesDiv.appendChild(bubble);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
+
+  messagesDiv.appendChild(bubble);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+
 
   document.getElementById("messageForm").addEventListener("submit", e => {
     e.preventDefault();
@@ -127,12 +218,16 @@
     const text = input.value.trim();
     if (!text) return;
 
-    const message = {
-      uid: currentUser.uid,
-      name: currentUser.displayName || "User",
-      text,
-      timestamp: Date.now()
-    };
+  const message = {
+  uid: currentUser.uid,
+  name: currentUser.displayName || "User",
+  avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+  text,
+  timestamp: Date.now(),
+  status: "delivered"
+};
+
+
 
     db.ref(`chats/${currentChatRoom}`).push(message);
     db.ref(`lastMessages/${currentUser.uid}`).set({
@@ -143,52 +238,268 @@
     input.value = "";
   });
 
-  function loadOnlineUsers() {
-    const userList = document.getElementById("userList");
+function loadOnlineUsers() {
+  const userList = document.getElementById("userList");
 
-    db.ref("presence").on("value", snap => {
-      userList.innerHTML = "";
-      snap.forEach(child => {
-        const uid = child.key;
-        const status = child.val();
+  // Keep track of typing statuses
+  const typingRef = db.ref("typing");
+  let typingData = {};
 
-        if (uid !== currentUser.uid && status === "online") {
-          db.ref("users/" + uid).once("value", userSnap => {
+  // Listen to typing data changes
+  typingRef.on("value", snap => {
+    typingData = snap.val() || {};
+    renderUserList();
+  });
+
+  // Presence and lastMessages are fetched once on each render
+  function renderUserList() {
+    db.ref("presence").once("value").then(presenceSnap => {
+      const presenceData = presenceSnap.val() || {};
+
+      db.ref("lastMessages").once("value").then(lastMessagesSnap => {
+        const lastMessages = lastMessagesSnap.val() || {};
+        const chattedUserIds = Object.keys(lastMessages).filter(uid => uid !== currentUser.uid);
+
+        const userPromises = chattedUserIds.map(uid => 
+          db.ref("users/" + uid).once("value").then(userSnap => {
             const user = userSnap.val();
-            db.ref("lastMessages/" + uid).once("value", lastSnap => {
-              const last = lastSnap.val() || {};
+            if (!user) return null;
 
-              const card = document.createElement("div");
-              card.className = "bg-white rounded-xl p-3 shadow flex gap-3 items-start cursor-pointer hover:bg-gray-100";
-              card.onclick = () => {
-                openChatWithUser(uid, user);
-                drawer.classList.add("-translate-x-full");
-                overlay.classList.add("hidden");
-              };
+            const isOnline = presenceData[uid] === "online";
+            const last = lastMessages[uid];
 
-              card.innerHTML = `
-                <img src="${user.avatar}" class="w-10 h-10 rounded-full object-cover" />
-                <div class="flex-1 min-w-0">
-                  <div class="font-semibold truncate">${user.name}</div>
-                  <div class="text-sm text-gray-600 truncate">${last.text || "No messages yet"}</div>
-                </div>
-                <div class="text-xs text-gray-400 self-start whitespace-nowrap">
-                  ${last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-                </div>
-              `;
-              userList.appendChild(card);
-            });
+            // lastSeen fallback
+            let lastSeen = null;
+            if (!isOnline && presenceData[uid] === "offline") {
+              lastSeen = last.timestamp || null;
+            }
+
+            // Check if user is typing to currentUser
+            const isTyping = typingData[uid] === true;
+
+            return {
+              uid,
+              user,
+              isOnline,
+              last,
+              lastSeen,
+              isTyping
+            };
+          })
+        );
+
+        Promise.all(userPromises).then(results => {
+          const usersToShow = results.filter(r => r !== null);
+
+          // Sort online users first, then offline, each by last message time desc
+          usersToShow.sort((a, b) => {
+            if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+            return (b.last?.timestamp || 0) - (a.last?.timestamp || 0);
           });
-        }
+
+          userList.innerHTML = "";
+
+          usersToShow.forEach(({ uid, user, isOnline, last, lastSeen, isTyping }) => {
+            const card = document.createElement("div");
+            card.className = "bg-white rounded-xl p-3 shadow flex gap-3 items-start cursor-pointer hover:bg-gray-100";
+            card.onclick = () => {
+              openChatWithUser(uid, user);
+              drawer.classList.add("-translate-x-full");
+              overlay.classList.add("hidden");
+            };
+
+            const lastSeenHTML = (!isOnline && lastSeen)
+              ? `<div class="text-xs text-gray-400">Last seen: ${new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`
+              : '';
+
+            const typingHTML = isTyping
+              ? `<div class="text-xs text-blue-500 italic">Typing...</div>`
+              : '';
+
+              const avatarUrl = user.avatar && user.avatar.trim() !== ""
+  ? user.avatar
+  : "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name) + "&background=random&color=fff&size=128";
+
+
+            card.innerHTML = `
+              <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover" />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-semibold truncate">${user.name}</div>
+                  <span class="w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                </div>
+                <div class="text-sm text-gray-600 truncate">${last.text || ""}</div>
+                ${typingHTML}
+                ${lastSeenHTML}
+              </div>
+              <div class="text-xs text-gray-400 self-start whitespace-nowrap">
+                ${last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+              </div>
+            `;
+
+            userList.appendChild(card);
+          });
+        });
       });
     });
   }
+
+  // Initial render
+  renderUserList();
+}
+
+
 
   function openChatWithUser(uid, user) {
     currentChatRoom = [currentUser.uid, uid].sort().join("_");
     document.getElementById("messages").innerHTML = "";
     listenForMessages();
   }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const button = document.querySelector('#emojiButton');
+  const input = document.querySelector('#messageInput');
+
+  const picker = new EmojiButton({
+    position: 'top-start',
+    theme: 'light',
+  });
+
+  picker.on('emoji', emoji => {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    input.value = text.slice(0, start) + emoji + text.slice(end);
+    input.focus();
+    input.selectionStart = input.selectionEnd = start + emoji.length;
+  });
+
+  button.addEventListener('click', () => {
+    picker.togglePicker(button);
+  });
+});
+
+
+
+
+let localStream, remoteStream, peerConnection;
+const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+const localVideo = document.getElementById('localVideo');
+const remoteVideo = document.getElementById('remoteVideo');
+const callContainer = document.getElementById('callContainer');
+const endCallBtn = document.getElementById('endCallBtn');
+
+const videoCallBtn = document.getElementById('videoCallBtn');
+const voiceCallBtn = document.getElementById('voiceCallBtn');
+
+// Firebase call ref
+const callRef = db.ref('calls');
+
+// Create call
+async function startCall(video = true) {
+  callContainer.classList.remove('hidden');
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video,
+    audio: true
+  });
+  localVideo.srcObject = localStream;
+
+  peerConnection = new RTCPeerConnection(servers);
+  remoteStream = new MediaStream();
+  remoteVideo.srcObject = remoteStream;
+
+  // Add local tracks
+  localStream.getTracks().forEach(track => {
+    peerConnection.addTrack(track, localStream);
+  });
+
+  // Handle remote tracks
+  peerConnection.ontrack = event => {
+    event.streams[0].getTracks().forEach(track => {
+      remoteStream.addTrack(track);
+    });
+  };
+
+  // ICE candidate handling
+  peerConnection.onicecandidate = e => {
+    if (e.candidate) {
+      callRef.child('iceCandidates').push(JSON.stringify(e.candidate));
+    }
+  };
+
+  // Offer
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  callRef.child('offer').set(JSON.stringify(offer));
+
+  // Listen for answer
+  callRef.child('answer').on('value', async snapshot => {
+    const answer = snapshot.val();
+    if (answer && !peerConnection.currentRemoteDescription) {
+      await peerConnection.setRemoteDescription(JSON.parse(answer));
+    }
+  });
+
+  // Listen for remote ICE
+  callRef.child('iceCandidates').on('child_added', async snapshot => {
+    const candidate = JSON.parse(snapshot.val());
+    if (candidate) {
+      await peerConnection.addIceCandidate(candidate);
+    }
+  });
+}
+
+// Join existing call
+async function joinCall() {
+  callContainer.classList.remove('hidden');
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  localVideo.srcObject = localStream;
+
+  peerConnection = new RTCPeerConnection(servers);
+  remoteStream = new MediaStream();
+  remoteVideo.srcObject = remoteStream;
+
+  localStream.getTracks().forEach(track => {
+    peerConnection.addTrack(track, localStream);
+  });
+
+  peerConnection.ontrack = event => {
+    event.streams[0].getTracks().forEach(track => {
+      remoteStream.addTrack(track);
+    });
+  };
+
+  peerConnection.onicecandidate = e => {
+    if (e.candidate) {
+      callRef.child('iceCandidates').push(JSON.stringify(e.candidate));
+    }
+  };
+
+  // Get offer and create answer
+  const snapshot = await callRef.child('offer').get();
+  const offer = snapshot.val();
+  await peerConnection.setRemoteDescription(JSON.parse(offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  callRef.child('answer').set(JSON.stringify(answer));
+}
+
+// End call
+endCallBtn.onclick = () => {
+  peerConnection.close();
+  callRef.remove();
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
+  callContainer.classList.add('hidden');
+};
+
+// Click buttons
+videoCallBtn.onclick = () => startCall(true);
+voiceCallBtn.onclick = () => startCall(false);
+
+
+
 </script>
 </body>
 </html>
