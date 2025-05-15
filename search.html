@@ -1,0 +1,149 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Search Users</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-2xl mx-auto py-6 px-4">
+    <h1 class="text-2xl font-bold mb-4 text-center">🔍 Search Users</h1>
+
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search by name or email..."
+      class="w-full p-3 mb-4 border border-gray-300 rounded-lg"
+    />
+
+    <div id="userList" class="space-y-4"></div>
+  </div>
+
+  <script>
+    // Firebase config
+     const firebaseConfig = {
+    apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+    authDomain: "fire-b-a8878.firebaseapp.com",
+    databaseURL: "https://fire-b-a8878.firebaseio.com",
+    projectId: "fire-b-a8878",
+    storageBucket: "fire-b-a8878.firebasestorage.app",
+    messagingSenderId: "658673187627",
+    appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+  };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database(); // or use Firestore if you prefer
+
+    const searchInput = document.getElementById('searchInput');
+    const userList = document.getElementById('userList');
+
+    let allUsers = [];
+
+    // Only show users if logged in
+    auth.onAuthStateChanged(user => {
+      if (!user) return (window.location.href = "/login.html");
+      fetchUsers();
+    });
+
+    // Fetch all users from database
+    function fetchUsers() {
+      db.ref("users").once("value", snapshot => {
+        const users = snapshot.val();
+        allUsers = [];
+
+        for (let uid in users) {
+          allUsers.push({ uid, ...users[uid] });
+        }
+
+        displayUsers(allUsers);
+      });
+    }
+
+    // Display users in the list
+function displayUsers(users) {
+  userList.innerHTML = "";
+
+  if (users.length === 0) {
+    userList.innerHTML = `<p class="text-center text-gray-500">No users found.</p>`;
+    return;
+  }
+
+  const currentUserId = auth.currentUser.uid;
+
+  users.forEach(user => {
+    if (user.uid === currentUserId) return; // Skip self
+
+    const userCard = document.createElement("div");
+    userCard.className = "bg-white p-4 rounded-lg shadow flex items-center justify-between";
+
+    userCard.innerHTML = `
+      <div class="flex items-center gap-4">
+        <img src="${user.avatar || `https://i.pravatar.cc/150?u=${user.uid}`}" class="w-12 h-12 rounded-full">
+        <div>
+          <p class="font-semibold">${user.name || "Unnamed User"}</p>
+          <p class="text-sm text-gray-500">${user.email || ""}</p>
+        </div>
+      </div>
+      <button
+        class="send-request-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+        data-target="${user.uid}"
+      >
+        Send Request
+      </button>
+    `;
+
+    userList.appendChild(userCard);
+  });
+
+  // Add event listeners to buttons
+  document.querySelectorAll(".send-request-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const targetUid = e.target.getAttribute("data-target");
+      sendFriendRequest(targetUid, btn);
+    });
+  });
+}
+
+// Send friend request to target user
+function sendFriendRequest(targetUid, buttonElement) {
+  const currentUser = auth.currentUser;
+  const requestRef = db.ref(`friend_requests/${targetUid}/${currentUser.uid}`);
+
+  requestRef.once("value", snapshot => {
+    if (snapshot.exists()) {
+      alert("Friend request already sent.");
+    } else {
+      requestRef.set({
+        from: currentUser.uid,
+        name: currentUser.displayName || "Anonymous",
+        email: currentUser.email || "",
+        timestamp: Date.now()
+      }).then(() => {
+        buttonElement.innerText = "Requested";
+        buttonElement.disabled = true;
+        buttonElement.classList.add("bg-gray-400", "cursor-not-allowed");
+      }).catch(err => {
+        console.error("Error sending request:", err);
+      });
+    }
+  });
+}
+
+    // Filter users based on search input
+    searchInput.addEventListener("input", e => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allUsers.filter(user =>
+        (user.name || "").toLowerCase().includes(query) ||
+        (user.email || "").toLowerCase().includes(query)
+      );
+      displayUsers(filtered);
+    });
+  </script>
+</body>
+</html>
