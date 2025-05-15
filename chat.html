@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -22,6 +22,14 @@
 <!-- Sidebar Drawer -->
 <div id="drawer" class="fixed top-0 left-0 w-72 h-full bg-white shadow-lg z-50 transform -translate-x-full transition-transform duration-300 overflow-y-auto">
   <div class="p-4 text-lg font-semibold border-b">Online Users</div>
+  <div class="p-3 border-b flex justify-end">
+  <button onclick="window.location.href='search.html'" title="Search">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z" />
+    </svg>
+  </button>
+</div>
+
   <div id="userList" class="p-4 space-y-2"></div>
 </div>
 
@@ -241,103 +249,107 @@ function displayMessage(msg) {
 function loadOnlineUsers() {
   const userList = document.getElementById("userList");
 
-  // Keep track of typing statuses
+  // Track typing status
   const typingRef = db.ref("typing");
   let typingData = {};
 
-  // Listen to typing data changes
   typingRef.on("value", snap => {
     typingData = snap.val() || {};
     renderUserList();
   });
 
-  // Presence and lastMessages are fetched once on each render
   function renderUserList() {
-    db.ref("presence").once("value").then(presenceSnap => {
-      const presenceData = presenceSnap.val() || {};
+    // Step 1: Get friends
+    db.ref(`friends/${currentUser.uid}`).once("value").then(friendsSnap => {
+      const friendsData = friendsSnap.val() || {};
+      const friendUIDs = Object.keys(friendsData);
 
-      db.ref("lastMessages").once("value").then(lastMessagesSnap => {
-        const lastMessages = lastMessagesSnap.val() || {};
-        const chattedUserIds = Object.keys(lastMessages).filter(uid => uid !== currentUser.uid);
+      // Step 2: Get presence and lastMessages
+      db.ref("presence").once("value").then(presenceSnap => {
+        const presenceData = presenceSnap.val() || {};
 
-        const userPromises = chattedUserIds.map(uid => 
-          db.ref("users/" + uid).once("value").then(userSnap => {
-            const user = userSnap.val();
-            if (!user) return null;
+        db.ref("lastMessages").once("value").then(lastMessagesSnap => {
+          const lastMessages = lastMessagesSnap.val() || {};
 
-            const isOnline = presenceData[uid] === "online";
-            const last = lastMessages[uid];
+          const userPromises = friendUIDs.map(uid =>
+            db.ref("users/" + uid).once("value").then(userSnap => {
+              const user = userSnap.val();
+              if (!user) return null;
 
-            // lastSeen fallback
-            let lastSeen = null;
-            if (!isOnline && presenceData[uid] === "offline") {
-              lastSeen = last.timestamp || null;
-            }
+              const isOnline = presenceData[uid] === "online";
+             const last = (
+  (lastMessages[currentUser.uid] && lastMessages[currentUser.uid][uid]) ||
+  (lastMessages[uid] && lastMessages[uid][currentUser.uid]) ||
+  {}
+);
 
-            // Check if user is typing to currentUser
-            const isTyping = typingData[uid] === true;
 
-            return {
-              uid,
-              user,
-              isOnline,
-              last,
-              lastSeen,
-              isTyping
-            };
-          })
-        );
+              const lastSeen = (!isOnline && presenceData[uid] === "offline")
+                ? last.timestamp || null
+                : null;
 
-        Promise.all(userPromises).then(results => {
-          const usersToShow = results.filter(r => r !== null);
+              const isTyping = typingData[uid] === true;
 
-          // Sort online users first, then offline, each by last message time desc
-          usersToShow.sort((a, b) => {
-            if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
-            return (b.last?.timestamp || 0) - (a.last?.timestamp || 0);
-          });
+              return {
+                uid,
+                user,
+                isOnline,
+                last,
+                lastSeen,
+                isTyping
+              };
+            })
+          );
 
-          userList.innerHTML = "";
+          Promise.all(userPromises).then(results => {
+            const usersToShow = results.filter(r => r !== null);
 
-          usersToShow.forEach(({ uid, user, isOnline, last, lastSeen, isTyping }) => {
-            const card = document.createElement("div");
-            card.className = "bg-white rounded-xl p-3 shadow flex gap-3 items-start cursor-pointer hover:bg-gray-100";
-            card.onclick = () => {
-              openChatWithUser(uid, user);
-              drawer.classList.add("-translate-x-full");
-              overlay.classList.add("hidden");
-            };
+            usersToShow.sort((a, b) => {
+              if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+              return (b.last?.timestamp || 0) - (a.last?.timestamp || 0);
+            });
 
-            const lastSeenHTML = (!isOnline && lastSeen)
-              ? `<div class="text-xs text-gray-400">Last seen: ${new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`
-              : '';
+            userList.innerHTML = "";
 
-            const typingHTML = isTyping
-              ? `<div class="text-xs text-blue-500 italic">Typing...</div>`
-              : '';
+            usersToShow.forEach(({ uid, user, isOnline, last, lastSeen, isTyping }) => {
+              const card = document.createElement("div");
+              card.className = "bg-white rounded-xl p-3 shadow flex gap-3 items-start cursor-pointer hover:bg-gray-100";
+              card.onclick = () => {
+                openChatWithUser(uid, user);
+                drawer.classList.add("-translate-x-full");
+                overlay.classList.add("hidden");
+              };
+
+              const lastSeenHTML = (!isOnline && lastSeen)
+                ? `<div class="text-xs text-gray-400">Last seen: ${new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`
+                : '';
+
+              const typingHTML = isTyping
+                ? `<div class="text-xs text-blue-500 italic">Typing...</div>`
+                : '';
 
               const avatarUrl = user.avatar && user.avatar.trim() !== ""
-  ? user.avatar
-  : "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name) + "&background=random&color=fff&size=128";
+                ? user.avatar
+                : "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name) + "&background=random&color=fff&size=128";
 
-
-            card.innerHTML = `
-              <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover" />
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <div class="font-semibold truncate">${user.name}</div>
-                  <span class="w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}"></span>
+              card.innerHTML = `
+                <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover" />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <div class="font-semibold truncate">${user.name}</div>
+                    <span class="w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                  </div>
+                  <div class="text-sm text-gray-600 truncate">${last.text || ""}</div>
+                  ${typingHTML}
+                  ${lastSeenHTML}
                 </div>
-                <div class="text-sm text-gray-600 truncate">${last.text || ""}</div>
-                ${typingHTML}
-                ${lastSeenHTML}
-              </div>
-              <div class="text-xs text-gray-400 self-start whitespace-nowrap">
-                ${last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-              </div>
-            `;
+                <div class="text-xs text-gray-400 self-start whitespace-nowrap">
+                  ${last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                </div>
+              `;
 
-            userList.appendChild(card);
+              userList.appendChild(card);
+            });
           });
         });
       });
