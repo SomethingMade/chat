@@ -1,606 +1,434 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home</title>
+  <title>Loopa Feed</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <style>
-.line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;  
-    overflow: hidden;
-  }
-    
-.card {
-  background-color: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-}
-.card:hover {
-  transform: scale(1.02);
-}
-.btn {
-  background-color: #000000;
-  color: white;
-  border-radius: 24px;
-  padding: 8px 16px;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-.btn:hover {
-  background-color: #333333;
-}
-.floating-btn {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  background-color: #1f2937;
-  color: white;
-  border-radius: 50%;
-  padding: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  font-size: 24px;
-  transition: background-color 0.3s ease;
-}
-.floating-btn:hover {
-  background-color: #374151;
-}
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+   .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffff;
+      box-shadow: 0 -1px 10px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 60px;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      z-index: 1000;
+    }
+
+    .bottom-nav a {
+      flex: 1;
+      text-align: center;
+      color: #777;
+      text-decoration: none;
+      font-size: 12px;
+      padding: 8px 0 4px;
+      transition: color 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bottom-nav a svg {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 2px;
+      fill: #777;
+      transition: fill 0.3s ease;
+    }
+
+    .bottom-nav a.active,
+    .bottom-nav a:hover {
+      color: #000000; /* blue */
+    }
+
+    .bottom-nav a.active svg,
+    .bottom-nav a:hover svg {
+      fill: #1d4ed8;
+    }
+
+    /* Optional: Add a little pulse effect on active */
+    .bottom-nav a.active svg {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
+
 
   </style>
 </head>
-<body class="bg-gray-50 pb-24">
+<body class="bg-gradient-to-b from-white to-gray-100 min-h-screen text-gray-800">
 
-<!-- Navbar -->
-
-<header class="bg-gray-800 p-4 rounded-b-2xl">
-  <div class="flex justify-between items-center text-white">
-    <div class="flex items-center space-x-4">
-      <img src="loopa.png" class="w-12 h-12 rounded-full" src="" alt="Profile Pic"/>
-      <div>
-        
-        <p id="user-name" class="font-semibold"></p>
-        <p id="user-email" class="text-sm"></p>
-      </div>
+  <!-- Container -->
+  <div class="max-w-md mx-auto p-4">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+       <img src="path/to/your-logo.png" alt="Your Logo" class="h-12 w-12 rounded-full mr-3" />
+      <h1 class="text-2xl font-extrabold text-blue-600">Loopa</h1>
+      <button onclick="firebase.auth().signOut()" class="text-sm text-red-500 hover:underline">Logout</button>
     </div>
-    <!-- Add this inside the header's flex container -->
-<button id="notification-btn" class="text-white text-xl mx-2 hover:text-gray-300">
-  <i class="fas fa-bell"></i>
-</button>
-    <button id="sign-out" class="btn text-sm">Sign Out</button>
-  </div>
-</header>
 
-<!-- Horizontal User Profiles -->
-
-<section class="p-4">
-  <h2 class="text-lg font-semibold mb-2 text-gray-800">Users</h2>
-  <p class="font-semibold">users who posted</p>
-  <div id="users-container" class="flex space-x-4 overflow-x-auto pb-2"></div>
-</section>
-
-<!-- Post Creation -->
-
-<form id="postForm" class="space-y-4">
-<section class="px-4">
-  <div class="card p-4 mb-4">
-    <textarea id="post-text" class="w-full p-3 mb-3 rounded-lg border" placeholder="What's on your mind?" rows="3"></textarea>
-     <input type="text" id="postImageURL" class="w-full p-2 border rounded" placeholder="Optional: Image URL" />
-    <br><br>
-    <button id="post-btn" class="btn">Create a Post</button>
-  </div>
-</section>
-</form>
-
-<!-- Post Feed -->
-
-<section class="px-4 space-y-4" id="feed-container">
-  <!-- Posts will be added here -->
-
-</section>
-
-<div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl p-6 w-80 relative">
-    <button id="closeModal" class="absolute top-2 right-2 text-gray-600 text-lg">&times;</button>
-    <img id="modalPhoto" class="w-24 h-24 rounded-full mx-auto border-2 border-gray-300 object-cover" />
-    <h2 id="modalName" class="text-xl font-semibold text-center mt-4"></h2>
-    <p id="modalEmail" class="text-sm text-center text-gray-500 mt-1"></p>
-    <!-- Add more user info here if needed -->
-  </div>
-</div>
-
-<!-- Likes Modal -->
-
-<div id="likesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl p-6 w-80 relative max-h-[80vh] overflow-y-auto">
-    <button id="closeLikesModal" class="absolute top-2 right-2 text-gray-600 text-lg">&times;</button>
-    <h2 class="text-xl font-semibold mb-4 text-center">Liked By</h2>
-    <ul id="likesList" class="space-y-3"></ul>
-  </div>
-</div>
-
-<!-- Bottom Nav -->
-
-<div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white w-[90%] max-w-md mx-auto rounded-full shadow-lg flex justify-around items-center py-3 px-4 z-50">
-  <a href="home.html" class="flex flex-col items-center text-sm hover:text-black transition">
-    <i class="fas fa-home text-lg mb-1"></i> Home
-  </a>
-  <a href="requests.html" class="flex flex-col items-center text-sm hover:text-black transition">
-    <i class="fas fa-video text-lg mb-1"></i> Videos
-  </a>
-  <a href="prof.html" class="flex flex-col items-center text-sm hover:text-black transition">
-    <i class="fas fa-user text-lg mb-1"></i> Profile
-  </a>
-  <a href="chat.html" class="flex flex-col items-center text-sm hover:text-black transition">
-    <i class="fas fa-comment text-lg mb-1"></i> Chat
-  </a>
-</div>
-
-<!-- Firebase -->
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
-  import { getDatabase, ref, get, set, push, onValue, update, child } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
-    authDomain: "fire-b-a8878.firebaseapp.com",
-    databaseURL: "https://fire-b-a8878.firebaseio.com",
-    projectId: "fire-b-a8878",
-    storageBucket: "fire-b-a8878.appspot.com",
-    messagingSenderId: "658673187627",
-    appId: "1:658673187627:web:6e4c29af661785f0afa36e"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-
-  const userPic = document.getElementById("user-pic");
-  const userName = document.getElementById("user-name");
-  const userEmail = document.getElementById("user-email");
-  const signOutBtn = document.getElementById("sign-out");
-  const feedContainer = document.getElementById("feed-container");
-  const usersContainer = document.getElementById("users-container");
-
-  let currentUser = null;
-
-  signOutBtn.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "index.html";
-  });
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser = user;
-      const userRef = ref(db, 'users/' + user.uid);
-      get(userRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          userPic.src = data.photoURL || "https://www.gravatar.com/avatar?d=mp";
-          userName.textContent = data.name || "Unnamed User";
-          document.getElementById("user-type").textContent = data.accountType || "Standard User";
-        }
-      });
-      loadPosts();
-    } else {
-      window.location.href = "index.html";
-    }
-  });
-
-
-function timeAgo(timestamp) {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  const intervals = {
-    year: 31536000,
-    month: 2592000,
-    week: 604800,
-    day: 86400,
-    hour: 3600,
-    minute: 60,
-  };
-
-  for (let [unit, value] of Object.entries(intervals)) {
-    const count = Math.floor(seconds / value);
-    if (count >= 1) return `${count} ${unit}${count > 1 ? 's' : ''} ago`;
-  }
-
-  return "just now";
-}
-  document.getElementById("post-btn").addEventListener("click", () => {
-    const text = document.getElementById("post-text").value;
-    if (text.trim()) {
-      const newPostRef = push(ref(db, 'posts/'));
-      set(newPostRef, {
-        userId: currentUser.uid,
-        text: text,
-        timestamp: Date.now(),
-        likes: 0,
-        likedBy: []  // Store the users who liked the post
-      }).then(() => {
-        document.getElementById("post-text").value = "";
-      });
-    }
-  });
-
-
-
-// Function to create a post with an optional image URL
-function createPost() {
-  const postText = document.getElementById("postText").value; // Get the text from the post
-  const postImageURL = document.getElementById("postImageURL").value.trim(); // Get the image URL (if any)
-
-  if (postText.trim() || postImageURL) { // Ensure that at least text or image is provided
-    const postId = push(ref(db, 'posts')).key; // Generate a new post ID
-    const postData = {
-      text: postText,
-      userId: auth.currentUser.uid, // Use the current user's ID
-      timestamp: Date.now(), // Set the current timestamp
-      likes: 0, // Initialize likes to 0
-    };
-
-    // If the user provided an image URL, add it to the post data
-    if (postImageURL) {
-      postData.imageURL = postImageURL; // Save the image URL in the post data
-    }
-
-    savePost(postId, postData); // Call the function to save the post data in the database
-  }
-}
-
-// Function to save the post data to Firebase
-function savePost(postId, postData) {
-  const postRef = ref(db, 'posts/' + postId); // Reference to the specific post in the database
-  set(postRef, postData).then(() => {
-    document.getElementById("postText").value = ''; // Clear the text input
-    document.getElementById("postImageURL").value = ''; // Clear the image URL input
-    loadPosts(); // Reload the posts to reflect the new post
-  });
-}
-
-  function repost(originalPostId) {
-  const user = firebase.auth().currentUser;
-  if (!user) return alert("You must be logged in to repost.");
-
-  const postRef = firebase.database().ref(`posts/${originalPostId}`);
-  postRef.once("value", (snapshot) => {
-    const originalPost = snapshot.val();
-    if (!originalPost) return alert("Original post not found.");
-
-    const newPost = {
-      text: originalPost.text,
-      imageURL: originalPost.imageURL || null,
-      timestamp: Date.now(),
-      userId: user.uid,
-      originalPostId: originalPostId, // Optional: track the source
-      likes: 0,
-      likesList: [],
-    };
-
-    firebase.database().ref("posts").push(newPost)
-      .then(() => alert("Reposted successfully!"))
-      .catch(err => {
-        console.error("Repost failed:", err);
-        alert("Error reposting.");
-      });
-  });
-}
-
-
-
-
-
-  
-
-// Event listener for the post form submission
-document.getElementById("postForm").addEventListener("submit", (e) => {
-  e.preventDefault(); // Prevent the default form submission behavior
-  createPost(); // Call the createPost function when the form is submitted
-});
-
-
-
-
- // Function to load posts with image (if available)
-function loadPosts() {
-  const postsRef = ref(db, 'posts/');
-  onValue(postsRef, (snapshot) => {
-    const posts = snapshot.val();
-    feedContainer.innerHTML = ''; // Clear previous posts
-    const shownUsers = new Set(); // Track users to show them only once
-    usersContainer.innerHTML = ''; // Clear previous user cards
-
-    if (posts) {
-      Object.keys(posts).reverse().forEach(postId => {
-        const post = posts[postId];
-        const userRef = ref(db, 'users/' + post.userId);
-
-        get(userRef).then(userSnap => {
-          if (userSnap.exists()) {
-            const user = userSnap.val();
-
-            // Show users at the top only once
-            if (!shownUsers.has(post.userId)) {
-  const userCard = document.createElement("div");
-  userCard.className = "min-w-[100px] bg-white rounded-xl shadow-md p-2 text-center hover:shadow-lg transition cursor-pointer";
-
-  userCard.innerHTML = ` 
-    <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-16 h-16 rounded-full mx-auto border-2 border-gray-300 object-cover" />
-    <p class="text-sm font-medium mt-2">${user.name}</p>
-  `;
-
-  userCard.addEventListener("click", () => {
-   window.location.href = `prof.html?uid=${post.userId}`;
-    
-  });
-
-  usersContainer.appendChild(userCard);
-  shownUsers.add(post.userId);
-}
-
-
-
-
-
-            const postCard = document.createElement("div");
-            postCard.className = "card p-4";
-            postCard.innerHTML = ` 
-
-  <button class="absolute top-2 right-2 text-gray-600 hover:text-black" onclick="toggleMenu(this)">
-    <i class="fas fa-ellipsis-v"></i>
-  </button>
-  <div class="hidden absolute right-2 top-10 bg-white shadow-md rounded-md p-2 space-y-2 z-10" style="min-width: 120px;">
-    <button class="w-full text-left hover:bg-gray-100 px-2 py-1 text-sm">Edit</button>
-    <button class="w-full text-left hover:bg-gray-100 px-2 py-1 text-sm">Delete</button>
-  </div>
-
-  <!-- Rest of the post content goes here -->
-
-
-
-
-            <a href="prof.html?uid=${post.userId}">
-              <div class="flex items-center space-x-3 mb-2">
-                <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full"/>
-                <div>
-                  <p class="font-semibold text-gray-800">${user.name} 
-  <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2">${user.accountType || 'User'}</span>
-</p></a>
-<p class="text-sm text-gray-600">${timeAgo(post.timestamp)}</p>
-
-                </div>
-              </div>
-
- <div class="text-gray-800 mb-2 relative">
-  <p id="postText-${postId}" class="line-clamp-3 overflow-hidden transition-all duration-3000">
-    ${highlightHashtags(post.text)}
-  </p>
-</div>
-
-              ${post.imageURL ? `<img src="${post.imageURL}" class="w-full mt-2 rounded" />` : ''}
-              <br>
-              <button class="btn text-xs like-btn flex items-center gap-1" data-id="${postId}">
-  <i class="fas fa-thumbs-up text-white-600"></i> ${post.likes || 0}
-</button>
-
-              <div class="flex justify-start mt-2">
-  <button class="btn px-4 py-1 flex items-center gap-1" onclick="repost('${postId}')">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 1l4 4-4 4M3 11v1a9 9 0 0015.9 5.66M21 13v-1a9 9 0 00-15.9-5.66" />
+    <!-- Post Form -->
+    <div class="bg-white rounded-2xl shadow-md p-4 mb-6 border border-gray-100">
+      <textarea id="postInput" placeholder="What's on your mind?" class="w-full text-sm p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none mb-2" rows="3"></textarea>
+      <!-- Post Button with Icon -->
+<button id="postBtn" class="w-full bg-black hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-full flex items-center justify-center gap-2 transition">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
   </svg>
-  Repost
+  Post
 </button>
 
-</div>
+    </div>
 
-              
-              <!-- Comment Section -->
-              <div class="comment-section mt-4">
-                <div id="comments-${postId}">
-                  <!-- Comments will be dynamically loaded here -->
-                </div>
-                <div class="mt-2">
-                  <input type="text" id="commentInput-${postId}" class="w-full p-2 border border-gray-300 rounded" placeholder="Write a comment..."/>
-                  <div class="flex items-center gap-2 mt-2">
-  <button class="btn text-xs flex items-center gap-1" onclick="addComment('${postId}')">
-    <i class="fas fa-comment"></i> Post Comment
-  </button>
-  ${user.accountType === 'business' ? `
-    <button class="btn text-xs bg-green-600 text-white hover:bg-green-700 flex items-center gap-1" onclick="startOrder('${postId}')">
-      <i class="fas fa-shopping-cart"></i> Start Order Now
-    </button>` : ''}
-</div>
+    <!-- Feed -->
+    <div id="posts" class="space-y-6"></div>
+  </div>
+
+ <div class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+    <a href="#home" class="active" aria-current="page">
+      <!-- Home Icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3h-4v-6H10v6H6a3 3 0 0 1-3-3v-9z"/>
+      </svg>
+      Home
+    </a>
+
+    <a href="#profile">
+      <!-- Profile Icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+      </svg>
+      Profile
+    </a>
+
+    <a href="#chat">
+      <!-- Chat Icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 4h16v12H5.17L4 17.17V4z"/>
+      </svg>
+      Chat
+    </a>
+
+    <a href="#search">
+      <!-- Search Icon -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
+      </svg>
+      Search
+    </a>
+  </div>
 
 
-                </div>
-              </div>
-            `;
-            feedContainer.appendChild(postCard); // Add the post to the feed
 
-            // Load and display comments for this post
-            loadComments(postId);
-            
-if (post.likes) {
-  const likeUserIds = Object.keys(post.likes);
-  const likeNames = [];
 
-  Promise.all(
-    likeUserIds.map(uid =>
-      firebase.database().ref('users/' + uid).once('value').then(snapshot => {
-        const userData = snapshot.val();
-        if (userData && userData.name) likeNames.push(userData.name);
-      })
-    )
-  ).then(() => {
-    const displayCount = 2; // number of names to show
-    const displayed = likeNames.slice(0, displayCount);
-    const remaining = likeNames.length - displayCount;
+  <!-- Scripts -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.appspot.com",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+    };
 
-    const text = displayed.join(', ') + (remaining > 0 ? ` and ${remaining} more` : '');
-    document.getElementById(`liked-users-${postId}`).textContent = likeNames.length
-      ? `Liked by: ${text}`
-      : '';
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    const postInput = document.getElementById("postInput");
+    const postBtn = document.getElementById("postBtn");
+    const postsContainer = document.getElementById("posts");
+
+    let currentUser = null;
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "login.html";
+      currentUser = user;
+      loadPosts();
+    });
+
+    postBtn.addEventListener("click", () => {
+      const content = postInput.value.trim();
+      if (!content) return;
+      const postRef = db.ref("posts").push();
+      postRef.set({
+        uid: currentUser.uid,
+        name: currentUser.displayName || "Anonymous",
+        email: currentUser.email,
+        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        content,
+        timestamp: Date.now()
+      });
+      postInput.value = "";
+    });
+
+function formatTimestamp(timestamp) {
+  const now = new Date();
+  const postDate = new Date(timestamp);
+  const diffMs = now - postDate;
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? "s" : ""} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  if (diffDays === 1) return `Yesterday at ${postDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+  return postDate.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   });
-} else {
-  document.getElementById(`liked-users-${postId}`).textContent = 'No likes yet';
 }
 
-            
+
+
+
+    function loadPosts() {
+      db.ref("posts").on("value", snapshot => {
+        const posts = snapshot.val() || {};
+        postsContainer.innerHTML = "";
+
+        Object.entries(posts).reverse().forEach(([postId, post]) => {
+
+
+
+          const postEl = document.createElement("div");
+          postEl.className = "bg-white rounded-2xl shadow p-4 border border-gray-100";
+
+          postEl.innerHTML = `
+            <div class="flex items-center gap-3 mb-3">
+              <img src="${post.avatar}" class="w-10 h-10 rounded-full object-cover"/>
+              <div class="flex-1">
+                <p class="font-semibold text-sm">${post.name}</p>
+                <span class="text-xs text-gray-400">${formatTimestamp(post.timestamp)}</span>
+
+              </div>
+              ${post.uid === currentUser.uid ? `
+              <div class="flex gap-2 text-xs">
+                <button class="edit-post-btn bg-black hover:bg-gray-900 text-white px-3 py-1 rounded-full text-xs flex items-center justify-center" data-id="${postId}" title="Edit">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11.5A1.5 1.5 0 005.5 20H17a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+</button>
+
+<button class="delete-post-btn bg-black hover:bg-gray-900 text-white px-3 py-1 rounded-full text-xs flex items-center justify-center" data-id="${postId}" title="Delete">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+</button>
+
+              </div>` : ""}
+            </div>
+
+            <p class="mb-3 text-sm leading-relaxed" id="content-${postId}">${post.content}</p>
+
+            <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
+            <button class="like-btn bg-black hover:bg-red-600 text-white p-2 rounded-full transition" data-id="${postId}" title="Like">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
+             2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 
+             4.5 2.09C13.09 3.81 14.76 3 
+             16.5 3 19.58 3 22 5.42 22 
+             8.5c0 3.78-3.4 6.86-8.55 
+             11.54L12 21.35z"/>
+  </svg>
+</button>
+
+              <span id="like-count-${postId}" class="text-gray-600">0</span>
+
+<button class="repost-btn text-gray-500 hover:text-black p-1 rounded-full" data-id="${postId}" title="Repost">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M17 1l4 4-4 4M3 11v-2a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" />
+  </svg>
+</button>
+
+
+
+            </div>
+
+            <div id="comments-${postId}" class="ml-4 space-y-2 text-sm"></div>
+
+            <div class="flex items-center gap-2 mt-3">
+                <input
+    type="text"
+    placeholder="Write a comment..."
+    class="comment-input flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:ring focus:ring-black/20 focus:outline-none"
+    data-id="${postId}"
+  />
+  <button
+    class="comment-btn bg-black hover:bg-gray-900 text-white p-2 rounded-full"
+    data-id="${postId}"
+    title="Post Comment"
+  >
+    <!-- Send (paper plane) icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 10l9-6 9 6-9 6-9-6z" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 21V9l3-2 3 2v12" />
+    </svg>
+  </button>
+            </div>
+          `;
+
+          postsContainer.appendChild(postEl);
+
+          db.ref(`likes/${postId}`).on("value", snap => {
+            const likes = snap.val() || {};
+            document.getElementById(`like-count-${postId}`).textContent = Object.keys(likes).length;
+          });
+
+          postEl.querySelector(".like-btn").addEventListener("click", () => {
+            const likeRef = db.ref(`likes/${postId}/${currentUser.uid}`);
+            likeRef.once("value", snap => {
+              if (snap.exists()) likeRef.remove();
+              else likeRef.set(true);
+            });
+          });
+
+          loadComments(postId);
+
+          postEl.querySelector(".comment-btn").addEventListener("click", () => {
+            const input = postEl.querySelector(`.comment-input[data-id="${postId}"]`);
+            const text = input.value.trim();
+            if (!text) return;
+            db.ref(`comments/${postId}`).push({
+              uid: currentUser.uid,
+              name: currentUser.displayName || "User",
+              avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+              text,
+              timestamp: Date.now()
+            });
+            input.value = "";
+          });
+
+          const deleteBtn = postEl.querySelector(".delete-post-btn");
+          if (deleteBtn) {
+            deleteBtn.addEventListener("click", () => {
+              if (confirm("Delete this post?")) {
+                db.ref(`posts/${postId}`).remove();
+                db.ref(`likes/${postId}`).remove();
+                db.ref(`comments/${postId}`).remove();
+              }
+            });
           }
-        }).catch(error => {
-          console.error("Error fetching user data:", error);
+
+          const editBtn = postEl.querySelector(".edit-post-btn");
+          if (editBtn) {
+            editBtn.addEventListener("click", () => {
+              const newContent = prompt("Edit your post:", post.content);
+              if (newContent && newContent !== post.content) {
+                db.ref(`posts/${postId}/content`).set(newContent);
+              }
+            });
+          }
         });
       });
     }
-  });
-}
 
-function highlightHashtags(text) {
-  const hashtagRegex = /#(\w+)/g;
-  return text.replace(hashtagRegex, `<span class="text-blue-600">#$1</span>`);
-}
+    function loadComments(postId) {
+      const container = document.getElementById(`comments-${postId}`);
+      db.ref(`comments/${postId}`).on("value", snapshot => {
+        const comments = snapshot.val() || {};
+        container.innerHTML = "";
 
+        Object.entries(comments).forEach(([key, cmt]) => {
+          const commentEl = document.createElement("div");
+          commentEl.className = "flex items-start gap-2";
 
-
-
-
-function toggleMenu(btn) {
-    const menu = btn.nextElementSibling;
-    // Close other open menus
-    document.querySelectorAll(".card .absolute.bg-white").forEach(m => {
-      if (m !== menu) m.classList.add("hidden");
-    });
-    menu.classList.toggle("hidden");
-  }
-
-  // Optional: Hide menu if clicked outside
-  document.addEventListener("click", function (e) {
-    if (!e.target.closest(".card")) {
-      document.querySelectorAll(".card .absolute.bg-white").forEach(m => m.classList.add("hidden"));
-    }
-  });
-
-
-  
-  
-
-// Function to add a comment to a post
-function addComment(postId) {
-  const input = document.getElementById(`commentInput-${postId}`);
-  const commentText = input.value.trim();
-  if (commentText === '') return;
-
-  const commentRef = push(ref(db, `posts/${postId}/comments`));
-  set(commentRef, {
-    text: commentText,
-    userId: currentUser.uid,
-    timestamp: Date.now()
-  }).then(() => {
-    input.value = '';
-  });
-}
-
-
-// Function to load and display comments for a post
-function loadComments(postId) {
-  const commentsContainer = document.getElementById(`comments-${postId}`);
-  const commentsRef = ref(db, `posts/${postId}/comments`);
-  onValue(commentsRef, snapshot => {
-    commentsContainer.innerHTML = '';
-    const comments = snapshot.val();
-    if (comments) {
-      Object.values(comments).forEach(comment => {
-        const commentDiv = document.createElement('div');
-        commentDiv.className = 'text-sm bg-gray-100 p-2 rounded mb-2';
-        commentDiv.textContent = comment.text;
-        commentsContainer.appendChild(commentDiv);
-      });
-    }
-  });
-}
-
-
-// Ensure the event listener is attached after DOM is loaded
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("closeModal").addEventListener("click", () => {
-      document.getElementById("profileModal").classList.add("hidden");
-    });
-
-    // Optional: Close modal when clicking outside the card
-    document.getElementById("profileModal").addEventListener("click", (e) => {
-      if (e.target.id === "profileModal") {
-        document.getElementById("profileModal").classList.add("hidden");
-      }
-    });
-  });
-  
-// Open Likes Modal
-function showLikesModal(postId) {
-  const postRef = ref(db, `posts/${postId}/likedBy`);
-  get(postRef).then(snapshot => {
-    const likedUserIds = snapshot.val() || [];
-    const likesList = document.getElementById('likesList');
-    likesList.innerHTML = '';
-
-    likedUserIds.forEach(uid => {
-      const userRef = ref(db, 'users/' + uid);
-      get(userRef).then(userSnap => {
-        if (userSnap.exists()) {
-          const user = userSnap.val();
-          const li = document.createElement('li');
-          li.className = "flex items-center space-x-3";
-          li.innerHTML = `
-            <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" class="w-10 h-10 rounded-full" />
-            <div>
-              <p class="font-semibold">${user.name || 'Unnamed User'}</p>
-              <p class="text-sm text-gray-500">${user.email || ''}</p>
+          commentEl.innerHTML = `
+            <img src="${cmt.avatar}" class="w-6 h-6 rounded-full mt-1"/>
+            <div class="bg-gray-100 px-3 py-2 rounded-xl w-full">
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-medium text-xs">${cmt.name}</span>
+                ${cmt.uid === currentUser.uid ? `<button class="delete-comment text-red-400 text-xs" data-id="${key}">Delete</button>` : ""}
+              </div>
+              <p class="text-xs">${cmt.text}</p>
+             <p class="text-[10px] text-gray-400 mt-1">${new Date(cmt.timestamp).toLocaleTimeString()}</p>
             </div>
           `;
-          likesList.appendChild(li);
-        }
+
+          container.appendChild(commentEl);
+
+          const delBtn = commentEl.querySelector(".delete-comment");
+          if (delBtn) {
+            delBtn.addEventListener("click", () => {
+              db.ref(`comments/${postId}/${key}`).remove();
+            });
+          }
+        });
       });
-    });
+    }
 
-    document.getElementById('likesModal').classList.remove('hidden');
+// Add repost button functionality
+document.querySelectorAll(".repost-btn").forEach(button => {
+  button.addEventListener("click", async () => {
+    const postId = button.getAttribute("data-id");
+    const postRef = db.ref("posts/" + postId);
+
+    try {
+      const snapshot = await postRef.get();
+      if (!snapshot.exists()) {
+        alert("Post not found.");
+        return;
+      }
+
+      const originalPost = snapshot.val();
+      const currentUser = auth.currentUser;
+
+      // Create new post with original content
+      const newPost = {
+        content: originalPost.content,
+        userId: currentUser.uid,
+        userName: currentUser.displayName || "Anonymous",
+        userAvatar: currentUser.photoURL || "",
+        originalPostId: postId,
+        repostedAt: Date.now(),
+        createdAt: Date.now()
+      };
+
+      await db.ref("posts").push(newPost);
+      alert("Reposted!");
+    } catch (err) {
+      console.error("Repost error:", err);
+    }
   });
-}
-
-// Close Modal
-document.getElementById('closeLikesModal').addEventListener('click', () => {
-  document.getElementById('likesModal').classList.add('hidden');
 });
 
 
 
-  document.addEventListener("click", function (e) {
-    if (e.target.classList.contains("like-btn")) {
-      const postId = e.target.getAttribute("data-id");
-      const postRef = ref(db, `posts/${postId}`);
-      get(postRef).then(snapshot => {
-        if (snapshot.exists()) {
-          const post = snapshot.val();
-          const userLiked = post.likedBy && post.likedBy.includes(currentUser.uid);
 
-          if (userLiked) {
-            // Unlike the post
-            const newLikes = (post.likes || 0) - 1;
-            const newLikedBy = post.likedBy.filter(uid => uid !== currentUser.uid);
-            update(postRef, { likes: newLikes, likedBy: newLikedBy });
-          } else {
-            // Like the post
-            const newLikes = (post.likes || 0) + 1;
-            const newLikedBy = [...(post.likedBy || []), currentUser.uid];
-            update(postRef, { likes: newLikes, likedBy: newLikedBy });
-          }
-        }
-      });
-    }
-  });
-</script>
 
+  </script>
 </body>
 </html>
