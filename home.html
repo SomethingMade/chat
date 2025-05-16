@@ -84,10 +84,41 @@
   <div class="max-w-md mx-auto p-4">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-       <img src="loopa.png" alt="Your Logo" class="h-12 w-12 rounded-full mr-3" />
+       <img src="path/to/your-logo.png" alt="Your Logo" class="h-12 w-12 rounded-full mr-3" />
       <h1 class="text-2xl font-extrabold text-black-600">Loopa</h1>
       <button onclick="firebase.auth().signOut()" class="text-sm text-red-500 hover:underline">Logout</button>
     </div>
+
+
+<!-- 🔵 Create Reel Button -->
+<div class="flex items-center justify-between mb-2 px-2">
+  <h2 class="text-lg font-semibold">Just Reels</h2>
+  <button id="createReelBtn" class="bg-black text-white text-sm px-4 py-1 rounded-full hover:bg-gray-800 transition">
+  + Create Reel
+</button>
+
+</div>
+
+<!-- 🟣 Text Reel Modal -->
+<div id="reelInputModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+  <div class="bg-white p-6 rounded-xl shadow-xl w-80">
+    <h3 class="text-lg font-semibold mb-2">Create a Reel</h3>
+    <textarea id="reelText" placeholder="What's on your mind?" maxlength="100"
+      class="w-full border p-2 rounded-md resize-none mb-4"></textarea>
+    <div class="flex justify-end space-x-2">
+      <button id="cancelReel" class="px-4 py-1 bg-black text-white rounded-full hover:bg-gray-800 transition">Cancel</button>
+<button id="postReel" class="px-4 py-1 bg-black text-white rounded-full hover:bg-gray-800 transition">Post</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- 🔴 Reels Container -->
+<div class="overflow-x-auto whitespace-nowrap px-4 reels-container flex space-x-4">
+  <!-- Reels will be loaded here by JavaScript -->
+</div>
+
+
 
     <!-- Post Form -->
     <div class="bg-white rounded-2xl shadow-md p-4 mb-6 border border-gray-100">
@@ -115,7 +146,7 @@
       Home
     </a>
 
-    <a href="profile.html">
+    <a href="#profile">
       <!-- Profile Icon -->
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
@@ -123,7 +154,7 @@
       Profile
     </a>
 
-    <a href="chat.html">
+    <a href="#chat">
       <!-- Chat Icon -->
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 4h16v12H5.17L4 17.17V4z"/>
@@ -131,7 +162,7 @@
       Chat
     </a>
 
-    <a href="requests.html">
+    <a href="#search">
       <!-- Search Icon -->
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
@@ -170,6 +201,80 @@
       currentUser = user;
       loadPosts();
     });
+
+  // Button Elements
+  const createReelBtn = document.getElementById('createReelBtn');
+  const reelModal = document.getElementById('reelInputModal');
+  const cancelReel = document.getElementById('cancelReel');
+  const postReel = document.getElementById('postReel');
+  const reelTextInput = document.getElementById('reelText');
+
+  // Modal Open/Close
+  createReelBtn.addEventListener('click', () => reelModal.classList.remove('hidden'));
+  cancelReel.addEventListener('click', () => {
+    reelModal.classList.add('hidden');
+    reelTextInput.value = '';
+  });
+
+  // Post Reel to Firebase
+  postReel.addEventListener('click', () => {
+    const text = reelTextInput.value.trim();
+    if (!text) return;
+
+    const user = firebase.auth().currentUser;
+    if (!user) return alert("Please log in to post a reel.");
+
+    const reelData = {
+      name: user.displayName || 'Anonymous',
+      uid: user.uid,
+      text: text,
+      timestamp: Date.now()
+    };
+
+    firebase.database().ref("reels").push(reelData).then(() => {
+      reelModal.classList.add('hidden');
+      reelTextInput.value = '';
+    });
+  });
+
+  // Load Reels from Firebase and remove those older than 24h
+  function loadReels() {
+    const reelsContainer = document.querySelector('.reels-container');
+    const now = Date.now();
+
+    firebase.database().ref("reels").on("value", snapshot => {
+      reelsContainer.innerHTML = '';
+      const reels = snapshot.val() || {};
+
+      Object.entries(reels).forEach(([id, reel]) => {
+        const age = now - reel.timestamp;
+
+        if (age > 86400000) { // 24 hours = 86400000 ms
+          // Delete expired reel
+          firebase.database().ref("reels/" + id).remove();
+        } else {
+          // Display reel
+          const reelEl = document.createElement('div');
+          reelEl.className = 'flex-shrink-0 text-center';
+          reelEl.innerHTML = `
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 flex items-center justify-center text-white text-xs text-center p-2 overflow-hidden">
+              ${reel.text.length > 30 ? reel.text.slice(0, 28) + "…" : reel.text}
+            </div>
+            <p class="text-xs mt-1 truncate w-16">${reel.name}</p>
+          `;
+          reelsContainer.appendChild(reelEl);
+        }
+      });
+    });
+  }
+
+  // Initialize on page load
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      loadReels();
+    }
+  });
+
 
     postBtn.addEventListener("click", () => {
       const content = postInput.value.trim();
@@ -432,3 +537,4 @@ document.querySelectorAll(".repost-btn").forEach(button => {
   </script>
 </body>
 </html>
+
