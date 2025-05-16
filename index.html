@@ -150,7 +150,7 @@
 
         const user = userCredential.user;
         await saveUserData(user);
-        window.location.href = "prof.html";
+        window.location.href = "profile.html";
       } catch (error) {
         errorMessage.textContent = error.message.replace("Firebase:", "").trim();
       } finally {
@@ -165,7 +165,7 @@
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         await saveUserData(user);
-        window.location.href = "proile.html";
+        window.location.href = "profile.html";
       } catch (error) {
         errorMessage.textContent = error.message.replace("Firebase:", "").trim();
       } finally {
