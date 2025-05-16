@@ -1,0 +1,87 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen">
+
+  <header class="bg-black text-white p-4 flex justify-between items-center">
+    <h1 class="text-xl font-semibold">AI Chat</h1>
+    <a href="home.html" class="text-gray-300 hover:text-white">Home</a>
+  </header>
+
+  <main class="flex-grow flex flex-col max-w-3xl mx-auto w-full p-4">
+    <div id="chatWindow" class="flex-grow overflow-y-auto bg-white rounded-lg p-4 shadow-md space-y-4">
+      <!-- Messages will appear here -->
+    </div>
+
+    <form id="chatForm" class="mt-4 flex space-x-2">
+      <input
+        id="userInput"
+        type="text"
+        placeholder="Type your message..."
+        class="flex-grow border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+        autocomplete="off"
+        required
+      />
+      <button type="submit" class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
+        Send
+      </button>
+    </form>
+  </main>
+
+  <script>
+    const chatWindow = document.getElementById('chatWindow');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+
+    function addMessage(text, sender = 'user') {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = sender === 'user'
+        ? 'text-right'
+        : 'text-left';
+
+      const bubble = document.createElement('div');
+      bubble.className = sender === 'user'
+        ? 'inline-block bg-black text-white px-4 py-2 rounded-lg max-w-xs'
+        : 'inline-block bg-gray-200 text-gray-900 px-4 py-2 rounded-lg max-w-xs';
+
+      bubble.textContent = text;
+      messageDiv.appendChild(bubble);
+      chatWindow.appendChild(messageDiv);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    async function getAIResponse(message) {
+      // This is a placeholder function.
+      // Replace this with your real AI backend API call.
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve("Sorry, I don't have a real AI backend connected yet!");
+        }, 1000);
+      });
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      userInput.value = '';
+
+      addMessage('...', 'ai'); // loading indicator
+
+      const aiResponse = await getAIResponse(message);
+
+      // Remove loading indicator
+      chatWindow.lastChild.remove();
+
+      addMessage(aiResponse, 'ai');
+    });
+  </script>
+</body>
+</html>
