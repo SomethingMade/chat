@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Loopa Feed</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -87,35 +88,23 @@
        <img src="loopa.png" alt="Your Logo" class="h-12 w-12 rounded-full mr-3" />
       <div class="flex justify-center gap-4 mt-4">
   <!-- Ride Sharing -->
-  <button class="flex flex-col items-center p-4 rounded-xl bg-blue-100 hover:bg-blue-200">
-    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"
-      viewBox="0 0 24 24">
-      <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-    <span class="text-sm mt-1">Ride Sharing</span>
+  <button class="flex flex-col items-center p-4 bg-blue-100 rounded-xl hover:bg-blue-200">
+    <div id="ride-icon" class="w-6 h-6 text-blue-600"></div>
+    <span class="text-sm mt-2 text-blue-700 font-medium">Ride Sharing</span>
   </button>
 
   <!-- Market -->
-  <button class="flex flex-col items-center p-4 rounded-xl bg-green-100 hover:bg-green-200">
-    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" stroke-width="2"
-      viewBox="0 0 24 24">
-      <path d="M3 3h18v6H3z" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M16 21H8a2 2 0 01-2-2V9h12v10a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-    <span class="text-sm mt-1">Market</span>
+  <button class="flex flex-col items-center p-4 bg-green-100 rounded-xl hover:bg-green-200">
+    <div id="market-icon" class="w-6 h-6 text-green-600"></div>
+    <span class="text-sm mt-2 text-green-700 font-medium">Market</span>
   </button>
 
   <!-- Events -->
-  <button class="flex flex-col items-center p-4 rounded-xl bg-purple-100 hover:bg-purple-200">
-    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" stroke-width="2"
-      viewBox="0 0 24 24">
-      <path d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-    <span class="text-sm mt-1">Events</span>
+  <button class="flex flex-col items-center p-4 bg-purple-100 rounded-xl hover:bg-purple-200">
+    <div id="event-icon" class="w-6 h-6 text-purple-600"></div>
+    <span class="text-sm mt-2 text-purple-700 font-medium">Events</span>
   </button>
 </div>
-
-      <button onclick="firebase.auth().signOut()" class="text-sm text-red-500 hover:underline">Logout</button>
     </div>
 
 
