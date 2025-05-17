@@ -562,7 +562,22 @@ document.querySelectorAll(".repost-btn").forEach(button => {
 });
 
 
+lucide.createIcons({
+    icons: {
+      rideIcon: lucide.Car,       // Ride sharing icon
+      marketIcon: lucide.ShoppingBag,  // Market icon
+      eventIcon: lucide.Calendar, // Events icon
+    },
+    attrs: {
+      'stroke-width': 2
+    }
+  });
 
+  lucide.replace({
+    'ride-icon': 'car',
+    'market-icon': 'shopping-bag',
+    'event-icon': 'calendar'
+  });
 
 
   </script>
