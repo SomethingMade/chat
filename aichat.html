@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -6,81 +6,108 @@
   <title>AI Chat</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex flex-col h-screen">
 
+<body class="bg-gray-100 flex flex-col h-screen">
+  <!-- ░░ Header ░░ -->
   <header class="bg-black text-white p-4 flex justify-between items-center">
     <h1 class="text-xl font-semibold">AI Chat</h1>
-    <a href="home.html" class="text-gray-300 hover:text-white">Home</a>
+    <a href="index.html" class="text-gray-300 hover:text-white">Home</a>
   </header>
 
+  <!-- ░░ Main ░░ -->
   <main class="flex-grow flex flex-col max-w-3xl mx-auto w-full p-4">
-    <div id="chatWindow" class="flex-grow overflow-y-auto bg-white rounded-lg p-4 shadow-md space-y-4">
-      <!-- Messages will appear here -->
+    <div id="chatWindow"
+         class="flex-grow overflow-y-auto bg-white rounded-lg p-4 shadow-md space-y-4">
+      <!-- messages -->
     </div>
 
     <form id="chatForm" class="mt-4 flex space-x-2">
-      <input
-        id="userInput"
-        type="text"
-        placeholder="Type your message..."
-        class="flex-grow border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-        autocomplete="off"
-        required
-      />
-      <button type="submit" class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
+      <input id="userInput" type="text" placeholder="Type your message..."
+             class="flex-grow border border-gray-300 rounded-lg px-4 py-2
+                    focus:outline-none focus:ring-2 focus:ring-black"
+             autocomplete="off" required />
+      <button type="submit"
+              class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
         Send
       </button>
     </form>
   </main>
 
-  <script>
-    const chatWindow = document.getElementById('chatWindow');
-    const chatForm = document.getElementById('chatForm');
-    const userInput = document.getElementById('userInput');
+  <!-- ░░ Scripts ░░ -->
+  <script type="module">
+    /* ── 1. Firebase SDKs ───────────────────────────────────────── */
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFunctions, httpsCallable }
+                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+    import { getAuth, onAuthStateChanged }
+                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    function addMessage(text, sender = 'user') {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = sender === 'user'
-        ? 'text-right'
-        : 'text-left';
+    /* ── 2. Firebase Config (YOUR PROJECT) ─────────────────────── */
+    const firebaseConfig = {
+      apiKey:            "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain:        "fire-b-a8878.firebaseapp.com",
+      databaseURL:       "https://fire-b-a8878.firebaseio.com",
+      projectId:         "fire-b-a8878",
+      storageBucket:     "fire-b-a8878.firebasestorage.app",
+      messagingSenderId: "658673187627",
+      appId:             "1:658673187627:web:6e4c29af661785f0afa36e"
+    };
 
-      const bubble = document.createElement('div');
-      bubble.className = sender === 'user'
-        ? 'inline-block bg-black text-white px-4 py-2 rounded-lg max-w-xs'
-        : 'inline-block bg-gray-200 text-gray-900 px-4 py-2 rounded-lg max-w-xs';
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const fn   = getFunctions(app);
+    const chatFn = httpsCallable(fn, "chat");   // <- Cloud Function name
 
+    /* ── 3. DOM helpers ────────────────────────────────────────── */
+    const chatWindow = document.getElementById("chatWindow");
+    const chatForm   = document.getElementById("chatForm");
+    const userInput  = document.getElementById("userInput");
+
+    function addMessage(text, sender = "user") {
+      const wrapper = document.createElement("div");
+      wrapper.className = sender === "user" ? "text-right" : "text-left";
+
+      const bubble = document.createElement("div");
+      bubble.className = sender === "user"
+        ? "inline-block bg-black text-white px-4 py-2 rounded-lg max-w-xs"
+        : "inline-block bg-gray-200 text-gray-900 px-4 py-2 rounded-lg max-w-xs";
       bubble.textContent = text;
-      messageDiv.appendChild(bubble);
-      chatWindow.appendChild(messageDiv);
+
+      wrapper.appendChild(bubble);
+      chatWindow.appendChild(wrapper);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    async function getAIResponse(message) {
-      // This is a placeholder function.
-      // Replace this with your real AI backend API call.
-      return new Promise(resolve => {
-        setTimeout(() => {
-          resolve("Sorry, I don't have a real AI backend connected yet!");
-        }, 1000);
-      });
+    /* ── 4. Call the backend ───────────────────────────────────── */
+    async function getAIResponse(prompt) {
+      const res = await chatFn({ message: prompt });
+      return res.data.reply;           // { reply: "..." } from the Function
     }
 
-    chatForm.addEventListener('submit', async (e) => {
+    /* ── 5. Form submit handler ────────────────────────────────── */
+    chatForm.addEventListener("submit", async e => {
       e.preventDefault();
-      const message = userInput.value.trim();
-      if (!message) return;
+      const text = userInput.value.trim();
+      if (!text) return;
 
-      addMessage(message, 'user');
-      userInput.value = '';
+      addMessage(text, "user");
+      userInput.value = "";
 
-      addMessage('...', 'ai'); // loading indicator
+      addMessage("...", "ai");              // loading
+      try {
+        const reply = await getAIResponse(text);
+        chatWindow.lastChild.remove();      // remove loading
+        addMessage(reply, "ai");
+      } catch (err) {
+        chatWindow.lastChild.remove();
+        addMessage("⚠️  Error contacting AI", "ai");
+        console.error(err);
+      }
+    });
 
-      const aiResponse = await getAIResponse(message);
-
-      // Remove loading indicator
-      chatWindow.lastChild.remove();
-
-      addMessage(aiResponse, 'ai');
+    /* ── 6. Optional: warn if user not signed-in ───────────────── */
+    onAuthStateChanged(auth, user => {
+      if (!user) addMessage("⚠️  You are not signed in; AI replies may fail.", "ai");
     });
   </script>
 </body>
