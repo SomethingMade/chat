@@ -237,13 +237,18 @@
   </div>
 
  <div class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
-    <a href="#home" class="active" aria-current="page">
-      <!-- Home Icon -->
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3h-4v-6H10v6H6a3 3 0 0 1-3-3v-9z"/>
-      </svg>
-      Home
-    </a>
+   <a href="#home" class="active relative" aria-current="page">
+  <!-- Home Icon -->
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3h-4v-6H10v6H6a3 3 0 0 1-3-3v-9z"/>
+  </svg>
+  Home
+  <!-- 🔴 badge -->
+  <span id="postCountBadge"
+        class="absolute -top-1 -right-3 hidden min-w-[20px] px-1.5 rounded-full
+               bg-red-600 text-white text-[10px] leading-4 text-center"></span>
+</a>
+
 
     <a href="profile.html">
       <!-- Profile Icon -->
@@ -651,7 +656,35 @@ drawer.querySelectorAll('.drawer-link').forEach(link => {
 });
 
 
+// 📊 Live post counter
+function bindPostCounter() {
+  const badge = document.getElementById('postCountBadge');
+
+  // Listen for any change in /posts
+  db.ref('posts').on('value', snap => {
+    const count = snap.numChildren();
+
+    if (count === 0) {
+      badge.classList.add('hidden');
+    } else {
+      badge.textContent = count > 99 ? '99+' : count; // cap at 99+
+      badge.classList.remove('hidden');
+    }
+  });
+}
+
+// Bind after user auth or right after Firebase init
+bindPostCounter();
+
+
+
+
+
+
+
   </script>
 </body>
 </html>
+
+
 
