@@ -515,6 +515,26 @@ const isOwnPost = post.uid === currentUser.uid;
 
           postsContainer.appendChild(postEl);
 
+// FOLLOW BUTTON LOGIC
+if (!isOwnPost) {
+  const followBtn = postEl.querySelector(".follow-btn");
+  const followRef = db.ref(`follows/${currentUser.uid}/${post.uid}`);
+
+  followRef.once("value", snap => {
+    if (!snap.exists()) {
+      followBtn.classList.remove("hidden");
+    }
+  });
+
+  followBtn?.addEventListener("click", () => {
+    db.ref(`follows/${currentUser.uid}/${post.uid}`).set(true);
+    followBtn.classList.add("hidden");
+    alert(`You followed ${post.name}`);
+  });
+}
+
+    
+
           db.ref(`likes/${postId}`).on("value", snap => {
             const likes = snap.val() || {};
             document.getElementById(`like-count-${postId}`).textContent = Object.keys(likes).length;
