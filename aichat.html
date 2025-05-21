@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Chat</title>
+  <title>AI Chat with Image Upload</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -21,11 +21,24 @@
       <!-- messages -->
     </div>
 
-    <form id="chatForm" class="mt-4 flex space-x-2">
+    <form id="chatForm" class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
       <input id="userInput" type="text" placeholder="Type your message..."
              class="flex-grow border border-gray-300 rounded-lg px-4 py-2
                     focus:outline-none focus:ring-2 focus:ring-black"
              autocomplete="off" required />
+
+      <label for="fileInput"
+       class="cursor-pointer px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center justify-center">
+  <svg xmlns="http://www.w3.org/2000/svg"
+       fill="none" viewBox="0 0 24 24"
+       stroke-width="1.5" stroke="currentColor"
+       class="w-5 h-5 text-gray-700">
+    <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 16.5V18a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 18v-1.5M16.5 12l-4.5 4.5m0 0L7.5 12m4.5 4.5V3" />
+  </svg>
+</label>
+<input type="file" id="fileInput" class="hidden" accept="image/*" />
+
       <button type="submit"
               class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
         Send
@@ -35,35 +48,31 @@
 
   <!-- ░░ Scripts ░░ -->
   <script type="module">
-    /* ── 1. Firebase SDKs ───────────────────────────────────────── */
-    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFunctions, httpsCallable }
-                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
-    import { getAuth, onAuthStateChanged }
-                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    /* ── 2. Firebase Config (YOUR PROJECT) ─────────────────────── */
     const firebaseConfig = {
-      apiKey:            "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
-      authDomain:        "fire-b-a8878.firebaseapp.com",
-      databaseURL:       "https://fire-b-a8878.firebaseio.com",
-      projectId:         "fire-b-a8878",
-      storageBucket:     "fire-b-a8878.firebasestorage.app",
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.firebasestorage.app",
       messagingSenderId: "658673187627",
-      appId:             "1:658673187627:web:6e4c29af661785f0afa36e"
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
     };
 
-    const app  = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const fn   = getFunctions(app);
-    const chatFn = httpsCallable(fn, "chat");   // <- Cloud Function name
+    const fn = getFunctions(app);
+    const chatFn = httpsCallable(fn, "chat");
 
-    /* ── 3. DOM helpers ────────────────────────────────────────── */
     const chatWindow = document.getElementById("chatWindow");
-    const chatForm   = document.getElementById("chatForm");
-    const userInput  = document.getElementById("userInput");
+    const chatForm = document.getElementById("chatForm");
+    const userInput = document.getElementById("userInput");
+    const fileInput = document.getElementById("fileInput");
 
-    function addMessage(text, sender = "user") {
+    function addMessage(text, sender = "user", isImage = false) {
       const wrapper = document.createElement("div");
       wrapper.className = sender === "user" ? "text-right" : "text-left";
 
@@ -71,44 +80,67 @@
       bubble.className = sender === "user"
         ? "inline-block bg-black text-white px-4 py-2 rounded-lg max-w-xs"
         : "inline-block bg-gray-200 text-gray-900 px-4 py-2 rounded-lg max-w-xs";
-      bubble.textContent = text;
+
+      if (isImage) {
+        const img = document.createElement("img");
+        img.src = text;
+        img.alt = "Uploaded Image";
+        img.className = "max-w-xs rounded-lg";
+        bubble.innerHTML = "";
+        bubble.appendChild(img);
+      } else {
+        bubble.textContent = text;
+      }
 
       wrapper.appendChild(bubble);
       chatWindow.appendChild(wrapper);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    /* ── 4. Call the backend ───────────────────────────────────── */
     async function getAIResponse(prompt) {
       const res = await chatFn({ message: prompt });
-      return res.data.reply;           // { reply: "..." } from the Function
+      return res.data.reply;
     }
 
-    /* ── 5. Form submit handler ────────────────────────────────── */
     chatForm.addEventListener("submit", async e => {
       e.preventDefault();
       const text = userInput.value.trim();
+      const file = fileInput.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const imageDataUrl = reader.result;
+          addMessage(imageDataUrl, "user", true);
+          addMessage("🧠 AI cannot process images yet in this demo.", "ai");
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = "";
+        userInput.value = "";
+        return;
+      }
+
       if (!text) return;
 
       addMessage(text, "user");
       userInput.value = "";
 
-      addMessage("...", "ai");              // loading
+      addMessage("...", "ai");
       try {
         const reply = await getAIResponse(text);
-        chatWindow.lastChild.remove();      // remove loading
+        chatWindow.lastChild.remove();
         addMessage(reply, "ai");
       } catch (err) {
         chatWindow.lastChild.remove();
-        addMessage("⚠️  Error contacting AI", "ai");
+        addMessage("⚠️ Error contacting AI", "ai");
         console.error(err);
       }
     });
 
-    /* ── 6. Optional: warn if user not signed-in ───────────────── */
     onAuthStateChanged(auth, user => {
-      if (!user) addMessage("⚠️  You are not signed in; AI replies may fail.", "ai");
+      if (!user) addMessage("⚠️ You are not signed in; AI replies may fail.", "ai");
     });
   </script>
 </body>
 </html>
+
