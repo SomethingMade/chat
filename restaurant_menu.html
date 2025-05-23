@@ -4,79 +4,68 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Restaurant Menu</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
-<body class="bg-gray-50 p-6">
-  <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-4" id="restaurant-title">Loading...</h1>
-    <p class="mb-6 text-gray-600" id="restaurant-description"></p>
-
-    <div id="menu-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+<body class="bg-gray-100">
+  <div class="max-w-4xl mx-auto p-4">
+    <div id="restaurantInfo" class="mb-6 text-center"></div>
+    <div id="menuList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
   </div>
 
-  <script>
-    // Firebase config
-    const firebaseConfig = {
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+ const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
       databaseURL: "https://fire-b-a8878.firebaseio.com",
       projectId: "fire-b-a8878",
       storageBucket: "fire-b-a8878.appspot.com",
       messagingSenderId: "658673187627",
-      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+      measurementId: "G-V4W97VMSKL"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    // Get restaurantId from query string
     const urlParams = new URLSearchParams(window.location.search);
     const restaurantId = urlParams.get("restaurantId");
 
-    const titleEl = document.getElementById("restaurant-title");
-    const descEl = document.getElementById("restaurant-description");
-    const menuContainer = document.getElementById("menu-container");
+    const restaurantInfo = document.getElementById("restaurantInfo");
+    const menuList = document.getElementById("menuList");
 
-    if (!restaurantId) {
-      titleEl.textContent = "Restaurant Not Found";
-      descEl.textContent = "Missing restaurantId in the URL.";
-    } else {
-      // Load restaurant info
-      db.ref("restaurants/" + restaurantId).once("value", snapshot => {
-        const data = snapshot.val();
-        if (data) {
-          titleEl.textContent = data.name || "Restaurant Menu";
-          descEl.textContent = data.description || "";
-        } else {
-          titleEl.textContent = "Restaurant Not Found";
-          descEl.textContent = "Invalid restaurantId.";
-        }
-      });
-
-      // Load menu items
-      db.ref("menu/" + restaurantId).on("value", snapshot => {
-        menuContainer.innerHTML = "";
-        if (!snapshot.exists()) {
-          menuContainer.innerHTML = "<p class='text-gray-500'>No menu items available.</p>";
-          return;
-        }
-
-        snapshot.forEach(child => {
-          const item = child.val();
-          const div = document.createElement("div");
-          div.className = "bg-white rounded shadow p-4";
-
-          div.innerHTML = `
-            <img src="${item.image}" alt="${item.name}" class="w-full h-40 object-cover rounded mb-2">
-            <h3 class="font-bold text-lg">${item.name}</h3>
-            <p class="text-green-700 font-semibold">R${item.price}</p>
-            <p class="text-sm text-gray-500">${item.availability}</p>
+    if (restaurantId) {
+      const restaurantRef = ref(db, 'restaurants/' + restaurantId);
+      get(restaurantRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const restaurant = snapshot.val();
+          restaurantInfo.innerHTML = `
+            <h1 class="text-2xl font-bold">${restaurant.name}</h1>
+            <p class="text-gray-600">${restaurant.category} • ${restaurant.description || ''}</p>
           `;
 
-          menuContainer.appendChild(div);
-        });
+          const menu = restaurant.menu || {};
+          for (const key in menu) {
+            const item = menu[key];
+            menuList.innerHTML += `
+              <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition">
+                <img src="${item.image || 'https://via.placeholder.com/150'}" alt="${item.name}" class="w-full h-32 object-cover rounded mb-2" />
+                <h3 class="text-lg font-semibold">${item.name}</h3>
+                <p class="text-sm text-gray-600">${item.description || ''}</p>
+                <p class="text-sm font-bold text-green-600 mt-2">$${item.price.toFixed(2)}</p>
+                ${item.available ? '' : '<p class="text-red-500 text-xs mt-1">Unavailable</p>'}
+              </div>
+            `;
+          }
+        } else {
+          restaurantInfo.innerHTML = '<p class="text-red-500">Restaurant not found.</p>';
+        }
       });
+    } else {
+      restaurantInfo.innerHTML = '<p class="text-red-500">No restaurant selected.</p>';
     }
   </script>
 </body>
