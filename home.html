@@ -9,9 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <!-- ADDED: Google AdSense Script -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1322747625222761"
-          crossorigin="anonymous"></script>
   <style>
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -53,7 +50,7 @@
       @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
     }
 
-    /* ADDED: Earnings Section */
+    /* Earnings Section */
     .earnings-section {
       padding: 16px;
       background: #f0f0f0;
@@ -264,7 +261,7 @@
       fill: #0095f6;
     }
 
-    /* ADDED: Ad Post */
+    /* User Ads */
     .ad-post {
       background: #fff;
       border: 1px solid #dbdbdb;
@@ -278,9 +275,20 @@
       color: #8e8e8e;
       margin-bottom: 8px;
     }
-    .ad-post ins {
-      display: block !important;
-      margin: 0 auto;
+    .ad-post a {
+      text-decoration: none;
+      color: inherit;
+    }
+    .ad-post img {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .ad-post p {
+      margin: 8px 0;
+      font-size: 14px;
     }
 
     /* Modals */
@@ -370,7 +378,6 @@
           <a href="profile.html" class="text-sm text-blue-500">View profile</a>
         </div>
       </div>
-      <!-- ADDED: Earnings Dashboard -->
       <div class="earnings-section">
         <p>Your Earnings: $<span id="user-earnings">0.00</span></p>
         <button id="payout-btn" disabled>Request Payout</button>
@@ -453,7 +460,8 @@
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create</h3>
       <button id="createPostOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg mb-2 hover:bg-gray-200 transition">Create Post</button>
-      <button id="createReelOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg hover:bg-gray-200 transition">Create Reel</button>
+      <button id="createReelOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg mb-2 hover:bg-gray-200 transition">Create Reel</button>
+      <button id="createAdOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg hover:bg-gray-200 transition">Create Ad</button>
     </div>
   </div>
 
@@ -479,6 +487,20 @@
       <div class="flex justify-end gap-2">
         <button id="cancelReel" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
         <button id="postReel" class="bg-blue-500 text-white rounded-full">Post</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ad Creation Modal -->
+  <div id="adInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
+    <div class="modal-content">
+      <h3 class="text-lg font-semibold mb-3">Create an Ad</h3>
+      <textarea id="adText" placeholder="Ad content (e.g., Promote your product!)" maxlength="200" class="mb-4"></textarea>
+      <input type="text" id="adImageUrl" placeholder="Image URL (optional)" class="mb-4"/>
+      <input type="text" id="adLink" placeholder="Link URL (e.g., https://yourwebsite.com)" class="mb-4"/>
+      <div class="flex justify-end gap-2">
+        <button id="cancelAd" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
+        <button id="submitAd" class="bg-blue-500 text-white rounded-full">Submit</button>
       </div>
     </div>
   </div>
@@ -553,7 +575,8 @@
       currentUser = user;
       loadPosts();
       loadReels();
-      loadUserEarnings(); // ADDED: Load earnings
+      loadUserEarnings();
+      trackAdEarnings();
     });
 
     // Drawer
@@ -575,7 +598,7 @@
       link.addEventListener('click', closeDrawer);
     });
 
-    // ADDED: Load User Earnings
+    // Load User Earnings
     function loadUserEarnings() {
       const earningsEl = document.getElementById('user-earnings');
       const payoutBtn = document.getElementById('payout-btn');
@@ -589,19 +612,23 @@
         if (earnings >= 10) {
           alert('Payout requested! Processing via Stripe...');
           // Placeholder for Stripe payout
-          /*
-          fetch('/api/payout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: currentUser.uid, amount: earnings })
-          }).then(response => {
-            if (response.ok) {
-              db.ref(`earnings/${currentUser.uid}/total`).set(0);
-              alert('Payout processed!');
-            }
-          });
-          */
         }
+      });
+    }
+
+    // Track Ad Earnings
+    function trackAdEarnings() {
+      db.ref('ads').orderByChild('status').equalTo('approved').on('value', snap => {
+        const ads = snap.val() || {};
+        Object.entries(ads).forEach(([adId, ad]) => {
+          db.ref(`ad_impressions/${adId}`).on('value', snap => {
+            const impressions = snap.val() || 0;
+            const earnings = (impressions * 0.01 * 0.6) / 1000; // $10 CPM, 60% creator share
+            db.ref(`earnings/${ad.uid}`).update({
+              total: firebase.database.ServerValue.increment(earnings)
+            });
+          });
+        });
       });
     }
 
@@ -609,6 +636,7 @@
     const createModal = document.getElementById('createModal');
     const createPostOption = document.getElementById('createPostOption');
     const createReelOption = document.getElementById('createReelOption');
+    const createAdOption = document.getElementById('createAdOption');
     document.querySelector('.bottom-nav .fab').addEventListener('click', () => {
       createModal.classList.remove('hidden');
     });
@@ -619,6 +647,16 @@
     createReelOption.addEventListener('click', () => {
       createModal.classList.add('hidden');
       document.getElementById('reelInputModal').classList.remove('hidden');
+    });
+    createAdOption.addEventListener('click', async () => {
+      createModal.classList.add('hidden');
+      const userSnap = await db.ref(`users/${currentUser.uid}`).once('value');
+      const userData = userSnap.val() || { followers: 0 };
+      if (userData.followers < 500) {
+        alert('You need at least 500 followers to create ads.');
+        return;
+      }
+      document.getElementById('adInputModal').classList.remove('hidden');
     });
 
     // Post Modal
@@ -640,11 +678,11 @@
       if (!content) return alert('Post content cannot be empty.');
 
       const postRef = db.ref('posts').push();
-      const postData = {
-        uid: currentUser.uid,
+      const content postData = {
+        uid: content currentUser.uid,
         name: currentUser.displayName || 'Anonymous',
         email: currentUser.email,
-        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        avatar: currentUser.photoURL || `https://i.pravatar.cc/150/?u=${currentUser.uid}`,
         content,
         timestamp: Date.now()
       };
@@ -690,6 +728,46 @@
         reelTextInput.value = '';
         reelImageUrl.value = '';
       });
+    });
+
+    // Ad Modal
+    const adInputModal = document.getElementById('adInputModal');
+    const adText = document.getElementById('adText');
+    const adImageUrl = document.getElementById('adImageUrl');
+    const adLink = document.getElementById('adLink');
+    const submitAd = document.getElementById('submitAd');
+    const cancelAd = document.getElementById('cancelAd');
+
+    cancelAd.addEventListener('click', () => {
+      adInputModal.classList.add('hidden');
+      adText.value = '';
+      adImageUrl.value = '';
+      adLink.value = '';
+    });
+
+    submitAd.addEventListener('click', () => {
+      const text = adText.value.trim();
+      const imageUrl = adImageUrl.value.trim();
+      const link = adLink.value.trim();
+      if (!text || !link) return alert('Ad content and link are required.');
+
+      const adData = {
+        uid: currentUser.uid,
+        name: currentUser.displayName || 'Anonymous',
+        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        text,
+        link,
+        status: 'pending',
+        timestamp: Date.now()
+      };
+      if (imageUrl) adData.imageUrl = imageUrl;
+
+      db.ref('ads').push(adData);
+      alert('Ad submitted for review!');
+      adInputModal.classList.add('hidden');
+      adText.value = '';
+      adImageUrl.value = '';
+      adLink.value = '';
     });
 
     // Reel Viewer Modal
@@ -765,21 +843,23 @@
       });
     }
 
-    // MODIFIED: loadPosts with Ad Integration
     async function loadPosts() {
       db.ref('posts').on('value', async snapshot => {
         const posts = snapshot.val() || {};
         const postsContainer = document.getElementById('posts');
         postsContainer.innerHTML = '';
-        let postIndex = 0; // ADDED: Track post index for ad placement
+        let postIndex = 0;
+
+        // Fetch approved ads
+        const adSnap = await db.ref('ads').orderByChild('status').equalTo('approved').once('value');
+        const ads = adSnap.val() || {};
+        const adArray = Object.entries(ads);
 
         for (const [postId, post] of Object.entries(posts).reverse()) {
-          // ADDED: Check eligibility for monetization
           const userRef = db.ref(`users/${post.uid}`);
           const userSnap = await userRef.once('value');
           const userData = userSnap.val() || { followers: 0 };
           const isEligible = userData.followers >= 500;
-
           let originalPost = {};
           if (post.originalPostId) {
             const originalSnapshot = await db.ref(`posts/${post.originalPostId}`).once('value');
@@ -848,35 +928,47 @@
 
           postsContainer.appendChild(postEl);
 
-          // ADDED: Track Ad Impressions for Eligible Users
+          // Track post impressions for eligible users
           if (isEligible && isOwnPost) {
             db.ref(`post_impressions/${postId}`).on('value', snap => {
               const impressions = snap.val() || 0;
-              const earnings = (impressions * 0.0085 * 0.55) / 1000; // 55% creator share, $8.50 CPM
+              const earnings = (impressions * 0.0085 * 0.55) / 1000; // $8.50 CPM, 55% share
               db.ref(`earnings/${post.uid}`).update({
                 total: firebase.database.ServerValue.increment(earnings)
               });
             });
           }
 
-          // ADDED: Insert Ad Post Every 3 Posts
+          // Insert user ad every 3 posts
           postIndex++;
-          if (postIndex % 3 === 0) {
+          if (postIndex % 3 === 0 && adArray.length > 0) {
+            const [adId, ad] = adArray[Math.floor(Math.random() * adArray.length)];
             const adEl = document.createElement('div');
             adEl.className = 'ad-post';
             adEl.innerHTML = `
-              <div class="ad-label">Sponsored</div>
-              <ins class="adsbygoogle"
-                   style="display:block"
-                   data-ad-client="ca-pub-1322747625222761"
-                   data-ad-slot="YOUR_AD_SLOT_ID"
-                   data-ad-format="auto"
-                   data-full-width-responsive="true"></ins>
+              <div class="ad-label">Sponsored by ${ad.name}</div>
+              <a href="${ad.link}" target="_blank" class="block">
+                ${ad.imageUrl ? `<img src="${ad.imageUrl}" class="w-full max-h-40 object-cover mb-2 rounded" alt="Ad image"/>` : ''}
+                <p class="text-sm">${ad.text}</p>
+              </a>
             `;
             postsContainer.appendChild(adEl);
-            (adsbygoogle = window.adsbygoogle || []).push({});
-            // Track impression for the preceding post
-            db.ref(`post_impressions/${postId}`).transaction(count => (count || 0) + 1);
+            db.ref(`ad_impressions/${adId}`).transaction(count => (count || 0) + 1);
+            // Optional AdSense fallback
+            /*
+            if (adArray.length === 0) {
+              adEl.innerHTML = `
+                <div class="ad-label">Sponsored</div>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-1322747625222761"
+                     data-ad-slot="YOUR_AD_SLOT_ID"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+              `;
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            }
+            */
           }
 
           if (!isOwnPost) {
@@ -941,7 +1033,7 @@
                 db.ref(`likes/${postId}`).remove();
                 db.ref(`comments/${postId}`).remove();
                 db.ref(`reposts/${postId}`).remove();
-                db.ref(`post_impressions/${postId}`).remove(); // ADDED: Clean up impressions
+                db.ref(`post_impressions/${postId}`).remove();
               }
             });
           }
