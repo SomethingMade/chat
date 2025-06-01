@@ -15,7 +15,7 @@
       background: #ECE5DD;
       color: #000;
       margin: 0;
-      padding-bottom: 80px; /* Space for floating input */
+      padding-bottom: 80px;
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -38,7 +38,7 @@
       z-index: 10;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    header .back-btn {
+    header .back-btn, header .menu-btn {
       width: 24px;
       height: 24px;
       margin-right: 12px;
@@ -58,10 +58,6 @@
     header .chat-info span {
       font-size: 17px;
       font-weight: 500;
-    }
-    header .menu-btn {
-      width: 24px;
-      height: 24px;
     }
 
     /* Drawer */
@@ -91,11 +87,53 @@
       height: 24px;
     }
 
+    /* Friend List */
+    #friendList {
+      background: #FFF;
+      min-height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+    .friend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #E0E0E0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .friend-item:hover {
+      background: #F0F0F0;
+    }
+    .friend-item img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .friend-item .name {
+      font-size: 16px;
+      font-weight: 500;
+      flex: 1;
+    }
+    .friend-item .badge {
+      background: #25D366;
+      color: #FFF;
+      font-size: 12px;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     /* Chat Area */
     #messages {
       padding: 12px;
       min-height: calc(100vh - 140px);
       overflow-y: auto;
+      display: none;
     }
     .message {
       max-width: 70%;
@@ -142,7 +180,7 @@
       background: #FFF;
       border-radius: 24px;
       padding: 8px 12px;
-      display: flex;
+      display: none;
       align-items: center;
       gap: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -189,7 +227,7 @@
     </button>
     <div class="chat-info">
       <img id="chatAvatar" src="https://i.pravatar.cc/40" alt="Chat avatar" />
-      <span id="chatTitle">Chats</span>
+      <span id="chatTitle">Loopa Chat</span>
     </div>
     <button class="menu-btn" id="burger">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -202,12 +240,6 @@
   <div id="overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
   <aside id="drawer" class="fixed inset-y-0 right-0 w-64 max-w-[80%] translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
     <div class="p-4 space-y-2">
-      <div class="drawer-item" onclick="openPublicChat()">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5m5-16a4 4 0 100 8 4 4 0 000-8z"/>
-        </svg>
-        Public Chat
-      </div>
       <div class="drawer-item" onclick="window.location.href='search.html'">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z"/>
@@ -221,11 +253,11 @@
         Profile
       </div>
     </div>
-    <div id="userList" class="p-4 space-y-2"></div>
   </aside>
 
-  <!-- Main Chat Area -->
+  <!-- Main Content -->
   <main class="p-0">
+    <div id="friendList"></div>
     <div id="messages" class="space-y-2"></div>
     <form id="messageForm">
       <button type="button" id="emojiButton" aria-label="Emoji picker">
@@ -267,7 +299,7 @@
     const db = firebase.database();
 
     let currentUser = null;
-    let currentChatRoom = "public";
+    let currentChatRoom = null;
     let currentChatUser = null;
     const unreadMap = {};
 
@@ -286,7 +318,7 @@
     }
     burger.addEventListener('click', openDrawer);
     overlay.addEventListener('click', closeDrawer);
-    backBtn.addEventListener('click', openPublicChat);
+    backBtn.addEventListener('click', showFriendList);
 
     // Unread Messages
     function bindUnreadListeners() {
@@ -301,31 +333,20 @@
             if (m.uid !== currentUser.uid && m.status !== 'seen') unseen++;
           });
           unreadMap[friendUid] = unseen;
-          renderUserList();
-          updateGlobalUnread();
+          renderFriendList();
         });
       });
     }
 
-    function updateGlobalUnread() {
-      const total = Object.values(unreadMap).reduce((a, b) => a + b, 0);
-      const badge = document.getElementById('chatTitle').nextElementSibling;
-      if (total > 0) {
-        badge.textContent = total > 99 ? '99+' : total;
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
-      }
-    }
-
     // Messages
     function listenForMessages() {
+      if (!currentChatRoom) return;
       const ref = db.ref(`chats/${currentChatRoom}`);
       ref.off();
       ref.on('child_added', s => {
         const msg = s.val();
         displayMessage(msg);
-        if (msg.uid !== currentUser.uid && currentChatRoom !== 'public') {
+        if (msg.uid !== currentUser.uid && currentChatRoom) {
           s.ref.update({ status: 'seen' });
         }
       });
@@ -351,63 +372,60 @@
       wrap.scrollTop = wrap.scrollHeight;
     }
 
-    function loadOnlineUsers() {
-      const userList = document.getElementById('userList');
+    function renderFriendList() {
+      const friendList = document.getElementById('friendList');
       db.ref('friends/' + currentUser.uid).once('value').then(snap => {
         const friendUIDs = Object.keys(snap.val() || {});
         Promise.all(friendUIDs.map(uid => db.ref('users/' + uid).once('value').then(u => ({ uid, user: u.val() })))).then(arr => {
-          userList.innerHTML = '';
+          friendList.innerHTML = '';
           arr.forEach(({ uid, user }) => {
             const unseen = unreadMap[uid] || 0;
-            const card = document.createElement('div');
-            card.className = 'flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer';
-            card.onclick = () => {
-              openChatWithUser(uid, user);
-              closeDrawer();
-            };
+            const item = document.createElement('div');
+            item.className = 'friend-item';
+            item.onclick = () => openChatWithUser(uid, user);
             const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
-            card.innerHTML = `
-              <img src="${avatarUrl}" class="w-10 h-10 rounded-full" />
-              <div class="flex-1">
-                <p class="font-semibold text-sm">${user.name}</p>
-              </div>
-              ${unseen > 0 ? `<span class="bg-green-500 text-white text-xs rounded-full px-2 py-1">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+            item.innerHTML = `
+              <img src="${avatarUrl}" alt="${user.name}" />
+              <div class="name">${user.name}</div>
+              ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
             `;
-            userList.appendChild(card);
+            friendList.appendChild(item);
           });
         });
       });
     }
 
+    function showFriendList() {
+      currentChatRoom = null;
+      currentChatUser = null;
+      const chatTitle = document.getElementById('chatTitle');
+      const chatAvatar = document.getElementById('chatAvatar');
+      chatTitle.textContent = 'Loopa Chat';
+      chatAvatar.src = 'https://i.pravatar.cc/40';
+      document.getElementById('friendList').style.display = 'block';
+      document.getElementById('messages').style.display = 'none';
+      document.getElementById('messageForm').style.display = 'none';
+      document.getElementById('backBtn').style.display = 'none';
+      renderFriendList();
+      closeDrawer();
+    }
+
     function openChatWithUser(uid, user) {
       unreadMap[uid] = 0;
-      renderUserList();
-      updateGlobalUnread();
+      renderFriendList();
       currentChatRoom = [currentUser.uid, uid].sort().join('_');
       currentChatUser = user;
       const chatTitle = document.getElementById('chatTitle');
       const chatAvatar = document.getElementById('chatAvatar');
       chatTitle.textContent = user.name;
       chatAvatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+      document.getElementById('friendList').style.display = 'none';
+      document.getElementById('messages').style.display = 'block';
       document.getElementById('messages').innerHTML = '';
+      document.getElementById('messageForm').style.display = 'flex';
+      document.getElementById('backBtn').style.display = 'block';
       listenForMessages();
       closeDrawer();
-    }
-
-    function openPublicChat() {
-      currentChatRoom = 'public';
-      currentChatUser = null;
-      const chatTitle = document.getElementById('chatTitle');
-      const chatAvatar = document.getElementById('chatAvatar');
-      chatTitle.textContent = 'Public Chat';
-      chatAvatar.src = 'https://i.pravatar.cc/40';
-      document.getElementById('messages').innerHTML = '';
-      listenForMessages();
-      closeDrawer();
-    }
-
-    function renderUserList() {
-      loadOnlineUsers();
     }
 
     // Emoji Picker
@@ -449,8 +467,7 @@
         avatar: user.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`
       });
       bindUnreadListeners();
-      listenForMessages();
-      loadOnlineUsers();
+      showFriendList();
     });
   </script>
 </body>
