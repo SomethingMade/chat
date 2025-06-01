@@ -9,6 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <!-- Google AdSense Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456"
+          crossorigin="anonymous"></script>
   <style>
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -17,9 +20,7 @@
       margin: 0;
       padding-bottom: 70px;
     }
-    ::-webkit-scrollbar {
-      display: none;
-    }
+    ::-webkit-scrollbar { display: none; }
 
     /* Header */
     header {
@@ -50,6 +51,26 @@
     }
     .drawer-link {
       @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
+    }
+
+    /* Earnings Section */
+    .earnings-section {
+      padding: 16px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    .earnings-section p {
+      font-size: 14px;
+      color: #262626;
+    }
+    .earnings-section button {
+      background: #0095f6;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 8px;
     }
 
     /* Bottom Navigation */
@@ -243,6 +264,25 @@
       fill: #0095f6;
     }
 
+    /* Ad Post */
+    .ad-post {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      padding: 12px;
+      text-align: center;
+    }
+    .ad-post .ad-label {
+      font-size: 12px;
+      color: #8e8e8e;
+      margin-bottom: 8px;
+    }
+    .ad-post ins {
+      display: block !important;
+      margin: 0 auto;
+    }
+
     /* Modals */
     .modal {
       background: rgba(0, 0, 0, 0.6);
@@ -329,6 +369,11 @@
           <p class="font-medium">Hi, There!</p>
           <a href="profile.html" class="text-sm text-blue-500">View profile</a>
         </div>
+      </div>
+      <!-- Earnings Dashboard -->
+      <div class="earnings-section">
+        <p>Your Earnings: $<span id="user-earnings">0.00</span></p>
+        <button id="payout-btn" disabled>Request Payout</button>
       </div>
       <nav class="flex flex-col space-y-2">
         <a href="home.html" class="drawer-link">
@@ -455,14 +500,14 @@
   <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
     <a href="#home" class="active" aria-current="page">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-6v-6H6v6H6a3 3 0 01-3-3v-9z"/>
       </svg>
       Home
       <span id="postCountBadge" class="badge hidden"></span>
     </a>
     <a href="chat.html">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.707M12 10h.01M16 10h.707M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
       </svg>
       Chat
     </a>
@@ -473,13 +518,13 @@
     </a>
     <a href="requests.html">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8z-indexM16"/>
       </svg>
       Requests
     </a>
     <a href="profile.html">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a5 5 0 110-10 5 5 00-10 0zm0 0c0 2-3 4-7 4s-7-2-7-4v2h14v-2h-4v2"/>
       </svg>
       Profile
     </a>
@@ -490,7 +535,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
-      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com/",
       projectId: "fire-b-a8878",
       storageBucket: "fire-b-a8878.appspot.com",
       messagingSenderId: "658673187627",
@@ -508,26 +553,59 @@
       currentUser = user;
       loadPosts();
       loadReels();
+      loadUserEarnings();
     });
 
     // Drawer
     const burger = document.getElementById('burger');
-    const overlay = document.getElementById('overlay');
+    const overlay = document.getElemententing #16px;
     const drawer = document.getElementById('drawer');
 
     function openDrawer() {
       drawer.classList.remove('-translate-x-full');
       overlay.classList.remove('opacity-0', 'pointer-events-none');
     }
+
     function closeDrawer() {
       drawer.classList.add('-translate-x-full');
       overlay.classList.add('opacity-0', 'pointer-events-none');
     }
+
     burger.addEventListener('click', openDrawer);
     overlay.addEventListener('click', closeDrawer);
     drawer.querySelectorAll('.drawer-link').forEach(link => {
       link.addEventListener('click', closeDrawer);
     });
+
+    // Load User Earnings
+    function loadUserEarnings() {
+      const earningsEl = document.getElementById('user-earnings');
+      const payoutBtn = document.getElementById('payout-btn');
+      db.ref(`earnings/${currentUser.uid}`).on('value', snap => {
+        const earnings = snap.val() || { total: 0 };
+        earningsEl.textContent = earnings.total.toFixed(2);
+        payoutBtn.disabled = earnings.total < 10; // Minimum $10 for payout
+      });
+      payoutBtn.addEventListener('click', async () => {
+        const earnings = await db.ref(`earnings/${currentUser.uid}/total`).once('value').val();
+        if (earnings >= 10) {
+          alert('Payout requested! Processing via Stripe...');
+          // Example Stripe payout call
+          /*
+          fetch('/api/payout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: currentUser.uid, amount: earnings })
+          }).then(response => {
+            if (response.ok) {
+              db.ref(`earnings/${currentUser.uid}/total`).set(0);
+              alert('Payout processed!');
+            }
+          });
+          */
+        }
+      });
+    }
 
     // Create Modal
     const createModal = document.getElementById('createModal');
@@ -546,14 +624,14 @@
     });
 
     // Post Modal
-    const postInputModal = document.getElementById('postInputModal');
+    const postModal = document.getElementById('postInputModal');
     const postInput = document.getElementById('postInput');
     const postImageUrl = document.getElementById('postImageUrl');
     const postBtn = document.getElementById('postBtn');
     const cancelPost = document.getElementById('cancelPost');
 
     cancelPost.addEventListener('click', () => {
-      postInputModal.classList.add('hidden');
+      postModal.classList.add('hidden');
       postInput.value = '';
       postImageUrl.value = '';
     });
@@ -575,7 +653,7 @@
       if (imageUrl) postData.imageUrl = imageUrl;
 
       postRef.set(postData);
-      postInputModal.classList.add('hidden');
+      postModal.classList.add('hidden');
       postInput.value = '';
       postImageUrl.value = '';
     });
@@ -694,8 +772,15 @@
         const posts = snapshot.val() || {};
         const postsContainer = document.getElementById('posts');
         postsContainer.innerHTML = '';
+        let postIndex = 0;
 
         for (const [postId, post] of Object.entries(posts).reverse()) {
+          // Check eligibility for monetization
+          const userRef = db.ref(`users/${post.uid}`);
+          const userSnap = await userRef.once('value');
+          const userData = userSnap.val() || { followers: 0 };
+          const isEligible = userData.followers >= 500;
+
           let originalPost = {};
           if (post.originalPostId) {
             const originalSnapshot = await db.ref(`posts/${post.originalPostId}`).once('value');
@@ -764,6 +849,37 @@
 
           postsContainer.appendChild(postEl);
 
+          // Track Ad Impressions for Eligible Users
+          if (isEligible && isOwnPost) {
+            db.ref(`post_impressions/${postId}`).on('value', snap => {
+              const impressions = snap.val() || 0;
+              const earnings = (impressions * 0.0085 * 0.55) / 1000; // 55% creator share
+              db.ref(`earnings/${post.uid}`).update({
+                total: firebase.database.ServerValue.increment(earnings)
+              });
+            });
+          }
+
+          // Insert Ad Post Every 3 Posts
+          postIndex++;
+          if (postIndex % 3 === 0) {
+            const adEl = document.createElement('div');
+            adEl.className = 'ad-post';
+            adEl.innerHTML = `
+              <div class="ad-label">Sponsored</div>
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-1234567890123456"
+                   data-ad-slot="1234567890"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+            `;
+            postsContainer.appendChild(adEl);
+            (adsbygoogle = window.adsbygoogle || []).push({});
+            // Track impression for the preceding post
+            db.ref(`post_impressions/${postId}`).transaction(count => (count || 0) + 1);
+          }
+
           if (!isOwnPost) {
             const followBtn = postEl.querySelector('.follow-btn');
             const followRef = db.ref(`follows/${currentUser.uid}/${post.uid}`);
@@ -826,6 +942,7 @@
                 db.ref(`likes/${postId}`).remove();
                 db.ref(`comments/${postId}`).remove();
                 db.ref(`reposts/${postId}`).remove();
+                db.ref(`post_impressions/${postId}`).remove();
               }
             });
           }
@@ -835,10 +952,10 @@
             editBtn.addEventListener('click', () => {
               const newContent = prompt('Edit your post:', post.content);
               const newImageUrl = prompt('Edit image URL (optional, leave blank to remove):', post.imageUrl || '');
-              if (newContent && newContent !== post.content) {
-                const updates = { content: newContent };
+              if (newContent && newContent.trim() !== post.content) {
+                const updates = { content: newContent.trim() };
                 if (newImageUrl) updates.imageUrl = newImageUrl;
-                else if (post.imageUrl) updates.imageUrl = null;
+                else if (post.imageUrl && !newImageUrl) updates.imageUrl = null;
                 db.ref(`posts/${postId}`).update(updates);
               }
             });
@@ -881,7 +998,7 @@
       });
     }
 
-    // Repost Event Listener (using event delegation)
+    // Repost Event Listener
     document.getElementById('posts').addEventListener('click', async (event) => {
       if (event.target.closest('.repost-btn')) {
         const button = event.target.closest('.repost-btn');
@@ -890,7 +1007,6 @@
         const repostRef = db.ref(`reposts/${postId}/${auth.currentUser?.uid}`);
 
         try {
-          // Check if user has already reposted
           const repostSnapshot = await repostRef.once('value');
           if (repostSnapshot.exists()) {
             alert('You have already reposted this post.');
@@ -922,7 +1038,7 @@
           if (originalPost.imageUrl) newPost.imageUrl = originalPost.imageUrl;
 
           await db.ref('posts').push(newPost);
-          await repostRef.set(true); // Track the repost
+          await repostRef.set(true);
           button.classList.add('reposted');
           alert('Reposted!');
         } catch (err) {
