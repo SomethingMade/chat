@@ -103,7 +103,7 @@
     }
     .bottom-nav .fab {
       background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
-      border-radius: 50%;
+      border-radius: 12px; /* Rounded corners for pill shape */
       width: 50px;
       height: 50px;
       display: flex;
@@ -111,13 +111,19 @@
       justify-content: center;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       transform: translateY(-10px);
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden; /* Prevents content from spilling out */
+      padding: 0; /* Remove padding to maintain shape */
     }
     .bottom-nav .fab:hover {
       transform: translateY(-12px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
     .bottom-nav .fab svg {
       stroke: #fff;
+      width: 24px;
+      height: 24px;
+      margin: 0; /* Ensure icon is centered */
     }
     .badge {
       position: absolute;
@@ -211,6 +217,11 @@
       font-size: 14px;
       line-height: 1.5;
     }
+    .post-image {
+      width: 100%;
+      max-height: 500px;
+      object-fit: cover;
+    }
     .post-actions {
       display: flex;
       gap: 16px;
@@ -239,18 +250,55 @@
       width: 90%;
       max-width: 400px;
     }
-    .modal textarea {
+    .modal textarea,
+    .modal input[type="text"] {
       border: 1px solid #dbdbdb;
       border-radius: 8px;
       padding: 12px;
       font-size: 14px;
       width: 100%;
       box-sizing: border-box;
+      margin-bottom: 12px;
     }
     .modal button {
       padding: 8px 16px;
       border-radius: 8px;
       font-size: 14px;
+    }
+
+    /* Reel Viewer Modal */
+    .reel-viewer-modal {
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reel-viewer-content {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      padding: 16px;
+      text-align: center;
+    }
+    .reel-viewer-text {
+      color: #fff;
+      font-size: 18px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      padding: 20px;
+    }
+    .reel-viewer-image {
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      margin-bottom: 20px;
+    }
+    .reel-viewer-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      color: #fff;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -365,6 +413,7 @@
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create a Post</h3>
       <textarea id="postInput" placeholder="What's on your mind?" class="mb-4"></textarea>
+      <input type="text" id="postImageUrl" placeholder="Image URL (optional)" class="mb-4"/>
       <div class="flex justify-end gap-2">
         <button id="cancelPost" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
         <button id="postBtn" class="bg-blue-500 text-white rounded-full">Post</button>
@@ -377,6 +426,7 @@
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create a Reel</h3>
       <textarea id="reelText" placeholder="What's on your mind?" maxlength="100" class="mb-4"></textarea>
+      <input type="text" id="reelImageUrl" placeholder="Image URL (optional)" class="mb-4"/>
       <div class="flex justify-end gap-2">
         <button id="cancelReel" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
         <button id="postReel" class="bg-blue-500 text-white rounded-full">Post</button>
@@ -384,34 +434,47 @@
     </div>
   </div>
 
+  <!-- Reel Viewer Modal -->
+  <div id="reelViewerModal" class="reel-viewer-modal fixed inset-0 z-50 hidden">
+    <div class="reel-viewer-content">
+      <div id="reelViewerImage" class="reel-viewer-image"></div>
+      <div id="reelViewerText" class="reel-viewer-text"></div>
+      <button id="closeReelViewer" class="reel-viewer-close" aria-label="Close reel viewer">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <!-- Bottom Navigation -->
   <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
     <a href="#home" class="active" aria-current="page">
-      <svg viewBox="0 0 24 24">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
       </svg>
       Home
       <span id="postCountBadge" class="badge hidden"></span>
     </a>
     <a href="chat.html">
-      <svg viewBox="0 0 24 24">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
       </svg>
       Chat
     </a>
-     <a href="#create" class="fab">
+    <a href="#create" class="fab">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
       </svg>
     </a>
     <a href="requests.html">
-      <svg viewBox="0 0 24 24">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
       </svg>
       Requests
     </a>
     <a href="profile.html">
-      <svg viewBox="0 0 24 24">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
       </svg>
       Profile
@@ -481,28 +544,36 @@
     // Post Modal
     const postInputModal = document.getElementById('postInputModal');
     const postInput = document.getElementById('postInput');
+    const postImageUrl = document.getElementById('postImageUrl');
     const postBtn = document.getElementById('postBtn');
     const cancelPost = document.getElementById('cancelPost');
 
     cancelPost.addEventListener('click', () => {
       postInputModal.classList.add('hidden');
       postInput.value = '';
+      postImageUrl.value = '';
     });
 
     postBtn.addEventListener('click', () => {
       const content = postInput.value.trim();
-      if (!content) return;
+      const imageUrl = postImageUrl.value.trim();
+      if (!content) return alert('Post content cannot be empty.');
+
       const postRef = db.ref('posts').push();
-      postRef.set({
+      const postData = {
         uid: currentUser.uid,
         name: currentUser.displayName || 'Anonymous',
         email: currentUser.email,
         avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
         content,
         timestamp: Date.now()
-      });
+      };
+      if (imageUrl) postData.imageUrl = imageUrl;
+
+      postRef.set(postData);
       postInputModal.classList.add('hidden');
       postInput.value = '';
+      postImageUrl.value = '';
     });
 
     // Reel Modal
@@ -510,15 +581,18 @@
     const cancelReel = document.getElementById('cancelReel');
     const postReel = document.getElementById('postReel');
     const reelTextInput = document.getElementById('reelText');
+    const reelImageUrl = document.getElementById('reelImageUrl');
 
     cancelReel.addEventListener('click', () => {
       reelModal.classList.add('hidden');
       reelTextInput.value = '';
+      reelImageUrl.value = '';
     });
 
     postReel.addEventListener('click', () => {
       const text = reelTextInput.value.trim();
-      if (!text) return;
+      const imageUrl = reelImageUrl.value.trim();
+      if (!text) return alert('Reel content cannot be empty.');
 
       const user = firebase.auth().currentUser;
       if (!user) return alert('Please log in to post a reel.');
@@ -526,14 +600,28 @@
       const reelData = {
         name: user.displayName || 'Anonymous',
         uid: user.uid,
-        text: text,
+        text,
         timestamp: Date.now()
       };
+      if (imageUrl) reelData.imageUrl = imageUrl;
 
       firebase.database().ref('reels').push(reelData).then(() => {
         reelModal.classList.add('hidden');
         reelTextInput.value = '';
+        reelImageUrl.value = '';
       });
+    });
+
+    // Reel Viewer Modal
+    const reelViewerModal = document.getElementById('reelViewerModal');
+    const reelViewerText = document.getElementById('reelViewerText');
+    const reelViewerImage = document.getElementById('reelViewerImage');
+    const closeReelViewer = document.getElementById('closeReelViewer');
+
+    closeReelViewer.addEventListener('click', () => {
+      reelViewerModal.classList.add('hidden');
+      reelViewerImage.style.display = 'none';
+      reelViewerImage.src = '';
     });
 
     function loadReels() {
@@ -557,6 +645,17 @@
               </div>
               <p>${reel.name}</p>
             `;
+            reelEl.addEventListener('click', () => {
+              reelViewerText.textContent = reel.text;
+              if (reel.imageUrl) {
+                reelViewerImage.src = reel.imageUrl;
+                reelViewerImage.style.display = 'block';
+              } else {
+                reelViewerImage.style.display = 'none';
+                reelViewerImage.src = '';
+              }
+              reelViewerModal.classList.remove('hidden');
+            });
             reelsContainer.appendChild(reelEl);
           }
         });
@@ -618,6 +717,7 @@
                 </div>` : `
                 <button class="follow-btn bg-blue-500 text-white text-xs px-3 py-1 rounded-full hidden" data-user="${post.uid}">Follow</button>`}
             </div>
+            ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="Post image"/>` : ''}
             <div class="post-content" id="content-${postId}">${post.content}</div>
             <div class="post-actions">
               <button class="like-btn" data-id="${postId}">
@@ -710,8 +810,12 @@
           if (editBtn) {
             editBtn.addEventListener('click', () => {
               const newContent = prompt('Edit your post:', post.content);
+              const newImageUrl = prompt('Edit image URL (optional, leave blank to remove):', post.imageUrl || '');
               if (newContent && newContent !== post.content) {
-                db.ref(`posts/${postId}/content`).set(newContent);
+                const updates = { content: newContent };
+                if (newImageUrl) updates.imageUrl = newImageUrl;
+                else if (post.imageUrl) updates.imageUrl = null;
+                db.ref(`posts/${postId}`).update(updates);
               }
             });
           }
@@ -777,6 +881,7 @@
             originalPostId: postId,
             timestamp: Date.now()
           };
+          if (originalPost.imageUrl) newPost.imageUrl = originalPost.imageUrl;
 
           await db.ref('posts').push(newPost);
           alert('Reposted!');
