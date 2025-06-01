@@ -17,7 +17,7 @@
       color: #000;
       margin: 0;
       padding-bottom: 80px;
-      padding-top: 80px; /* Space for floating header */
+      padding-top: 80px;
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -40,7 +40,6 @@
       width: 100%;
       z-index: 1000;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      border-bottom: none;
     }
     header .action-btn {
       display: flex;
@@ -49,21 +48,17 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      transition: background-color 0.2s ease-in-out;
       cursor: pointer;
-      margin-left: auto;
       margin-right: 5px;
     }
     header .action-btn svg {
-      background-color: #ffffff;
-      color: #000000;
       width: 20px;
       height: 20px;
       stroke-width: 2;
-      stroke: currentColor;
+      stroke: #000000;
     }
     header .action-btn:hover {
-      background-color: #F0F0F0;
+      background: #F0F0F0;
     }
     header .back-btn, header .menu-btn {
       width: 24px;
@@ -110,7 +105,6 @@
       padding: 12px 16px;
       font-size: 16px;
       color: #333;
-      transition: background 0.2s;
     }
     .drawer-item:hover {
       background: #F0F0F0;
@@ -133,7 +127,6 @@
       padding: 12px 16px;
       border-bottom: 1px solid #E0E0E0;
       cursor: pointer;
-      transition: background 0.2s;
     }
     .friend-item:hover {
       background: #F0F0F0;
@@ -144,10 +137,26 @@
       border-radius: 50%;
       object-fit: cover;
     }
+    .friend-item .info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
     .friend-item .name {
       font-size: 16px;
       font-weight: 500;
-      flex: 1;
+    }
+    .friend-item .last-message {
+      font-size: 14px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .friend-item .last-seen {
+      font-size: 12px;
+      color: #25D366;
     }
     .friend-item .badge {
       background: #25D366;
@@ -174,7 +183,6 @@
       margin-bottom: 12px;
       font-size: 14px;
       line-height: 1.4;
-      position: relative;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
     .message.sent {
@@ -245,7 +253,6 @@
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      transition: background 0.2s;
     }
     #emojiButton:hover, #micButton:hover, #imageUploadBtn:hover {
       background: #F0F0F0;
@@ -416,7 +423,6 @@
           mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
           mediaRecorder.onstop = async () => {
             const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            const audioUrl = URL.createObjectURL(audioBlob);
             const storageRef = storage.ref(`voice_notes/${currentChatRoom}/${Date.now()}.wav`);
             await storageRef.put(audioBlob);
             const downloadUrl = await storageRef.getDownloadURL();
@@ -435,10 +441,44 @@
           micButton.classList.add('recording');
         } catch (err) {
           console.error('Microphone access error:', err);
-          alert('Failed to access microphone. Please check permissions.');
+          alert('Failed to access microphone');
         }
       }
     });
+
+    // Manage User Presence
+    function setupPresence(user) {
+      const presenceRef = db.ref(`presence/${user.uid}`);
+      const connectedRef = db.ref('.info/connected');
+      connectedRef.on('value', snap => {
+        if (snap.val() === true) {
+          presenceRef.set({ isOnline: true, lastOnline: firebase.database.ServerValue.TIMESTAMP });
+          presenceRef.onDisconnect().set({ isOnline: false, lastOnline: firebase.database.ServerValue.TIMESTAMP });
+        }
+      });
+    }
+
+    // Format Last Seen
+    function formatLastSeen(isOnline, lastOnline) {
+      if (isOnline) return 'Online';
+      if (!lastOnline) return '';
+      const date = new Date(lastOnline);
+      const now = new Date();
+      const diffMinutes = Math.floor((now - date) / (1000 * 60));
+      if (diffMinutes < 1) return 'Online';
+      return `Last seen at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // Get Last Message
+    async function getLastMessage(chatRoomId) {
+      const snap = await db.ref(`chats/${chatRoomId}`).orderByChild('timestamp').limitToLast(1).once('value');
+      let lastMessage = '';
+      snap.forEach(child => {
+        const msg = child.val();
+        lastMessage = msg.audioUrl ? 'Voice note' : (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
+      });
+      return lastMessage;
+    }
 
     // Unread Messages
     function bindUnreadListeners() {
@@ -495,40 +535,52 @@
       wrap.scrollTop = wrap.scrollHeight;
     }
 
-    function renderFriendList() {
+    async function renderFriendList() {
       const friendList = document.getElementById('friendList');
-      db.ref('friends/' + currentUser.uid).once('value').then(snap => {
-        const friendUIDs = Object.keys(snap.val() || {});
-        Promise.all(friendUIDs.map(uid => db.ref('users/' + uid).once('value').then(u => ({ uid, user: u.val() })))).then(arr => {
-          friendList.innerHTML = '';
-          if (arr.length === 0) {
-            friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
-            return;
-          }
-          arr.forEach(({ uid, user }) => {
-            const unseen = unreadMap[uid] || 0;
-            const item = document.createElement('div');
-            item.className = 'friend-item';
-            item.onclick = () => openChatWithUser(uid, user);
-            const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
-            item.innerHTML = `
-              <img src="${avatarUrl}" alt="${user.name}" />
-              <div class="name">${user.name}</div>
-              ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
-            `;
-            friendList.appendChild(item);
-          });
-        });
+      const snap = await db.ref('friends/' + currentUser.uid).once('value');
+      const friendUIDs = Object.keys(snap.val() || {});
+      if (friendUIDs.length === 0) {
+        friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
+        return;
+      }
+      const friends = await Promise.all(friendUIDs.map(async uid => {
+        const userSnap = await db.ref('users/' + uid).once('value');
+        const presenceSnap = await db.ref('presence/' + uid).once('value');
+        const chatRoomId = [currentUser.uid, uid].sort().join('_');
+        const lastMessage = await getLastMessage(chatRoomId);
+        return {
+          uid,
+          user: userSnap.val(),
+          presence: presenceSnap.val() || { isOnline: false, lastOnline: null },
+          lastMessage
+        };
+      }));
+      friendList.innerHTML = '';
+      friends.forEach(f => {
+        const { uid, user, presence, lastMessage } = f;
+        const unseen = unreadMap[uid] || 0;
+        const item = document.createElement('div');
+        item.className = 'friend-item';
+        item.onclick = () => openChatWithUser(uid, user);
+        const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+        item.innerHTML = `
+          <img src="${avatarUrl}" alt="${user.name}" />
+          <div class="info">
+            <div class="name">${user.name}</div>
+            <div class="last-message">${lastMessage || 'No messages yet'}</div>
+            <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
+          </div>
+          ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+        `;
+        friendList.appendChild(item);
       });
     }
 
     function showFriendList() {
       currentChatRoom = null;
       currentChatUser = null;
-      const chatTitle = document.getElementById('chatTitle');
-      const chatAvatar = document.getElementById('chatAvatar');
-      chatTitle.textContent = 'Looper Chat';
-      chatAvatar.src = 'https://i.pravatar.cc/40';
+      document.getElementById('chatTitle').textContent = 'Looper Chat';
+      document.getElementById('chatAvatar').src = 'https://i.pravatar.cc/40';
       document.getElementById('friendList').style.display = 'block';
       document.getElementById('messages').style.display = 'none';
       document.getElementById('messageForm').style.display = 'none';
@@ -543,14 +595,12 @@
       renderFriendList();
       currentChatRoom = [currentUser.uid, uid].sort().join('_');
       currentChatUser = user;
-      const chatTitle = document.getElementById('chatTitle');
-      const chatAvatar = document.getElementById('chatAvatar');
-      chatTitle.textContent = user.name;
-      chatAvatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+      document.getElementById('chatTitle').textContent = user.name;
+      document.getElementById('chatAvatar').src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
       document.getElementById('friendList').style.display = 'none';
       document.getElementById('messages').style.display = 'block';
       document.getElementById('messageForm').style.display = 'flex';
-      document.getElementById('backBtn').style.display = 'block';
+      document.getElementById('backBtn').style.display = 'inline-block';
       document.getElementById('actionButtons').style.display = 'flex';
       document.getElementById('messages').innerHTML = '';
       listenForMessages();
@@ -597,6 +647,7 @@
         name: user.displayName || 'User',
         avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`
       });
+      setupPresence(user);
       bindUnreadListeners();
       showFriendList();
     });
