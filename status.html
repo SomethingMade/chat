@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Status - My Two Minutes Food</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      z-index: 1000;
+    }
+    /* Spinner */
+    .spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .spinner.hidden {
+      display: none;
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Button Hover Effect */
+    .btn-orange {
+      @apply bg-orange-500 text-white hover:bg-orange-600 transition duration-200 ease-in-out;
+    }
+    /* Status Badge */
+    .status-badge {
+      @apply px-3 py-1 rounded-full text-sm font-semibold;
+    }
+    .status-pending { @apply bg-yellow-100 text-yellow-700; }
+    .status-accepted { @apply bg-green-100 text-green-700; }
+    .status-preparing { @apply bg-blue-100 text-blue-700; }
+    .status-out-for-delivery { @apply bg-purple-100 text-purple-700; }
+    .status-delivered { @apply bg-gray-100 text-gray-700; }
+    /* Timeline */
+    .timeline-step {
+      @apply flex items-center space-x-3 mb-4;
+    }
+    .timeline-step.active .icon {
+      @apply bg-orange-500 text-white;
+    }
+    .timeline-step.active .line {
+      @apply bg-orange-500;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+  <!-- Header -->
+  <header class="bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-20">
+    <button onclick="window.location.href='index.html'" class="text-gray-600">
+      <i class="fas fa-arrow-left text-xl"></i>
+    </button>
+    <div class="flex items-center">
+      <img src="https://i.postimg.cc/Pf13fPPM/Whats-App-Image-2025-05-05-at-11-16-46-1-removebg-preview.png" alt="Logo" class="h-8 object-contain">
+    </div>
+    <div id="userProfile" class="flex items-center space-x-2">
+      <span id="userName" class="text-sm font-semibold text-gray-800 hidden sm:block"></span>
+      <img id="userProfilePic" src="" alt="Profile" class="w-8 h-8 rounded-full">
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 sm:px-6 py-8">
+    <!-- Spinner -->
+    <div id="spinner" class="spinner">
+      <svg class="animate-spin h-10 w-10 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    </div>
+
+    <!-- Order Status -->
+    <section id="orderStatus" class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Status</h2>
+      <div id="statusMessage" class="text-lg font-semibold mb-4">
+        <span id="statusText" class="status-badge status-pending">Pending</span>
+      </div>
+      <div id="statusTimeline" class="space-y-4"></div>
+    </section>
+
+    <!-- Order Summary -->
+    <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Summary</h2>
+      <div id="orderItems" class="space-y-4"></div>
+      <div class="flex justify-between items-center mt-6 border-t pt-4">
+        <span class="text-lg font-semibold">Total:</span>
+        <span id="totalAmount" class="text-lg font-bold text-orange-500">R0.00</span>
+      </div>
+    </section>
+
+    <!-- Delivery Details -->
+    <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Delivery Details</h2>
+      <div id="deliveryDetails" class="space-y-2">
+        <p><strong>Name:</strong> <span id="deliveryName"></span></p>
+        <p><strong>Phone:</strong> <span id="deliveryPhone"></span></p>
+        <p><strong>Address:</strong> <span id="deliveryAddress"></span></p>
+        <p><strong>Notes:</strong> <span id="deliveryNotes"></span></p>
+      </div>
+    </section>
+
+    <!-- Support Button -->
+    <div class="flex justify-center">
+      <button id="whatsappSupportBtn" class="btn-orange py-3 px-6 rounded-lg font-semibold text-lg flex items-center">
+        <i class="fab fa-whatsapp mr-2"></i>Contact Support via WhatsApp
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.appspot.com",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+      measurementId: "G-V4W97VMSKL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth();
+
+    const spinner = document.getElementById('spinner');
+    const userName = document.getElementById('userName');
+    const userProfilePic = document.getElementById('userProfilePic');
+    const statusText = document.getElementById('statusText');
+    const statusMessage = document.getElementById('statusMessage');
+    const statusTimeline = document.getElementById('statusTimeline');
+    const orderItems = document.getElementById('orderItems');
+    const totalAmount = document.getElementById('totalAmount');
+    const deliveryName = document.getElementById('deliveryName');
+    const deliveryPhone = document.getElementById('deliveryPhone');
+    const deliveryAddress = document.getElementById('deliveryAddress');
+    const deliveryNotes = document.getElementById('deliveryNotes');
+    const whatsappSupportBtn = document.getElementById('whatsappSupportBtn');
+
+    let userId = null;
+    let restaurantId = null;
+    let restaurantWhatsapp = null;
+
+    // Parse URL Parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    restaurantId = urlParams.get('restaurantId');
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Status Messages
+    const statusMessages = {
+      pending: 'Waiting for restaurant confirmation...',
+      accepted: 'Order accepted by the restaurant!',
+      preparing: 'Your order is being prepared.',
+      'out-for-delivery': 'Your order is out for delivery.',
+      delivered: 'Order delivered! Enjoy your meal.'
+    };
+
+    // Status Timeline Steps
+    const statusSteps = [
+      { status: 'pending', label: 'Order Placed', icon: 'fa-clock' },
+      { status: 'accepted', label: 'Order Accepted', icon: 'fa-check-circle' },
+      { status: 'preparing', label: 'Preparing', icon: 'fa-utensils' },
+      { status: 'out-for-delivery', label: 'Out for Delivery', icon: 'fa-truck' },
+      { status: 'delivered', label: 'Delivered', icon: 'fa-box-open' }
+    ];
+
+    function renderTimeline(status) {
+      statusTimeline.innerHTML = '';
+      statusSteps.forEach((step, index) => {
+        const isActive = statusSteps.findIndex(s => s.status === status) >= index;
+        const isLast = index === statusSteps.length - 1;
+        const el = document.createElement('div');
+        el.className = `timeline-step ${isActive ? 'active' : ''}`;
+        el.innerHTML = `
+          <div class="icon w-10 h-10 flex items-center justify-center rounded-full border-2 ${isActive ? 'bg-orange-500 text-white border-orange-500' : 'border-gray-300 text-gray-500'}">
+            <i class="fas ${step.icon}"></i>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold ${isActive ? 'text-gray-800' : 'text-gray-500'}">${step.label}</p>
+            ${!isLast ? `<div class="line h-1 w-full ${isActive ? 'bg-orange-500' : 'bg-gray-300'} mt-2"></div>` : ''}
+          </div>
+        `;
+        statusTimeline.appendChild(el);
+      });
+    }
+
+    function renderOrder(order) {
+      // Status
+      statusText.textContent = status === 'out-for-delivery' ? 'Out for Delivery' : status.charAt(0).toUpperCase() + status.slice(1);
+      statusText.className = `status-badge status-${status}`;
+      statusMessage.innerHTML = `<span class="status-badge status-${order.status}">${statusText.textContent}</span> - ${statusMessages[order.status]}`;
+      renderTimeline(order.status);
+
+      // Order Items
+      orderItems.innerHTML = '';
+      let total = 0;
+      order.items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'flex justify-between items-center mb-4 border-b pb-4';
+        el.innerHTML = `
+          <div>
+            <h4 class="text-lg font-semibold text-gray-800">${item.item.name} (x${item.quantity})</h4>
+            <p class="text-orange-500 font-bold">R${(item.item.price * item.quantity).toFixed(2)}</p>
+          </div>
+        `;
+        orderItems.appendChild(el);
+        total += item.item.price * item.quantity;
+      });
+      totalAmount.textContent = `R${total.toFixed(2)}`;
+
+      // Delivery Details
+      deliveryName.textContent = order.deliveryDetails.name;
+      deliveryPhone.textContent = order.deliveryDetails.phone;
+      deliveryAddress.textContent = order.deliveryDetails.address;
+      deliveryNotes.textContent = order.deliveryDetails.notes || 'None';
+    }
+
+    function loadRestaurantDetails() {
+      const restaurantRef = ref(db, `restaurants/${restaurantId}`);
+      onValue(restaurantRef, (snapshot) => {
+        const restaurant = snapshot.val();
+        if (restaurant && restaurant.whatsapp) {
+          restaurantWhatsapp = restaurant.whatsapp;
+        }
+      }, { onlyOnce: true });
+    }
+
+    function loadOrder() {
+      if (!userId || !restaurantId) return;
+      const ordersRef = ref(db, `orders/${userId}`);
+      spinner.classList.remove('hidden');
+      onValue(ordersRef, (snapshot) => {
+        const orders = snapshot.val();
+        if (!orders) {
+          showToast('No orders found.');
+          spinner.classList.add('hidden');
+          return;
+        }
+        // Get the latest order for the restaurant
+        const orderArray = Object.entries(orders)
+          .map(([id, order]) => ({ id, ...order }))
+          .filter(order => order.restaurantId === restaurantId)
+          .sort((a, b) => b.timestamp - a.timestamp);
+        if (orderArray.length === 0) {
+          showToast('No orders found for this restaurant.');
+          spinner.classList.add('hidden');
+          return;
+        }
+        const latestOrder = orderArray[0];
+        renderOrder(latestOrder);
+        spinner.classList.add('hidden');
+      }, (error) => {
+        console.error('Error loading order:', error);
+        showToast('Failed to load order.');
+        spinner.classList.add('hidden');
+      });
+    }
+
+    // WhatsApp Support
+    whatsappSupportBtn.addEventListener('click', () => {
+      if (!restaurantWhatsapp) {
+        showToast('Support contact not available.');
+        return;
+      }
+      const message = `Hi, I have a question about my order from My Two Minutes Food.`;
+      const whatsappUrl = `https://wa.me/${restaurantWhatsapp}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    });
+
+    // Authentication
+    onAuthStateChanged(auth, (user) => {
+      spinner.classList.remove('hidden');
+      if (user) {
+        userId = user.uid;
+        userName.textContent = user.displayName || "User";
+        userProfilePic.src = user.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+        loadRestaurantDetails();
+        loadOrder();
+        spinner.classList.add('hidden');
+      } else {
+        spinner.classList.add('hidden');
+        window.location.href = "login.html";
+      }
+    }, (error) => {
+      console.error("Auth error:", error);
+      showToast("Failed to authenticate. Please try again.");
+      spinner.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
