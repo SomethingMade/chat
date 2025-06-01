@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loopa Chat</title>
+  <title>Looper Chat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
   <style>
     body {
@@ -16,33 +17,54 @@
       color: #000;
       margin: 0;
       padding-bottom: 80px;
+      padding-top: 80px;
     }
     ::-webkit-scrollbar {
       width: 6px;
     }
     ::-webkit-scrollbar-thumb {
       background: #888;
-      border-radius: 3px;
+      border-radius: 6px;
     }
 
-    /* Header */
+    /* Floating Header */
     header {
       background: #FFFFFF;
       color: #000000;
       height: 60px;
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      position: sticky;
+      padding: 0 8px;
+      position: fixed;
       top: 0;
-      z-index: 10;
-      border-bottom: 1px solid #E0E0E0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    header .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    header .action-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+      stroke: #000000;
+    }
+    header .action-btn:hover {
+      background: #F0F0F0;
     }
     header .back-btn, header .menu-btn {
       width: 24px;
       height: 24px;
-      margin-right: 12px;
+      margin-right: 8px;
+      color: #000000;
     }
     header .chat-info {
       flex: 1;
@@ -56,9 +78,14 @@
       border-radius: 50%;
       object-fit: cover;
     }
-    header .chat-info span {
+    header .chat-info .name {
       font-size: 17px;
       font-weight: 500;
+      color: #000000;
+    }
+    header .action-btns {
+      display: flex;
+      gap: 4px;
     }
 
     /* Drawer */
@@ -66,7 +93,7 @@
       width: 280px;
       max-width: 80%;
       background: #FFF;
-      z-index: 40;
+      z-index: 1000;
     }
     #overlay {
       background: rgba(0, 0, 0, 0.5);
@@ -77,8 +104,7 @@
       gap: 12px;
       padding: 12px 16px;
       font-size: 16px;
-      color: #000;
-      transition: background 0.2s;
+      color: #333;
     }
     .drawer-item:hover {
       background: #F0F0F0;
@@ -90,8 +116,8 @@
 
     /* Friend List */
     #friendList {
-      background: #FFF;
-      min-height: calc(100vh - 60px);
+      background: #fff;
+      min-height: calc(100vh - 80px);
       overflow-y: auto;
     }
     .friend-item {
@@ -101,7 +127,6 @@
       padding: 12px 16px;
       border-bottom: 1px solid #E0E0E0;
       cursor: pointer;
-      transition: background 0.2s;
     }
     .friend-item:hover {
       background: #F0F0F0;
@@ -119,7 +144,7 @@
     }
     .friend-item .badge {
       background: #25D366;
-      color: #FFF;
+      color: #fff;
       font-size: 12px;
       min-width: 24px;
       height: 24px;
@@ -132,18 +157,18 @@
     /* Chat Area */
     #messages {
       padding: 12px;
-      min-height: calc(100vh - 140px);
+      min-height: calc(100vh - 160px);
       overflow-y: auto;
       display: none;
     }
     .message {
       max-width: 70%;
       padding: 8px 12px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       font-size: 14px;
       line-height: 1.4;
       position: relative;
-      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
     .message.sent {
       background: #DCF8C6;
@@ -159,6 +184,17 @@
       font-weight: 500;
       margin-bottom: 2px;
     }
+    .message .message-text {
+      font-size: 14px;
+      word-wrap: break-word;
+      white-space: pre-line;
+    }
+    .message audio {
+      width: 100%;
+      max-width: 200px;
+      height: 32px;
+      margin-top: 4px;
+    }
     .message .timestamp {
       font-size: 10px;
       color: #666;
@@ -167,7 +203,8 @@
     }
     .message .delivered {
       font-size: 10px;
-      color: #34C759;
+      color: #FFD700;
+      margin-left: 4px;
     }
 
     /* Floating Input */
@@ -177,15 +214,15 @@
       left: 50%;
       transform: translateX(-50%);
       max-width: 640px;
-      width: calc(100% - 24px);
-      background: #FFF;
-      border-radius: 24px;
+      width: calc(100% - 20px);
+      background: #fff;
+      border-radius: 8px;
       padding: 8px 12px;
       display: none;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      z-index: 5;
     }
     #messageInput {
       flex: 1;
@@ -194,21 +231,24 @@
       font-size: 14px;
       padding: 4px 0;
     }
-    #emojiButton, #imageUploadBtn, #sendButton {
+    #emojiButton, #micButton, #imageUploadBtn, #sendButton {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      transition: background 0.2s;
     }
-    #emojiButton:hover, #imageUploadBtn:hover {
+    #emojiButton:hover, #micButton:hover, #imageUploadBtn:hover {
       background: #F0F0F0;
+    }
+    #micButton.recording {
+      background: #FF3B30;
+      color: #fff;
     }
     #sendButton {
       background: #25D366;
-      color: #FFF;
+      color: #fff;
     }
     #sendButton:hover {
       background: #1EBE57;
@@ -216,10 +256,64 @@
     #imageUpload {
       display: none;
     }
+
+    /* Call Modal */
+    #callModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    #remoteVideo {
+      width: 100%;
+      max-width: 640px;
+      max-height: 480px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    #localVideo {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 120px;
+      height: 90px;
+      border-radius: 8px;
+      border: 2px solid #fff;
+      object-fit: cover;
+    }
+    .call-controls {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .call-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    #hangupBtn {
+      background: #FF3B30;
+      color: #fff;
+    }
+    #muteBtn {
+      background: #A0A0A0;
+      color: #fff;
+    }
+    #muteBtn.muted {
+      background: #FF3B30;
+    }
   </style>
 </head>
 <body>
-  <!-- Header -->
+  <!-- Floating Header -->
   <header>
     <button class="back-btn" id="backBtn" style="display: none;">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -228,7 +322,19 @@
     </button>
     <div class="chat-info">
       <img id="chatAvatar" src="https://i.pravatar.cc/40" alt="Chat avatar" />
-      <span id="chatTitle">Loopa Chat</span>
+      <span id="chatTitle" class="name">Looper Chat</span>
+    </div>
+    <div class="action-btns" id="actionButtons" style="display: none;">
+      <button class="action-btn" id="callBtn" title="Voice Call">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
+      </button>
+      <button class="action-btn" id="videoCallBtn" title="Video Call">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </button>
     </div>
     <button class="menu-btn" id="burger">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -238,8 +344,8 @@
   </header>
 
   <!-- Drawer -->
-  <div id="overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
-  <aside id="drawer" class="fixed inset-y-0 right-0 w-64 max-w-[80%] translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
+  <div id="overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-990"></div>
+  <aside id="drawer" class="fixed inset-y-0 right-0 w-64 max-width-[80%] translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-1000">
     <div class="p-4 space-y-2">
       <div class="drawer-item" onclick="window.location.href='search.html'">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,236 +355,446 @@
       </div>
       <div class="drawer-item" onclick="window.location.href='profile.html'">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10m0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 12 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
         </svg>
         Profile
       </div>
     </div>
   </aside>
 
+  <!-- Call Modal -->
+  <div id="callModal" class="flex-col">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay muted playsinline></video>
+    <div class="call-controls">
+      <button class="call-btn" id="muteBtn" title="Mute">
+        <svg fill="none" stroke="w-6 h-6" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-6a1 1 0 011-1h1.586l4.707-4.707C10.098 3.398 11 3.865 11 4.707v14.586c0 .842-.902 1.309-1.293.707L5.586 15z"/>
+          <path stroke-linecap="round" d="M15 10l2 2m0 0-2 4m2-4l-2-2m0 0l4 4l2-2"/>
+        </svg>
+      </button>
+      <button class="call-btn" id="hangupBtn" title="Hang Up">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <!-- Main Content -->
   <main class="p-0">
     <div id="friendList"></div>
     <div id="messages" class="space-y-2"></div>
     <form id="messageForm">
-      <button type="button" id="emojiButton" aria-label="Emoji picker">
+      <button type="flex" type="emojiButton" id="emojiButton" aria-label="Emoji Picker">
+        <button type="flex" id="emojiButton" aria-label="button">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" />
           <path d="M8 14s1.5 2 4 2 4-2 4-2" />
           <line x1="9" y1="9" x2="9.01" y2="9" />
-          <line x1="15" y1="9" x2="15.01" y2="9" />
+          <line x1="15" y1="15" x2="9" y2="15.01" y2="9" />
+        </svg>
+        </button>
+      div>
+      <input id="messageInput" type="text" placeholder="Type a message" />
+      <button type="button" id="micButton" aria-label="Record voice note">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-width="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4 0h4m-4-8a3 3 01-3-3-3V5a3 3 0 116 0v6a3 3 0 01-3-3z"/>
         </svg>
       </button>
-      <input id="messageInput" type="text" placeholder="Type a message" />
       <label id="imageUploadBtn" for="imageUpload" class="cursor-pointer">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          <path stroke-linecap="round" stroke-width="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 01-7.743 0 6.7a6 0 0 0 112 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 0 0 01.293-.707l5.964-5.964a6.964A6 0 1121 9z"/>
         </svg>
       </label>
       <input id="imageUpload" type="file" accept="image/*" class="hidden" />
-      <button id="sendButton" type="submit">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-        </svg>
-      </button>
-    </form>
-  </main>
+      <button type="submit" id="sendButton">
+        <svg class="w-5 h-5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-width="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </form>
+    </main>
 
-  <script>
-    // Firebase initialization
-    const firebaseConfig = {
-      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
-      authDomain: "fire-b-a8878.firebaseapp.com",
-      databaseURL: "https://fire-b-a8878.firebaseio.com",
-      projectId: "fire-b-a8878",
-      storageBucket: "fire-b-a8878.appspot.com",
-      messagingSenderId: "658673187627",
-      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+    <script>
+      // Firebase initialization
+      const firebaseConfig = {  apiKey:"AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc", authDomain:"fire-b-a8878.firebaseapp.com", databaseURL:"https://fire-b-a8878.firebaseio.com", projectId:"fire-b-a8878", storageBucket:"fire-b-a8878.firebasestorage.app", messagingSenderId:"658673187627", appId:"1:658673187627:web:6e4c29af661785f0afa36e" };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.database();
+      const storage = firebase.storage();
 
-    let currentUser = null;
-    let currentChatRoom = null;
-    let currentChatUser = null;
-    const unreadMap = {};
+      let currentUser = null;
+      let currentChatRoom = null;
+      let currentChatUser = null;
+      let peerConnection = null;
+      let localStream = null;
+      let isMuted = false;
+      const unreadMap = {};
+      let mediaRecorder = null;
+      let audioChunks = [];
 
-    // Message sent sound
-    const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c44.mp3'); // WhatsApp-like sent sound
+      // Audio configuration
+      const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c44.mp3');
 
-    // Drawer Logic
-    const burger = document.getElementById('burger');
-    const backBtn = document.getElementById('backBtn');
-    const overlay = document.getElementById('overlay');
-    const drawer = document.getElementById('drawer');
-    function openDrawer() {
-      drawer.classList.remove('translate-x-full');
-      overlay.classList.remove('opacity-0', 'pointer-events-none');
-    }
-    function closeDrawer() {
-      drawer.classList.add('translate-x-full');
-      overlay.classList.add('opacity-0', 'pointer-events-none');
-    }
-    burger.addEventListener('click', openDrawer);
-    overlay.addEventListener('click', closeDrawer);
-    backBtn.addEventListener('click', showFriendList);
+      // WebRTC configuration
+      const configuration = {
+        iceServers: [
+          urls: ['stun:stun.l.google.com:19302']
+        };
+      };
 
-    // Unread Messages
-    function bindUnreadListeners() {
-      db.ref('chats').on('child_added', roomSnap => {
-        const roomId = roomSnap.key;
-        if (!roomId.includes(currentUser.uid)) return;
-        roomSnap.ref.on('value', snap => {
-          const friendUid = roomId.split('_').find(id => id !== currentUser.uid);
-          let unseen = 0;
-          snap.forEach(c => {
-            const m = c.val();
-            if (m.uid !== currentUser.uid && m.status !== 'seen') unseen++;
-          });
-          unreadMap[friendUid] = unseen;
-          renderFriendList();
-        });
-      });
-    }
+      // Drawer Logic
+      function openDrawer() {
+        document.getElementById('drawer').classList.remove('translate-x-full');
+        document.getElementById('overlay').classList.remove('opacity-0', 'pointer-events-none');
+      }
+      function closeDrawer() {
+        document.getElementById('drawer').classList.add('translate-x-full');
+        document.getElementById('overlay').classList.add('opacity-0', 'pointer-events-none');
+          }
+      document.getElementById('burger').addEventListener('click', openDrawer);
+      document.getElementById('overlay').addEventListener('click', closeDrawer);
+      document.getElementById('backBtn').addEventListener('click', showFriendList');
 
-    // Messages
-    function listenForMessages() {
-      if (!currentChatRoom) return;
-      const ref = db.ref(`chats/${currentChatRoom}`);
-      ref.off();
-      ref.on('child_added', s => {
-        const msg = s.val();
-        displayMessage(msg);
-        if (msg.uid !== currentUser.uid && currentChatRoom) {
-          s.ref.update({ status: 'seen' });
-        }
-      });
-    }
-
-    function displayMessage(msg) {
-      const wrap = document.getElementById('messages');
-      const me = msg.uid === currentUser.uid;
-      const div = document.createElement('div');
-      div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
-      const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
-      div.innerHTML = `
-        <div class="message ${me ? 'sent' : 'received'}">
-          <div class="name">${msg.name}</div>
-          <div>${msg.text}</div>
-          <div class="timestamp">
-            ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            ${me ? deliveredText : ''}
-          </div>
-        </div>
-      `;
-      wrap.appendChild(div);
-      wrap.scrollTop = wrap.scrollHeight;
-    }
-
-    function renderFriendList() {
-      const friendList = document.getElementById('friendList');
-      db.ref('friends/' + currentUser.uid).once('value').then(snap => {
-        const friendUIDs = Object.keys(snap.val() || {});
-        Promise.all(friendUIDs.map(uid => db.ref('users/' + uid).once('value').then(u => ({ uid, user: u.val() })))).then(arr => {
-          friendList.innerHTML = '';
-          if (arr.length === 0) {
-            friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
+      // WebRTC Call Handling
+      async function initiateCall(isVideo) {
+        try {
+          if (!currentChatRoom || !currentChatUser) {
+            alert('No chat selected.');
             return;
           }
-          arr.forEach(({ uid, user }) => {
-            const unseen = unreadMap[uid] || 0;
-            const item = document.createElement('div');
-            item.className = 'friend-item';
-            item.onclick = () => openChatWithUser(uid, user);
-            const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
-            item.innerHTML = `
-              <img src="${avatarUrl}" alt="${user.name}" />
-              <div class="name">${user.name}</div>
-              ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
-            `;
-            friendList.appendChild(item);
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: isVideo
           });
+          document.getElementById('localVideo').srcObject = localStream;
+          peerConnection = new RTCPeerConnection(configuration);
+          localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+          peerConnection.ontrack = e => {
+            document.getElementById('remoteVideo').srcObject = e.streams[0];
+            document.getElementById('callModal').style.display = 'flex';
+          };
+          peerConnection.onicecandidate = e => {
+            if (e.candidate) {
+              db.ref(`signaling/${currentChatRoom}-${isVideo ? 'video' : 'video' : 'voice'}/${currentUser.uid}_${currentChatUser.uid}/candidates`).push({
+                candidate: e.candidate.toJSON()
+              });
+            }
+          };
+          peerConnection.oniceconnectionstatechangeEventListener = () => {
+            if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
+              endCall();
+            }
+          });
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          await db.ref(`signaling/${currentChatRoom}-${isVideo ? 'video' : 'voice'}/${currentUser.uid}_${currentChatUser.uid}`).set({
+            offer: peerConnection.localDescription.toJSON(),
+            initiator: currentUser.uid
+          });
+          listenForAnswer(isVideo);
+        } catch (error) {
+          console.error('Error initiating call:', error);
+          alert('Failed to start call. Check permissions or network.');
+          endCall();
+        }
+      }
+
+      async function listenForCall() {
+        if (!currentUser) return;
+        db.ref(`signaling`).on('child_added', async snap => {
+          const callId = snap.key;
+          if (!callId.includes(currentChatRoom) || !callId.includes(currentUser.uid)) return;
+          const data = snap.val();
+          const senderId = Object.keys(data)[0].split('_')[0];
+          if (senderId === currentUser.uid) return; // Ignore own calls
+          const isVideo = callId.includes('-video');
+          const senderRef = db.ref(`users/${senderId}`);
+          const senderSnap = await senderRef.once('value',);
+          const senderName = senderSnap.val().name || 'Unknown';
+          if (confirm(`Incoming ${isVideo ? 'video' : 'voice'} call from ${senderName}`)) {
+            localStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: isVideo
+            });
+            document.getElementById('localVideo').srcObject = localStream;
+            peerConnection = new RTCPeerConnection(configuration);
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            peerConnection.ontrack = e => {
+              document.getElementById('remoteVideo').srcObject = e.streams[0];
+              document.getElementById('callModal').style.display = 'flex';
+            };
+            peerConnection.onicecandidate = e => {
+              if (e.candidate) {
+                db.ref(`signaling/${callId}/${currentUser.uid}_${senderId}/candidates`).push({
+                  candidate: e.candidate.toJSON()
+                });
+              };
+            peerConnection.oniceconnectionstatechange = () => {
+              if (peerConnection.iceConnectionState === 'disconnected' || peerConnection.iceConnectionState === 'failed') {
+                endCall();
+              }
+            };
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data[senderId + '_' + currentUser.uid].offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            await db.ref(`signaling/${callId}/${currentUser.uid}_${senderId}`).set({
+              answer: peerConnection.localDescription.toJSON(),
+              responder: currentUser.uid
+            });
+            listenForCandidates(callId, senderId + '_' + currentUser.uid);
+          } else {
+            db.ref(`signaling/${callId}`).remove();
+          }
+        });
+      }
+
+      async function listenForAnswer(isVideo) {
+        db.ref(`signaling/${currentChatRoom}-${isVideo ? 'video' : 'voice'}/${currentChatUser.uid}_${currentUser.uid}`).on('value', async snap => {
+          const data = snap.val();
+          if (data && data.answer && peerConnection.signalingState === 'have-local-offer') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            listenForCandidates(`${currentChatRoom}-${isVideo ? 'video' : 'voice'}`, `${currentUser.uid}_${currentChatUser.uid}`);
+          }
+        });
+      }
+
+      function listenForCandidates(callId, path) {
+        db.ref(`signaling/${callId}/${path}/candidates`).on('child_added', async snap => {
+          const candidate = snap.val().candidate;
+          try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.error('Error adding ICE candidate:', e);
+          }
+        });
+      }
+
+      function endCall() {
+        if (peerConnection) {
+          peerConnection.close();
+          peerConnection = null;
+        }
+        if (localStream) {
+          localStream.getTracks().forEach(track => track.stop());
+          localStream = null;
+        }
+        document.getElementById('localVideo').srcObject = null;
+        document.getElementById('remoteVideo').srcObject = null;
+        document.getElementById('callModal').style.display = 'none';
+        db.ref(`signaling/${currentChatRoom}-${currentUser.uid}`).remove();
+        isMuted = false;
+        document.getElementById('muteBtn').classList.remove('muted');
+      }
+
+      document.getElementById('callBtn').addEventListener('click', () => initiateCall(false));
+      document.getElementById('videoCallBtn').addEventListener('click', () => initiateCall(true));
+      document.getElementById('hangupBtn').addEventListener('click', endCall);
+      document.getElementById('muteBtn').addEventListener('click', () => {
+        if (localStream) {
+          isMuted = !isMuted;
+          localStream.getAudioTracks()[0].enabled = !isMuted;
+          document.getElementById('muteBtn').classList.toggle('muted', isMuted);
+        }
+      });
+
+      // Voice Note Recording
+      document.getElementById('micButton').addEventListener('click', async () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          micButton.classList.remove('recording');
+        } else {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = async () => {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const storageRef = storage.ref(`voice_notes/${currentChatRoom}/${Date.now()}.wav`);
+              await storageRef.put(audioBlob);
+              const url = await storageRef.getDownloadURL();
+              const message = {
+                uid: currentUser.uid,
+                name: currentUser.displayName || 'User',
+                avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+                audioUrl,
+                timestamp: Date.now(),
+                status: 'delivered'
+              };
+              await db.ref(`Chats/${currentChatRoom}`).push(message);
+              stream.getTracks().forEach(track => track.stop());
+            };
+            mediaRecorder.start();
+            micButton.classList.add('recording');
+          } catch (err) {
+            console.error('Microphone access error:', err);
+            alert('Failed to access microphone. Please check permissions.');
+          }
         });
       });
-    }
 
-    function showFriendList() {
-      currentChatRoom = null;
-      currentChatUser = null;
-      const chatTitle = document.getElementById('chatTitle');
-      const chatAvatar = document.getElementById('chatAvatar');
-      chatTitle.textContent = 'Loopa Chat';
-      chatAvatar.src = 'https://i.pravatar.cc/40';
-      document.getElementById('friendList').style.display = 'block';
-      document.getElementById('messages').style.display = 'none';
-      document.getElementById('messageForm').style.display = 'none';
-      document.getElementById('backBtn').style.display = 'none';
-      renderFriendList();
-      closeDrawer();
-    }
+      // Unread Messages
+      function bindUnreadListeners() {
+        db.ref('Messages').on('child_added', room => {
+          const roomId = room.key;
+          if (!roomId.includes(currentUser.uid)) return;
+          roomSnap.ref.on('value', snapshot => {
+            const friendUid = roomId.split('_').find(id => id !== currentUser.uid);
+            let unseen = 0;
+            snapshot.forEach(child => {
+              const message = child.val();
+              if (message.uid !== currentUser.uid && message.status !== 'seen') unseen++;
+            });
+            unreadMap[friendUid] = unseen;
+            renderFriendList();
+          });
+        });
+      }
 
-    function openChatWithUser(uid, user) {
-      unreadMap[uid] = 0;
-      renderFriendList();
-      currentChatRoom = [currentUser.uid, uid].sort().join('_');
-      currentChatUser = user;
-      const chatTitle = document.getElementById('chatTitle');
-      const chatAvatar = document.getElementById('chatAvatar');
-      chatTitle.textContent = user.name;
-      chatAvatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
-      document.getElementById('friendList').style.display = 'none';
-      document.getElementById('messages').style.display = 'block';
-      document.getElementById('messageForm').style.display = 'flex';
-      document.getElementById('backBtn').style.display = 'block';
-      document.getElementById('messages').innerHTML = '';
-      listenForMessages();
-      closeDrawer();
-    }
+      // Messages
+      function listenForMessages() {
+        if (!currentChatRoom) return;
+        const ref = db.ref(`Chats/${currentChatRoom}`);
+        ref.off();
+        ref.on('child_added', snapshot => {
+          const message = snapshot.val();
+          displayMessage(message);
+          if (message.uid !== currentUser.uid && currentChatRoom) {
+            snapshot.ref.update({ status: 'seen' });
+          }
+        });
+      }
 
-    // Emoji Picker
-    document.addEventListener('DOMContentLoaded', () => {
-      const picker = new EmojiButton({ position: 'top-start', theme: 'light' });
-      picker.on('emoji', e => {
-        const inp = document.getElementById('messageInput');
-        const { selectionStart: s, selectionEnd: t } = inp;
-        inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
-        inp.focus();
-        inp.selectionStart = inp.selectionEnd = s + e.length;
+      function displayMessage(message) {
+        const wrapper = document.getElementById('messages');
+        const isMe = message.sender === currentUser.uid;
+        const div = document.createElement('div');
+        div.classList.add('message', isMe ? 'sent' : 'received');
+        const deliveredText = message.status === 'delivered' || message.status === 'seen' ? `<span class="delivered">${message.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
+        const content = message.audioUrl
+          ? `<audio controls src="${message.audioUrl}"></audio>`
+          : `<div class="message-text">${message.text}</div>`;
+        div.innerHTML = `
+          <div class="name">${message.senderName}</div>
+          ${content}
+          <div class="timestamp">
+            ${new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            ${isMe ? deliveredText : ''}
+          </div>
+        `;
+        wrapper.appendChild(div);
+        wrapper.scrollTop = wrapper.scrollHeight;
+      }
+
+      function renderFriendList() {
+        const friendList = document.getElementById('friendList');
+        db.ref('friends/' + currentUser.uid).once('value').then(snapshot => {
+          const friendUIDs = Object.keys(snapshot.val() || {});
+          Promise.all(friendUIDs.map(uid => db.ref('users/' + uid).once('value').then(user => ({ uid, user: user.val() })))).then(arr => {
+            friendList.innerHTML = '';
+            if (arr.length === 0) {
+              friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
+              return;
+            }
+            arr.forEach(({ uid, user }) => {
+              const unseen = unreadMap[uid] || 0;
+              const item = document.createElement('div');
+              item.className = 'friend-item';
+              item.onclick = () => openChatWithUser(userId, user);
+              const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+              item.innerHTML = `
+                <img src="${avatarUrl}" alt="${user.name}" />
+                <div class="name">${user.name}</div>
+                ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+              `;
+              friendList.appendChild(item);
+            });
+          });
+        });
+      }
+
+      function showFriendList() {
+        currentChatRoom = null;
+        currentChatUser = null;
+        document.getElementById('chatTitle').textContent = 'Looper Chat';
+        document.getElementById('chatAvatar').value = 'https://i.pravatar.cc/40';
+        document.getElementById('friendList').style.display = 'block';
+        document.getElementById('messages').style.display = 'none';
+        document.getElementById('messageForm').style.display = 'none';
+        document.getElementById('backBtn').style.display = 'none';
+        document.getElementById('actionButtons').style.display = 'none';
+        renderFriendList();
+        closeDrawer();
+        endCall();
+      }
+
+      function openChatWithUser(userId, user) {
+        unreadMap[userId] = 0;
+        renderFriendList();
+        currentChatRoom = [currentUser.uid, userId].sort().join('_');
+        currentChatUser = user;
+        document.getElementById('chatTitle').textContent = user.name;
+        document.getElementById('chatAvatar').value = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+        document.getElementById('friendList').style.display = 'none';
+        document.getElementById('messages').style.display = 'block';
+        document.getElementById('messageForm').style.display = 'flex';
+        document.getElementById('backBtn').value = 'block';
+        document.getElementById('actionButtons').style.display = 'flex';
+        document.getElementById('messages').innerHTML = '';
+        listenForMessages();
+        closeDrawer();
+      }
+
+      // Emoji Picker
+      document.addEventListener('DOMContentLoaded', () => {
+        const picker = new EmojiButton({ position: 'top-start', theme: 'light' });
+        picker.on('emoji', emoji => {
+          const input = document.getElementById('messageInput');
+          const startPos = input.selectionStart;
+          input.value = input.value.slice(0, startPos) + emoji + input.value.slice(startPos);
+          input.focus();
+          input.selectionStart = input.selectionEnd = startPos + emoji.length;
+        });
+        document άνElementById('emojiButton').addEventListener('click', () => picker.togglePicker(document.getElementById('emojiButton')));
       });
-      document.getElementById('emojiButton').addEventListener('click', () => picker.togglePicker(document.getElementById('emojiButton')));
-    });
 
-    // Message Send
-    document.getElementById('messageForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const text = document.getElementById('messageInput').value.trim();
-      if (!text) return;
-      const msg = {
-        uid: currentUser.uid,
-        name: currentUser.displayName || 'User',
-        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
-        text,
-        timestamp: Date.now(),
-        status: 'delivered'
-      };
-      db.ref(`chats/${currentChatRoom}`).push(msg).then(() => {
-        sendSound.play().catch(err => console.error('Audio play error:', err));
-        document.getElementById('messageInput').value = '';
+      // Send Message
+      document.getElementById('messageForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const text = document.getElementById('messageInput').value.trim();
+        if (!text) return;
+        const message = {
+          uid: currentUser.uid,
+          name: currentUser.displayName || 'User',
+          text,
+          avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+          timestamp: Date.now(),
+          status: 'delivered'
+        };
+        db.ref(`Messages/${currentChatRoom}`).push(message).then(() => {
+          sendSound.play().catch(error => console.error('Audio play error:', error));
+          document.getElementById('messageInput').value = '';
+        });
       });
-    });
 
-    // Auth
-    auth.onAuthStateChanged(user => {
-      if (!user) return window.location.href = 'index.html';
-      currentUser = user;
-      db.ref(`users/${user.uid}`).set({
-        name: user.displayName || 'User',
-        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`
+      // Authentication
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          window.location.href = 'index.html';
+          return;
+        }
+        currentUser = user;
+        db.ref(`users/${user.uid}`).set({
+          name: user.displayName || 'User',
+          avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`
+        });
+        bindUnreadListeners();
+        listenForCalls();
+        showFriendList();
       });
-      bindUnreadListeners();
-      showFriendList();
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
