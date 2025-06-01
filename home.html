@@ -9,6 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <!-- ADDED: Google AdSense Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1322747625222761"
+          crossorigin="anonymous"></script>
   <style>
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -17,9 +20,7 @@
       margin: 0;
       padding-bottom: 70px;
     }
-    ::-webkit-scrollbar {
-      display: none;
-    }
+    ::-webkit-scrollbar { display: none; }
 
     /* Header */
     header {
@@ -50,6 +51,26 @@
     }
     .drawer-link {
       @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
+    }
+
+    /* ADDED: Earnings Section */
+    .earnings-section {
+      padding: 16px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    .earnings-section p {
+      font-size: 14px;
+      color: #262626;
+    }
+    .earnings-section button {
+      background: #0095f6;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 8px;
     }
 
     /* Bottom Navigation */
@@ -243,6 +264,25 @@
       fill: #0095f6;
     }
 
+    /* ADDED: Ad Post */
+    .ad-post {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      padding: 12px;
+      text-align: center;
+    }
+    .ad-post .ad-label {
+      font-size: 12px;
+      color: #8e8e8e;
+      margin-bottom: 8px;
+    }
+    .ad-post ins {
+      display: block !important;
+      margin: 0 auto;
+    }
+
     /* Modals */
     .modal {
       background: rgba(0, 0, 0, 0.6);
@@ -329,6 +369,11 @@
           <p class="font-medium">Hi, There!</p>
           <a href="profile.html" class="text-sm text-blue-500">View profile</a>
         </div>
+      </div>
+      <!-- ADDED: Earnings Dashboard -->
+      <div class="earnings-section">
+        <p>Your Earnings: $<span id="user-earnings">0.00</span></p>
+        <button id="payout-btn" disabled>Request Payout</button>
       </div>
       <nav class="flex flex-col space-y-2">
         <a href="home.html" class="drawer-link">
@@ -508,6 +553,7 @@
       currentUser = user;
       loadPosts();
       loadReels();
+      loadUserEarnings(); // ADDED: Load earnings
     });
 
     // Drawer
@@ -528,6 +574,36 @@
     drawer.querySelectorAll('.drawer-link').forEach(link => {
       link.addEventListener('click', closeDrawer);
     });
+
+    // ADDED: Load User Earnings
+    function loadUserEarnings() {
+      const earningsEl = document.getElementById('user-earnings');
+      const payoutBtn = document.getElementById('payout-btn');
+      db.ref(`earnings/${currentUser.uid}`).on('value', snap => {
+        const earnings = snap.val() || { total: 0 };
+        earningsEl.textContent = earnings.total.toFixed(2);
+        payoutBtn.disabled = earnings.total < 10;
+      });
+      payoutBtn.addEventListener('click', async () => {
+        const earnings = await db.ref(`earnings/${currentUser.uid}/total`).once('value').then(s => s.val());
+        if (earnings >= 10) {
+          alert('Payout requested! Processing via Stripe...');
+          // Placeholder for Stripe payout
+          /*
+          fetch('/api/payout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: currentUser.uid, amount: earnings })
+          }).then(response => {
+            if (response.ok) {
+              db.ref(`earnings/${currentUser.uid}/total`).set(0);
+              alert('Payout processed!');
+            }
+          });
+          */
+        }
+      });
+    }
 
     // Create Modal
     const createModal = document.getElementById('createModal');
@@ -689,13 +765,21 @@
       });
     }
 
+    // MODIFIED: loadPosts with Ad Integration
     async function loadPosts() {
       db.ref('posts').on('value', async snapshot => {
         const posts = snapshot.val() || {};
         const postsContainer = document.getElementById('posts');
         postsContainer.innerHTML = '';
+        let postIndex = 0; // ADDED: Track post index for ad placement
 
         for (const [postId, post] of Object.entries(posts).reverse()) {
+          // ADDED: Check eligibility for monetization
+          const userRef = db.ref(`users/${post.uid}`);
+          const userSnap = await userRef.once('value');
+          const userData = userSnap.val() || { followers: 0 };
+          const isEligible = userData.followers >= 500;
+
           let originalPost = {};
           if (post.originalPostId) {
             const originalSnapshot = await db.ref(`posts/${post.originalPostId}`).once('value');
@@ -764,6 +848,37 @@
 
           postsContainer.appendChild(postEl);
 
+          // ADDED: Track Ad Impressions for Eligible Users
+          if (isEligible && isOwnPost) {
+            db.ref(`post_impressions/${postId}`).on('value', snap => {
+              const impressions = snap.val() || 0;
+              const earnings = (impressions * 0.0085 * 0.55) / 1000; // 55% creator share, $8.50 CPM
+              db.ref(`earnings/${post.uid}`).update({
+                total: firebase.database.ServerValue.increment(earnings)
+              });
+            });
+          }
+
+          // ADDED: Insert Ad Post Every 3 Posts
+          postIndex++;
+          if (postIndex % 3 === 0) {
+            const adEl = document.createElement('div');
+            adEl.className = 'ad-post';
+            adEl.innerHTML = `
+              <div class="ad-label">Sponsored</div>
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-1322747625222761"
+                   data-ad-slot="YOUR_AD_SLOT_ID"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+            `;
+            postsContainer.appendChild(adEl);
+            (adsbygoogle = window.adsbygoogle || []).push({});
+            // Track impression for the preceding post
+            db.ref(`post_impressions/${postId}`).transaction(count => (count || 0) + 1);
+          }
+
           if (!isOwnPost) {
             const followBtn = postEl.querySelector('.follow-btn');
             const followRef = db.ref(`follows/${currentUser.uid}/${post.uid}`);
@@ -826,6 +941,7 @@
                 db.ref(`likes/${postId}`).remove();
                 db.ref(`comments/${postId}`).remove();
                 db.ref(`reposts/${postId}`).remove();
+                db.ref(`post_impressions/${postId}`).remove(); // ADDED: Clean up impressions
               }
             });
           }
@@ -881,7 +997,7 @@
       });
     }
 
-    // Repost Event Listener (using event delegation)
+    // Repost Event Listener
     document.getElementById('posts').addEventListener('click', async (event) => {
       if (event.target.closest('.repost-btn')) {
         const button = event.target.closest('.repost-btn');
@@ -890,7 +1006,6 @@
         const repostRef = db.ref(`reposts/${postId}/${auth.currentUser?.uid}`);
 
         try {
-          // Check if user has already reposted
           const repostSnapshot = await repostRef.once('value');
           if (repostSnapshot.exists()) {
             alert('You have already reposted this post.');
@@ -922,7 +1037,7 @@
           if (originalPost.imageUrl) newPost.imageUrl = originalPost.imageUrl;
 
           await db.ref('posts').push(newPost);
-          await repostRef.set(true); // Track the repost
+          await repostRef.set(true);
           button.classList.add('reposted');
           alert('Reposted!');
         } catch (err) {
