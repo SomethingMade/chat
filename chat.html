@@ -184,6 +184,8 @@
       font-size: 14px;
       line-height: 1.4;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      position: relative;
     }
     .message.sent {
       background: #DCF8C6;
@@ -220,6 +222,21 @@
       font-size: 10px;
       color: #FFD700;
       margin-left: 4px;
+    }
+    .message .reactions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 12px;
+    }
+    .message .reaction {
+      background: #E0E0E0;
+      border-radius: 12px;
+      padding: 2px 6px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
     }
 
     /* Floating Input */
@@ -378,6 +395,7 @@
     const unreadMap = {};
     let mediaRecorder = null;
     let audioChunks = [];
+    let reactionPicker = null;
 
     // Message sent sound
     const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c44.mp3');
@@ -505,14 +523,24 @@
       ref.off();
       ref.on('child_added', s => {
         const msg = s.val();
-        displayMessage(msg);
+        const key = s.key;
+        displayMessage(key, msg);
         if (msg.uid !== currentUser.uid && currentChatRoom) {
           s.ref.update({ status: 'seen' });
         }
       });
+      ref.on('child_changed', s => {
+        const msg = s.val();
+        const key = s.key;
+        const existing = document.querySelector(`.message[data-key="${key}"]`);
+        if (existing) {
+          existing.parentElement.remove();
+          displayMessage(key, msg);
+        }
+      });
     }
 
-    function displayMessage(msg) {
+    async function displayMessage(key, msg) {
       const wrap = document.getElementById('messages');
       const me = msg.uid === currentUser.uid;
       const div = document.createElement('div');
@@ -521,18 +549,39 @@
       const content = msg.audioUrl
         ? `<audio controls src="${msg.audioUrl}"></audio>`
         : `<div class="message-text">${msg.text}</div>`;
+
+      // Fetch reactions
+      const reactionSnap = await db.ref(`chats/${currentChatRoom}/${key}/reactions`).once('value');
+      const reactions = reactionSnap.val() || {};
+      const reactionCounts = {};
+      Object.values(reactions).forEach(emoji => {
+        reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
+      });
+      const reactionHtml = Object.entries(reactionCounts).map(([emoji, count]) => `
+        <span class="reaction">${emoji}${count > 1 ? ` ${count}` : ''}</span>
+      `).join('');
+
       div.innerHTML = `
-        <div class="message ${me ? 'sent' : 'received'}">
+        <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
           <div class="name">${msg.name}</div>
           ${content}
           <div class="timestamp">
             ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             ${me ? deliveredText : ''}
           </div>
+          ${reactionHtml ? `<div class="reactions">${reactionHtml}</div>` : ''}
         </div>
       `;
       wrap.appendChild(div);
       wrap.scrollTop = wrap.scrollHeight;
+
+      // Add reaction handler
+      const messageEl = div.querySelector('.message');
+      messageEl.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        reactionPicker.togglePicker(messageEl);
+        reactionPicker.messageKey = key;
+      });
     }
 
     async function renderFriendList() {
@@ -607,17 +656,31 @@
       closeDrawer();
     }
 
-    // Emoji Picker
+    // Emoji Picker for Input
     document.addEventListener('DOMContentLoaded', () => {
-      const picker = new EmojiButton({ position: 'top-start', theme: 'light' });
-      picker.on('emoji', e => {
+      const inputPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
+      inputPicker.on('emoji', e => {
         const inp = document.getElementById('messageInput');
         const { selectionStart: s, selectionEnd: t } = inp;
         inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
         inp.focus();
         inp.selectionStart = inp.selectionEnd = s + e.length;
       });
-      document.getElementById('emojiButton').addEventListener('click', () => picker.togglePicker(document.getElementById('emojiButton')));
+      document.getElementById('emojiButton').addEventListener('click', () => inputPicker.togglePicker(document.getElementById('emojiButton')));
+
+      // Reaction Picker
+      reactionPicker = new EmojiButton({ position: 'auto', theme: 'light' });
+      reactionPicker.on('emoji', async emoji => {
+        if (!reactionPicker.messageKey) return;
+        const reactionRef = db.ref(`chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`);
+        const snap = await reactionRef.once('value');
+        if (snap.val() === emoji) {
+          await reactionRef.remove();
+        } else {
+          await reactionRef.set(emoji);
+        }
+        reactionPicker.messageKey = null;
+      });
     });
 
     // Message Send
