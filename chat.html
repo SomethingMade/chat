@@ -11,195 +11,149 @@
   <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
   <style>
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #fafafa;
-      color: #262626;
+      font-family: -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+      background: #ECE5DD;
+      color: #000;
       margin: 0;
-      padding-bottom: 70px;
+      padding-bottom: 80px; /* Space for floating input */
     }
     ::-webkit-scrollbar {
-      display: none;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 3px;
     }
 
     /* Header */
     header {
-      background: #fff;
-      border-bottom: 1px solid #dbdbdb;
-      height: 54px;
+      background: #075E54;
+      color: #FFF;
+      height: 60px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 12px;
       position: sticky;
       top: 0;
       z-index: 10;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    .logo {
-      font-family: 'Lobster', cursive;
-      font-size: 24px;
-      font-weight: 600;
+    header .back-btn {
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+    }
+    header .chat-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header .chat-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    header .chat-info span {
+      font-size: 17px;
+      font-weight: 500;
+    }
+    header .menu-btn {
+      width: 24px;
+      height: 24px;
     }
 
     /* Drawer */
     #drawer {
       width: 280px;
       max-width: 80%;
-      background: #fff;
-      border-right: 1px solid #dbdbdb;
+      background: #FFF;
       z-index: 40;
     }
-    .drawer-link {
-      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
+    #overlay {
+      background: rgba(0, 0, 0, 0.5);
     }
-
-    /* Bottom Navigation */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #fff;
-      border-top: 1px solid #dbdbdb;
-      height: 60px;
+    .drawer-item {
       display: flex;
-      justify-content: space-around;
       align-items: center;
-      box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
-      border-top-left-radius: 12px;
-      border-top-right-radius: 12px;
-      z-index: 1000;
+      gap: 12px;
+      padding: 12px 16px;
+      font-size: 16px;
+      color: #000;
+      transition: background 0.2s;
     }
-    .bottom-nav a {
-      flex: 1;
-      text-align: center;
-      color: #262626;
-      font-size: 12px;
-      padding: 8px 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: color 0.3s ease;
+    .drawer-item:hover {
+      background: #F0F0F0;
     }
-    .bottom-nav a svg {
+    .drawer-item svg {
       width: 24px;
       height: 24px;
-      fill: none;
-      stroke: #262626;
-      stroke-width: 2;
-      margin-bottom: 2px;
-      transition: stroke 0.3s ease, transform 0.3s ease;
-    }
-    .bottom-nav a.active,
-    .bottom-nav a:hover {
-      color: #0095f6;
-    }
-    .bottom-nav a.active svg,
-    .bottom-nav a:hover svg {
-      stroke: #0095f6;
-      transform: scale(1.1);
-    }
-    .bottom-nav a.active svg {
-      animation: pulse 1.5s infinite;
-    }
-    .bottom-nav .fab {
-      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
-      border-radius: 12px;
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transform: translateY(-10px);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      overflow: hidden;
-      padding: 0;
-    }
-    .bottom-nav .fab:hover {
-      transform: translateY(-12px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-    .bottom-nav .fab svg {
-      stroke: #fff;
-      width: 24px;
-      height: 24px;
-      margin: 0;
-    }
-    .badge {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      background: #ff3040;
-      color: #fff;
-      font-size: 10px;
-      min-width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1.1); }
-      50% { transform: scale(1.2); }
     }
 
     /* Chat Area */
     #messages {
-      background: #fff;
-      border: 1px solid #dbdbdb;
-      border-radius: 12px;
-      padding: 16px;
-      min-height: 60vh;
+      padding: 12px;
+      min-height: calc(100vh - 140px);
       overflow-y: auto;
-      margin-bottom: 16px;
     }
     .message {
-      max-width: 75%;
-      padding: 12px;
-      border-radius: 20px;
+      max-width: 70%;
+      padding: 8px 12px;
+      margin-bottom: 8px;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.4;
+      position: relative;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
     }
     .message.sent {
-      background: #0095f6;
-      color: #fff;
+      background: #DCF8C6;
       margin-left: auto;
+      border-radius: 8px 8px 2px 8px;
     }
     .message.received {
-      background: #e4e6eb;
-      color: #262626;
+      background: #FFF;
+      border-radius: 8px 8px 8px 2px;
     }
-    .message img.avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
+    .message .name {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 2px;
     }
     .message .timestamp {
-      font-size: 12px;
-      color: #737373;
+      font-size: 10px;
+      color: #666;
+      text-align: right;
+      margin-top: 4px;
     }
     .message .delivered {
-      font-size: 12px;
-      color: #34c759;
+      font-size: 10px;
+      color: #34C759;
     }
 
-    /* Message Form */
+    /* Floating Input */
     #messageForm {
-      background: #fff;
-      border: 1px solid #dbdbdb;
-      border-radius: 12px;
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 640px;
+      width: calc(100% - 24px);
+      background: #FFF;
+      border-radius: 24px;
       padding: 8px 12px;
       display: flex;
       align-items: center;
       gap: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 10;
     }
     #messageInput {
       flex: 1;
       border: none;
       outline: none;
       font-size: 14px;
+      padding: 4px 0;
     }
     #emojiButton, #imageUploadBtn, #sendButton {
       display: flex;
@@ -208,10 +162,17 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      transition: background 0.3s ease;
+      transition: background 0.2s;
     }
-    #emojiButton:hover, #imageUploadBtn:hover, #sendButton:hover {
-      background: #f0f0f0;
+    #emojiButton:hover, #imageUploadBtn:hover {
+      background: #F0F0F0;
+    }
+    #sendButton {
+      background: #075E54;
+      color: #FFF;
+    }
+    #sendButton:hover {
+      background: #064A3F;
     }
     #imageUpload {
       display: none;
@@ -221,100 +182,74 @@
 <body>
   <!-- Header -->
   <header>
-    <button id="burger" class="p-2 focus:outline-none">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+    <button class="back-btn" id="backBtn">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
       </svg>
     </button>
-    <h1 class="logo">Loopa</h1>
-    <div class="relative">
-      <span id="globalUnread" class="badge hidden"></span>
+    <div class="chat-info">
+      <img id="chatAvatar" src="https://i.pravatar.cc/40" alt="Chat avatar" />
+      <span id="chatTitle">Chats</span>
     </div>
+    <button class="menu-btn" id="burger">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+      </svg>
+    </button>
   </header>
 
   <!-- Drawer -->
-  <div id="overlay" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
-  <aside id="drawer" class="fixed inset-y-0 left-0 w-64 max-w-[80%] -translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
-    <div class="p-4 space-y-6">
-      <div class="text-xl font-bold">Online Users</div>
-      <div class="flex justify-end">
-        <a href="search.html" class="drawer-link">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z"/>
-          </svg>
-          Search
-        </a>
+  <div id="overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
+  <aside id="drawer" class="fixed inset-y-0 right-0 w-64 max-w-[80%] translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
+    <div class="p-4 space-y-2">
+      <div class="drawer-item" onclick="openPublicChat()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5m5-16a4 4 0 100 8 4 4 0 000-8z"/>
+        </svg>
+        Public Chat
       </div>
-      <div id="userList" class="space-y-2"></div>
+      <div class="drawer-item" onclick="window.location.href='search.html'">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z"/>
+        </svg>
+        Search
+      </div>
+      <div class="drawer-item" onclick="window.location.href='profile.html'">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10m0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+        </svg>
+        Profile
+      </div>
     </div>
+    <div id="userList" class="p-4 space-y-2"></div>
   </aside>
 
   <!-- Main Chat Area -->
-  <main class="max-w-md mx-auto p-4">
-    <div class="flex items-center justify-between mb-4">
-      <h2 id="chatTitle" class="text-lg font-semibold">Chats</h2>
-    </div>
-    <div id="messages" class="space-y-4"></div>
-    <form id="messageForm" class="mt-4">
-      <div class="relative flex items-center">
-        <button type="button" id="emojiButton" aria-label="Emoji picker">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-            <line x1="9" y1="9" x2="9.01" y2="9" />
-            <line x1="15" y1="9" x2="15.01" y2="9" />
-          </svg>
-        </button>
-        <input id="messageInput" type="text" placeholder="Type your message…" class="pl-10 pr-20" />
-        <label id="imageUploadBtn" for="imageUpload" class="absolute right-10 cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v12H3V7z" />
-            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
-          </svg>
-        </label>
-        <input id="imageUpload" type="file" accept="image/*" class="hidden" />
-        <button id="sendButton" type="submit">
-          <svg class="w-5 h-5 transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
+  <main class="p-0">
+    <div id="messages" class="space-y-2"></div>
+    <form id="messageForm">
+      <button type="button" id="emojiButton" aria-label="Emoji picker">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <line x1="9" y1="9" x2="9.01" y2="9" />
+          <line x1="15" y1="9" x2="15.01" y2="9" />
+        </svg>
+      </button>
+      <input id="messageInput" type="text" placeholder="Type a message" />
+      <label id="imageUploadBtn" for="imageUpload" class="cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+      </label>
+      <input id="imageUpload" type="file" accept="image/*" class="hidden" />
+      <button id="sendButton" type="submit">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        </svg>
+      </button>
     </form>
   </main>
-
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav" role="navigation" aria-label="Main Navigation">
-    <a href="home.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
-      </svg>
-      Home
-    </a>
-    <a href="#" class="active" aria-current="page">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v2a4 4 0 004-4h6a4 4 0 004 4v-2h-4"/>
-      </svg>
-      Chat
-      <span id="globalUnreadBadge" class="badge hidden"></span>
-    </a>
-    <button class="fab" id="fabBtn">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-    </button>
-    <a href="requests.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 12h.5v2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8a4 4 0 000 8zM16 7a4 4 0 110 8"/>
-      </svg>
-      Requests
-    </a>
-    <a href="profile.html">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10m0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
-      </svg>
-      Profile
-    </a>
-  </nav>
 
   <script>
     // Firebase initialization
@@ -333,25 +268,25 @@
 
     let currentUser = null;
     let currentChatRoom = "public";
+    let currentChatUser = null;
     const unreadMap = {};
 
     // Drawer Logic
     const burger = document.getElementById('burger');
+    const backBtn = document.getElementById('backBtn');
     const overlay = document.getElementById('overlay');
     const drawer = document.getElementById('drawer');
     function openDrawer() {
-      drawer.classList.remove('-translate-x-full');
+      drawer.classList.remove('translate-x-full');
       overlay.classList.remove('opacity-0', 'pointer-events-none');
     }
     function closeDrawer() {
-      drawer.classList.add('-translate-x-full');
+      drawer.classList.add('translate-x-full');
       overlay.classList.add('opacity-0', 'pointer-events-none');
     }
     burger.addEventListener('click', openDrawer);
     overlay.addEventListener('click', closeDrawer);
-
-    // FAB opens drawer (alternative action since no create modal)
-    document.getElementById('fabBtn').addEventListener('click', openDrawer);
+    backBtn.addEventListener('click', openPublicChat);
 
     // Unread Messages
     function bindUnreadListeners() {
@@ -374,43 +309,42 @@
 
     function updateGlobalUnread() {
       const total = Object.values(unreadMap).reduce((a, b) => a + b, 0);
-      const badges = [document.getElementById('globalUnread'), document.getElementById('globalUnreadBadge')];
-      badges.forEach(badge => {
-        if (total > 0) {
-          badge.textContent = total > 99 ? '99+' : total;
-          badge.classList.remove('hidden');
-        } else {
-          badge.classList.add('hidden');
-        }
-      });
+      const badge = document.getElementById('chatTitle').nextElementSibling;
+      if (total > 0) {
+        badge.textContent = total > 99 ? '99+' : total;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
     }
 
     // Messages
     function listenForMessages() {
       const ref = db.ref(`chats/${currentChatRoom}`);
       ref.off();
-      ref.on('child_added', s => displayMessage(s.val()));
+      ref.on('child_added', s => {
+        const msg = s.val();
+        displayMessage(msg);
+        if (msg.uid !== currentUser.uid && currentChatRoom !== 'public') {
+          s.ref.update({ status: 'seen' });
+        }
+      });
     }
 
     function displayMessage(msg) {
       const wrap = document.getElementById('messages');
       const me = msg.uid === currentUser.uid;
-      const avatarUrl = msg.avatar || `https://i.pravatar.cc/150?u=${msg.uid}`;
       const div = document.createElement('div');
       div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
-      const deliveredText = msg.status === 'delivered' ? `<span class="delivered">Delivered</span>` : '';
+      const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
       div.innerHTML = `
-        <div class="flex items-start gap-2">
-          ${me ? '' : `<img src="${avatarUrl}" class="avatar" />`}
-          <div class="message ${me ? 'sent' : 'received'}">
-            <p class="font-semibold text-sm">${msg.name}</p>
-            <p>${msg.text}</p>
-            <div class="timestamp flex justify-end gap-2">
-              <span>${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
-              ${me ? deliveredText : ''}
-            </div>
+        <div class="message ${me ? 'sent' : 'received'}">
+          <div class="name">${msg.name}</div>
+          <div>${msg.text}</div>
+          <div class="timestamp">
+            ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            ${me ? deliveredText : ''}
           </div>
-          ${me ? `<img src="${avatarUrl}" class="avatar" />` : ''}
         </div>
       `;
       wrap.appendChild(div);
@@ -426,7 +360,7 @@
           arr.forEach(({ uid, user }) => {
             const unseen = unreadMap[uid] || 0;
             const card = document.createElement('div');
-            card.className = 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer';
+            card.className = 'flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer';
             card.onclick = () => {
               openChatWithUser(uid, user);
               closeDrawer();
@@ -437,7 +371,7 @@
               <div class="flex-1">
                 <p class="font-semibold text-sm">${user.name}</p>
               </div>
-              ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+              ${unseen > 0 ? `<span class="bg-green-500 text-white text-xs rounded-full px-2 py-1">${unseen > 99 ? '99+' : unseen}</span>` : ''}
             `;
             userList.appendChild(card);
           });
@@ -450,7 +384,11 @@
       renderUserList();
       updateGlobalUnread();
       currentChatRoom = [currentUser.uid, uid].sort().join('_');
-      document.getElementById('chatTitle').textContent = user.name;
+      currentChatUser = user;
+      const chatTitle = document.getElementById('chatTitle');
+      const chatAvatar = document.getElementById('chatAvatar');
+      chatTitle.textContent = user.name;
+      chatAvatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
       document.getElementById('messages').innerHTML = '';
       listenForMessages();
       closeDrawer();
@@ -458,9 +396,14 @@
 
     function openPublicChat() {
       currentChatRoom = 'public';
-      document.getElementById('chatTitle').textContent = 'Chats';
+      currentChatUser = null;
+      const chatTitle = document.getElementById('chatTitle');
+      const chatAvatar = document.getElementById('chatAvatar');
+      chatTitle.textContent = 'Public Chat';
+      chatAvatar.src = 'https://i.pravatar.cc/40';
       document.getElementById('messages').innerHTML = '';
       listenForMessages();
+      closeDrawer();
     }
 
     function renderUserList() {
