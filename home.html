@@ -9,19 +9,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
   <style>
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #fafafa;
       color: #262626;
       margin: 0;
       padding-bottom: 70px;
-      transition: background 0.3s, color 0.3s;
-    }
-    body.dark {
-      background: #121212;
-      color: #e0e0e0;
     }
     ::-webkit-scrollbar {
       display: none;
@@ -40,10 +34,6 @@
       top: 0;
       z-index: 10;
     }
-    .dark header {
-      background: #1c1c1c;
-      border-bottom: 1px solid #333;
-    }
     .logo {
       font-family: 'Lobster', cursive;
       font-size: 24px;
@@ -58,12 +48,8 @@
       border-right: 1px solid #dbdbdb;
       z-index: 40;
     }
-    .dark #drawer {
-      background: #1c1c1c;
-      border-right: 1px solid #333;
-    }
     .drawer-link {
-      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700;
+      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
     }
 
     /* Bottom Navigation */
@@ -78,11 +64,10 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
+      box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
       z-index: 1000;
-    }
-    .dark .bottom-nav {
-      background: #1c1c1c;
-      border-top: 1px solid #333;
     }
     .bottom-nav a {
       flex: 1;
@@ -90,11 +75,10 @@
       color: #262626;
       font-size: 12px;
       padding: 8px 0;
-      position: relative;
-      transition: color 0.2s ease;
-    }
-    .dark .bottom-nav a {
-      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: color 0.3s ease;
     }
     .bottom-nav a svg {
       width: 24px;
@@ -102,10 +86,8 @@
       fill: none;
       stroke: #262626;
       stroke-width: 2;
-      transition: stroke 0.2s ease, transform 0.3s ease;
-    }
-    .dark .bottom-nav a svg {
-      stroke: #e0e0e0;
+      margin-bottom: 2px;
+      transition: stroke 0.3s ease, transform 0.3s ease;
     }
     .bottom-nav a.active,
     .bottom-nav a:hover {
@@ -115,6 +97,9 @@
     .bottom-nav a:hover svg {
       stroke: #0095f6;
       transform: scale(1.1);
+    }
+    .bottom-nav a.active svg {
+      animation: pulse 1.5s infinite;
     }
     .bottom-nav .fab {
       background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
@@ -148,6 +133,10 @@
       align-items: center;
       justify-content: center;
     }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1.1); }
+      50% { transform: scale(1.2); }
+    }
 
     /* Reels */
     .reels-container {
@@ -161,6 +150,10 @@
       flex: 0 0 auto;
       text-align: center;
       cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .reel-item:hover {
+      transform: scale(1.05);
     }
     .reel-item .avatar {
       width: 64px;
@@ -172,12 +165,22 @@
       align-items: center;
       justify-content: center;
     }
-    .reel-item .avatar img {
+    .reel-item .avatar div {
       width: 60px;
       height: 60px;
       border-radius: 50%;
       border: 2px solid #fff;
-      object-fit: cover;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      overflow: hidden;
+      padding: 4px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .reel-item p {
       font-size: 12px;
@@ -188,9 +191,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .dark .reel-item p {
-      color: #e0e0e0;
-    }
 
     /* Posts */
     .post {
@@ -200,10 +200,6 @@
       margin-bottom: 16px;
       overflow: hidden;
     }
-    .dark .post {
-      background: #1c1c1c;
-      border: 1px solid #333;
-    }
     .post-header {
       display: flex;
       align-items: center;
@@ -211,16 +207,9 @@
       gap: 12px;
     }
     .post-content {
-      padding: 0 16px 12px;
+      padding: 12px 16px;
       font-size: 14px;
       line-height: 1.5;
-    }
-    .post-content img {
-      width: 100%;
-      max-height: 500px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-top: 8px;
     }
     .post-actions {
       display: flex;
@@ -234,17 +223,14 @@
       font-size: 14px;
       color: #262626;
     }
-    .dark .post-actions button {
-      color: #e0e0e0;
-    }
     .post-actions button svg {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
     }
 
-    /* Modal */
+    /* Modals */
     .modal {
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.6);
     }
     .modal-content {
       background: #fff;
@@ -253,12 +239,7 @@
       width: 90%;
       max-width: 400px;
     }
-    .dark .modal-content {
-      background: #1c1c1c;
-      color: #e0e0e0;
-    }
-    .modal textarea,
-    .modal input[type="file"] {
+    .modal textarea {
       border: 1px solid #dbdbdb;
       border-radius: 8px;
       padding: 12px;
@@ -266,36 +247,10 @@
       width: 100%;
       box-sizing: border-box;
     }
-    .dark .modal textarea,
-    .dark .modal input[type="file"] {
-      border: 1px solid #333;
-      background: #2a2a2a;
-      color: #e0e0e0;
-    }
     .modal button {
       padding: 8px 16px;
       border-radius: 8px;
       font-size: 14px;
-    }
-
-    /* Notifications */
-    .notifications-container {
-      display: none;
-      padding: 16px;
-    }
-    .notification {
-      background: #fff;
-      border: 1px solid #dbdbdb;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .dark .notification {
-      background: #1c1c1c;
-      border: 1px solid #333;
     }
   </style>
 </head>
@@ -308,12 +263,7 @@
       </svg>
     </button>
     <h1 class="logo">Loopa</h1>
-    <a href="#notifications">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-      </svg>
-      <span id="notificationBadge" class="badge hidden"></span>
-    </a>
+    <div class="w-6"></div>
   </header>
 
   <!-- Drawer -->
@@ -365,7 +315,7 @@
           </svg>
           Requests
         </a>
-        <hr class="border-gray-200 dark:border-gray-700"/>
+        <hr class="border-gray-200"/>
         <a href="settings.html" class="drawer-link">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
@@ -373,108 +323,98 @@
           </svg>
           Settings
         </a>
-        <button id="darkModeToggle" class="drawer-link">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-          Toggle Dark Mode
-        </button>
-        <button class="drawer-link text-red-500">Log out</button>
+        <button class="drawer-link text-red-500 text-left">Log out</button>
       </nav>
     </div>
   </aside>
 
   <!-- Main Content -->
   <main class="max-w-md mx-auto p-4">
-    <!-- Stories -->
-    <div class="reels-container"></div>
-
-    <!-- Notifications -->
-    <div id="notifications" class="notifications-container"></div>
-
-    <!-- Create Post -->
-    <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6 dark:bg-gray-800 dark:border-gray-700">
-      <div class="flex items-center gap-2 mb-3">
-        <img src="https://i.pravatar.cc/40" alt="avatar" class="w-8 h-8 rounded-full"/>
-        <textarea id="postInput" placeholder="What's on your mind?" class="w-full text-sm p-2 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" rows="2"></textarea>
-      </div>
-      <input type="file" id="postImage" accept="image/*" class="mb-3"/>
-      <button id="postBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-full flex items-center justify-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        Post
-      </button>
+    <!-- Reels -->
+    <div class="flex items-center justify-between mb-4 px-2">
+      <h2 class="text-lg font-semibold">Just Reels</h2>
+      <a href="https://www.chatbase.co/chatbot-iframe/WadQfJamkW2Hl2U4NbGbH">
+        <button id="ai-button" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm px-4 py-1 rounded-full flex items-center gap-2 hover:from-purple-600 hover:to-pink-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="6" y="8" width="12" height="8" rx="2" ry="2"/>
+            <circle cx="9" cy="12" r="1" fill="currentColor"/>
+            <circle cx="15" cy="12" r="1" fill="currentColor"/>
+            <path d="M12 16v2" stroke-linecap="round"/>
+          </svg>
+          NexoraAI
+        </button>
+      </a>
     </div>
+    <div class="reels-container"></div>
 
     <!-- Feed -->
     <div id="posts" class="space-y-4"></div>
   </main>
 
-  <!-- Create Post/Reel Modal -->
-  <div id="createModal" class="modal fixed inset-0 flex items-center justify-center bg-black/70 z-50 hidden">
+  <!-- Create Modal -->
+  <div id="createModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create</h3>
-      <button id="createPostOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg mb-2 dark:bg-gray-700 dark:text-gray-200">Create Post</button>
-      <button id="createReelOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg dark:bg-gray-700 dark:text-gray-200">Create Story</button>
+      <button id="createPostOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg mb-2 hover:bg-gray-200 transition">Create Post</button>
+      <button id="createReelOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg hover:bg-gray-200 transition">Create Reel</button>
+    </div>
+  </div>
+
+  <!-- Post Modal -->
+  <div id="postInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
+    <div class="modal-content">
+      <h3 class="text-lg font-semibold mb-3">Create a Post</h3>
+      <textarea id="postInput" placeholder="What's on your mind?" class="mb-4"></textarea>
+      <div class="flex justify-end gap-2">
+        <button id="cancelPost" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
+        <button id="postBtn" class="bg-blue-500 text-white rounded-full">Post</button>
+      </div>
     </div>
   </div>
 
   <!-- Reel Modal -->
-  <div id="reelInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/70 z-50 hidden">
+  <div id="reelInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
     <div class="modal-content">
-      <h3 class="text-lg font-semibold mb-3">Create a Story</h3>
+      <h3 class="text-lg font-semibold mb-3">Create a Reel</h3>
       <textarea id="reelText" placeholder="What's on your mind?" maxlength="100" class="mb-4"></textarea>
-      <input type="file" id="reelImage" accept="image/*" class="mb-4"/>
       <div class="flex justify-end gap-2">
-        <button id="cancelReel" class="bg-gray-200 text-gray-800 rounded-full dark:bg-gray-700 dark:text-gray-200">Cancel</button>
+        <button id="cancelReel" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
         <button id="postReel" class="bg-blue-500 text-white rounded-full">Post</button>
       </div>
     </div>
   </div>
 
-  <!-- Reel Viewer Modal -->
-  <div id="reelViewerModal" class="modal fixed inset-0 bg-black flex items-center justify-center z-50 hidden">
-    <div class="w-full h-full flex items-center justify-center">
-      <img id="reelViewerImage" class="max-w-full max-h-full object-contain"/>
-      <div id="reelViewerText" class="absolute bottom-10 text-white text-lg font-semibold text-center"></div>
-      <button id="closeReelViewer" class="absolute top-4 right-4 text-white">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
   <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
     <a href="#home" class="active" aria-current="page">
       <svg viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
       </svg>
+      Home
       <span id="postCountBadge" class="badge hidden"></span>
     </a>
     <a href="chat.html">
       <svg viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
       </svg>
-      <span id="chatBadge" class="badge hidden"></span>
+      Chat
     </a>
     <a href="#create" class="fab">
       <svg viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
       </svg>
     </a>
-    <a href="#notifications">
+    <a href="requests.html">
       <svg viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
       </svg>
-      <span id="notificationBadgeNav" class="badge hidden"></span>
+      Requests
     </a>
     <a href="profile.html">
       <svg viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
       </svg>
+      Profile
     </a>
   </nav>
 
@@ -493,7 +433,6 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
-    const storage = firebase.storage();
 
     let currentUser = null;
 
@@ -502,7 +441,6 @@
       currentUser = user;
       loadPosts();
       loadReels();
-      loadNotifications();
     });
 
     // Drawer
@@ -524,16 +462,6 @@
       link.addEventListener('click', closeDrawer);
     });
 
-    // Dark Mode
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    darkModeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark') ? 'enabled' : 'disabled');
-    });
-    if (localStorage.getItem('darkMode') === 'enabled') {
-      document.body.classList.add('dark');
-    }
-
     // Create Modal
     const createModal = document.getElementById('createModal');
     const createPostOption = document.getElementById('createPostOption');
@@ -543,154 +471,126 @@
     });
     createPostOption.addEventListener('click', () => {
       createModal.classList.add('hidden');
-      document.getElementById('postInput').focus();
+      document.getElementById('postInputModal').classList.remove('hidden');
     });
     createReelOption.addEventListener('click', () => {
       createModal.classList.add('hidden');
       document.getElementById('reelInputModal').classList.remove('hidden');
     });
 
-    // Reels
+    // Post Modal
+    const postInputModal = document.getElementById('postInputModal');
+    const postInput = document.getElementById('postInput');
+    const postBtn = document.getElementById('postBtn');
+    const cancelPost = document.getElementById('cancelPost');
+
+    cancelPost.addEventListener('click', () => {
+      postInputModal.classList.add('hidden');
+      postInput.value = '';
+    });
+
+    postBtn.addEventListener('click', () => {
+      const content = postInput.value.trim();
+      if (!content) return;
+      const postRef = db.ref('posts').push();
+      postRef.set({
+        uid: currentUser.uid,
+        name: currentUser.displayName || 'Anonymous',
+        email: currentUser.email,
+        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        content,
+        timestamp: Date.now()
+      });
+      postInputModal.classList.add('hidden');
+      postInput.value = '';
+    });
+
+    // Reel Modal
     const reelModal = document.getElementById('reelInputModal');
     const cancelReel = document.getElementById('cancelReel');
     const postReel = document.getElementById('postReel');
     const reelTextInput = document.getElementById('reelText');
-    const reelImageInput = document.getElementById('reelImage');
-    const reelViewerModal = document.getElementById('reelViewerModal');
-    const reelViewerImage = document.getElementById('reelViewerImage');
-    const reelViewerText = document.getElementById('reelViewerText');
-    const closeReelViewer = document.getElementById('closeReelViewer');
 
     cancelReel.addEventListener('click', () => {
       reelModal.classList.add('hidden');
       reelTextInput.value = '';
-      reelImageInput.value = '';
-    });
-    closeReelViewer.addEventListener('click', () => {
-      reelViewerModal.classList.add('hidden');
     });
 
-    postReel.addEventListener('click', async () => {
+    postReel.addEventListener('click', () => {
       const text = reelTextInput.value.trim();
-      const file = reelImageInput.files[0];
-      if (!text && !file) return;
+      if (!text) return;
+
+      const user = firebase.auth().currentUser;
+      if (!user) return alert('Please log in to post a reel.');
 
       const reelData = {
-        name: currentUser.displayName || 'Anonymous',
-        uid: currentUser.uid,
-        text: text || '',
+        name: user.displayName || 'Anonymous',
+        uid: user.uid,
+        text: text,
         timestamp: Date.now()
       };
 
-      if (file) {
-        const storageRef = storage.ref(`reels/${currentUser.uid}/${Date.now()}_${file.name}`);
-        await storageRef.put(file);
-        reelData.image = await storageRef.getDownloadURL();
-      }
-
-      await db.ref("reels").push(reelData);
-      reelModal.classList.add('hidden');
-      reelTextInput.value = '';
-      reelImageInput.value = '';
+      firebase.database().ref('reels').push(reelData).then(() => {
+        reelModal.classList.add('hidden');
+        reelTextInput.value = '';
+      });
     });
 
     function loadReels() {
       const reelsContainer = document.querySelector('.reels-container');
       const now = Date.now();
 
-      db.ref("reels").on("value", snapshot => {
+      firebase.database().ref('reels').on('value', snapshot => {
         reelsContainer.innerHTML = '';
         const reels = snapshot.val() || {};
 
         Object.entries(reels).forEach(([id, reel]) => {
           const age = now - reel.timestamp;
           if (age > 86400000) {
-            db.ref("reels/" + id).remove();
-            return;
+            firebase.database().ref('reels/' + id).remove();
+          } else {
+            const reelEl = document.createElement('div');
+            reelEl.className = 'reel-item';
+            reelEl.innerHTML = `
+              <div class="avatar">
+                <div>${reel.text.length > 30 ? reel.text.slice(0, 28) + '…' : reel.text}</div>
+              </div>
+              <p>${reel.name}</p>
+            `;
+            reelsContainer.appendChild(reelEl);
           }
-
-          const reelEl = document.createElement('div');
-          reelEl.className = 'reel-item';
-          reelEl.innerHTML = `
-            <div class="avatar">
-              <img src="${reel.image || `https://i.pravatar.cc/150?u=${reel.uid}`}" alt="${reel.name}"/>
-            </div>
-            <p>${reel.name}</p>
-          `;
-          reelEl.addEventListener('click', () => {
-            reelViewerImage.src = reel.image || `https://i.pravatar.cc/150?u=${reel.uid}`;
-            reelViewerText.textContent = reel.text || '';
-            reelViewerModal.classList.remove('hidden');
-          });
-          reelsContainer.appendChild(reelEl);
         });
       });
     }
 
-    // Posts
-    const postInput = document.getElementById('postInput');
-    const postImageInput = document.getElementById('postImage');
-    const postBtn = document.getElementById('postBtn');
-    const postsContainer = document.getElementById('posts');
-
-    postBtn.addEventListener('click', async () => {
-      const content = postInput.value.trim();
-      const file = postImageInput.files[0];
-      if (!content && !file) return;
-
-      const postRef = db.ref("posts").push();
-      const postData = {
-        uid: currentUser.uid,
-        name: currentUser.displayName || 'Anonymous',
-        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
-        content: content || '',
-        timestamp: Date.now()
-      };
-
-      if (file) {
-        const storageRef = storage.ref(`posts/${currentUser.uid}/${Date.now()}_${file.name}`);
-        await storageRef.put(file);
-        postData.image = await storageRef.getDownloadURL();
-      }
-
-      await postRef.set(postData);
-      postInput.value = '';
-      postImageInput.value = '';
-
-      // Notify followers
-      db.ref(`follows`).orderByChild(currentUser.uid).equalTo(true).once('value', snap => {
-        snap.forEach(child => {
-          db.ref(`notifications/${child.key}`).push({
-            type: 'post',
-            from: currentUser.uid,
-            fromName: currentUser.displayName || 'Anonymous',
-            postId: postRef.key,
-            timestamp: Date.now()
-          });
-        });
-      });
-    });
-
     function formatTimestamp(timestamp) {
       const now = new Date();
-      const date = new Date(timestamp);
-      const diffMs = now - date;
+      const postDate = new Date(timestamp);
+      const diffMs = now - postDate;
       const diffMinutes = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMs / 3600000);
       const diffDays = Math.floor(diffMs / 86400000);
 
       if (diffMinutes < 1) return 'Just now';
-      if (diffMinutes < 60) return `${diffMinutes}m`;
-      if (diffHours < 24) return `${diffHours}h`;
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays}d`;
-      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      if (diffDays === 1) return `Yesterday at ${postDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+      return postDate.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
 
     function loadPosts() {
-      db.ref("posts").on("value", snapshot => {
-        postsContainer.innerHTML = '';
+      db.ref('posts').on('value', snapshot => {
         const posts = snapshot.val() || {};
+        const postsContainer = document.getElementById('posts');
+        postsContainer.innerHTML = '';
 
         Object.entries(posts).reverse().forEach(([postId, post]) => {
           const isOwnPost = post.uid === currentUser.uid;
@@ -701,27 +601,24 @@
               <img src="${post.avatar}" class="w-8 h-8 rounded-full"/>
               <div class="flex-1">
                 <p class="font-semibold text-sm">${post.name}</p>
-                <span class="text-xs text-gray-500 dark:text-gray-400">${formatTimestamp(post.timestamp)}</span>
+                <span class="text-xs text-gray-500">${formatTimestamp(post.timestamp)}</span>
               </div>
               ${isOwnPost ? `
                 <div class="flex gap-2">
-                  <button class="edit-post-btn text-gray-500 dark:text-gray-400" data-id="${postId}">
+                  <button class="edit-post-btn text-gray-500 p-1" data-id="${postId}" title="Edit">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11.5A1.5 1.5 0 005.5 20H17a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
                   </button>
-                  <button class="delete-post-btn text-gray-500 dark:text-gray-400" data-id="${postId}">
+                  <button class="delete-post-btn text-gray-500 p-1" data-id="${postId}" title="Delete">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                   </button>
                 </div>` : `
-                <button class="follow-btn text-blue-500 text-sm hidden" data-user="${post.uid}">Follow</button>`}
+                <button class="follow-btn bg-blue-500 text-white text-xs px-3 py-1 rounded-full hidden" data-user="${post.uid}">Follow</button>`}
             </div>
-            <div class="post-content">
-              ${post.content ? `<p>${post.content}</p>` : ''}
-              ${post.image ? `<img src="${post.image}" alt="Post image"/>` : ''}
-            </div>
+            <div class="post-content" id="content-${postId}">${post.content}</div>
             <div class="post-actions">
               <button class="like-btn" data-id="${postId}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -741,10 +638,15 @@
               </button>
             </div>
             <div id="comments-${postId}" class="px-4 py-2 space-y-2"></div>
-            <div class="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-2 border-t border-gray-200">
               <div class="flex items-center gap-2">
-                <input type="text" placeholder="Add a comment..." class="comment-input flex-1 border-0 bg-gray-100 rounded-full px-4 py-2 text-sm focus:ring-0 dark:bg-gray-700 dark:text-gray-200" data-id="${postId}"/>
-                <button class="comment-btn text-blue-500" data-id="${postId}">Post</button>
+                <input type="text" placeholder="Write a comment..." class="comment-input flex-1 border-0 bg-gray-100 rounded-full px-4 py-2 text-sm focus:ring-0" data-id="${postId}"/>
+                <button class="comment-btn bg-blue-500 text-white p-2 rounded-full" data-id="${postId}" title="Post Comment">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-6 9 6-9 6-9-6z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21V9l3-2 3 2v12"/>
+                  </svg>
+                </button>
               </div>
             </div>
           `;
@@ -759,15 +661,10 @@
                 followBtn.classList.remove('hidden');
               }
             });
-            followBtn.addEventListener('click', () => {
+            followBtn?.addEventListener('click', () => {
               db.ref(`follows/${currentUser.uid}/${post.uid}`).set(true);
               followBtn.classList.add('hidden');
-              db.ref(`notifications/${post.uid}`).push({
-                type: 'follow',
-                from: currentUser.uid,
-                fromName: currentUser.displayName || 'Anonymous',
-                timestamp: Date.now()
-              });
+              alert(`You followed ${post.name}`);
             });
           }
 
@@ -779,20 +676,8 @@
           postEl.querySelector('.like-btn').addEventListener('click', () => {
             const likeRef = db.ref(`likes/${postId}/${currentUser.uid}`);
             likeRef.once('value', snap => {
-              if (snap.exists()) {
-                likeRef.remove();
-              } else {
-                likeRef.set(true);
-                if (!isOwnPost) {
-                  db.ref(`notifications/${post.uid}`).push({
-                    type: 'like',
-                    from: currentUser.uid,
-                    fromName: currentUser.displayName || 'Anonymous',
-                    postId,
-                    timestamp: Date.now()
-                  });
-                }
-              }
+              if (snap.exists()) likeRef.remove();
+              else likeRef.set(true);
             });
           });
 
@@ -802,21 +687,12 @@
             if (!text) return;
             db.ref(`comments/${postId}`).push({
               uid: currentUser.uid,
-              name: currentUser.displayName || 'Anonymous',
+              name: currentUser.displayName || 'User',
               avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
               text,
               timestamp: Date.now()
             });
             input.value = '';
-            if (!isOwnPost) {
-              db.ref(`notifications/${post.uid}`).push({
-                type: 'comment',
-                from: currentUser.uid,
-                fromName: currentUser.displayName || 'Anonymous',
-                postId,
-                timestamp: Date.now()
-              });
-            }
           });
 
           const deleteBtn = postEl.querySelector('.delete-post-btn');
@@ -855,14 +731,14 @@
           const commentEl = document.createElement('div');
           commentEl.className = 'flex items-start gap-2';
           commentEl.innerHTML = `
-            <img src="${cmt.avatar}" class="w-6 h-6 rounded-full"/>
-            <div class="flex-1">
-              <div class="flex justify-between">
-                <span class="font-semibold text-sm">${cmt.name}</span>
+            <img src="${cmt.avatar}" class="w-6 h-6 rounded-full mt-1"/>
+            <div class="bg-gray-100 px-3 py-2 rounded-xl w-full">
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-medium text-xs">${cmt.name}</span>
                 ${cmt.uid === currentUser.uid ? `<button class="delete-comment text-red-500 text-xs" data-id="${key}">Delete</button>` : ''}
               </div>
-              <p class="text-sm">${cmt.text}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">${formatTimestamp(cmt.timestamp)}</p>
+              <p class="text-xs">${cmt.text}</p>
+              <p class="text-[10px] text-gray-500 mt-1">${new Date(cmt.timestamp).toLocaleTimeString()}</p>
             </div>
           `;
           container.appendChild(commentEl);
@@ -878,91 +754,34 @@
     }
 
     // Repost
-    postsContainer.addEventListener('click', async e => {
-      if (e.target.closest('.repost-btn')) {
-        const postId = e.target.closest('.repost-btn').getAttribute('data-id');
-        const postRef = db.ref(`posts/${postId}`);
-        const snapshot = await postRef.once('value');
-        if (!snapshot.exists()) {
-          alert('Post not found.');
-          return;
-        }
+    document.querySelectorAll('.repost-btn').forEach(button => {
+      button.addEventListener('click', async () => {
+        const postId = button.getAttribute('data-id');
+        const postRef = db.ref('posts/' + postId);
 
-        const originalPost = snapshot.val();
-        const newPost = {
-          content: originalPost.content,
-          image: originalPost.image || '',
-          uid: currentUser.uid,
-          name: currentUser.displayName || 'Anonymous',
-          avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
-          originalPostId: postId,
-          timestamp: Date.now()
-        };
-
-        await db.ref('posts').push(newPost);
-        alert('Reposted!');
-      }
-    });
-
-    // Notifications
-    function loadNotifications() {
-      const notificationsContainer = document.getElementById('notifications');
-      const notificationBadge = document.getElementById('notificationBadge');
-      const notificationBadgeNav = document.getElementById('notificationBadgeNav');
-
-      db.ref(`notifications/${currentUser.uid}`).on('value', snapshot => {
-        const notifications = snapshot.val() || {};
-        notificationsContainer.innerHTML = '';
-        const count = Object.keys(notifications).length;
-
-        if (count === 0) {
-          notificationBadge.classList.add('hidden');
-          notificationBadgeNav.classList.add('hidden');
-        } else {
-          notificationBadge.textContent = count > 99 ? '99+' : count;
-          notificationBadgeNav.textContent = count > 99 ? '99+' : count;
-          notificationBadge.classList.remove('hidden');
-          notificationBadgeNav.classList.remove('hidden');
-        }
-
-        Object.entries(notifications).reverse().forEach(([id, notif]) => {
-          const notifEl = document.createElement('div');
-          notifEl.className = 'notification';
-          let message = '';
-          if (notif.type === 'follow') {
-            message = `${notif.fromName} followed you`;
-          } else if (notif.type === 'like') {
-            message = `${notif.fromName} liked your post`;
-          } else if (notif.type === 'comment') {
-            message = `${notif.fromName} commented on your post`;
-          } else if (notif.type === 'post') {
-            message = `${notif.fromName} posted something new`;
+        try {
+          const snapshot = await postRef.once('value');
+          if (!snapshot.exists()) {
+            alert('Post not found.');
+            return;
           }
-          notifEl.innerHTML = `
-            <img src="https://i.pravatar.cc/150?u=${notif.from}" class="w-8 h-8 rounded-full"/>
-            <p class="text-sm">${message}</p>
-            <span class="text-xs text-gray-500 dark:text-gray-400">${formatTimestamp(notif.timestamp)}</span>
-          `;
-          notificationsContainer.appendChild(notifEl);
-        });
-      });
-    }
 
-    // Navigation
-    document.querySelectorAll('.bottom-nav a').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        document.querySelectorAll('.bottom-nav a').forEach(a => a.classList.remove('active'));
-        link.classList.add('active');
-        const href = link.getAttribute('href');
-        if (href === '#home') {
-          document.getElementById('posts').style.display = 'block';
-          document.getElementById('notifications').style.display = 'none';
-        } else if (href === '#notifications') {
-          document.getElementById('posts').style.display = 'none';
-          document.getElementById('notifications').style.display = 'block';
-        } else if (href !== '#create') {
-          window.location.href = href;
+          const originalPost = snapshot.val();
+          const currentUser = auth.currentUser;
+
+          const newPost = {
+            content: originalPost.content,
+            uid: currentUser.uid,
+            name: currentUser.displayName || 'Anonymous',
+            avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+            originalPostId: postId,
+            timestamp: Date.now()
+          };
+
+          await db.ref('posts').push(newPost);
+          alert('Reposted!');
+        } catch (err) {
+          console.error('Repost error:', err);
         }
       });
     });
