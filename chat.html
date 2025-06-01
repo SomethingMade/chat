@@ -1,291 +1,514 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Loopa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loopa Chat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      color: #262626;
+      margin: 0;
+      padding-bottom: 70px;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      font-family: 'Lobster', cursive;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    /* Drawer */
+    #drawer {
+      width: 280px;
+      max-width: 80%;
+      background: #fff;
+      border-right: 1px solid #dbdbdb;
+      z-index: 40;
+    }
+    .drawer-link {
+      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      border-top: 1px solid #dbdbdb;
+      height: 60px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      z-index: 1000;
+    }
+    .bottom-nav a {
+      flex: 1;
+      text-align: center;
+      color: #262626;
+      font-size: 12px;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: color 0.3s ease;
+    }
+    .bottom-nav a svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #262626;
+      stroke-width: 2;
+      margin-bottom: 2px;
+      transition: stroke 0.3s ease, transform 0.3s ease;
+    }
+    .bottom-nav a.active,
+    .bottom-nav a:hover {
+      color: #0095f6;
+    }
+    .bottom-nav a.active svg,
+    .bottom-nav a:hover svg {
+      stroke: #0095f6;
+      transform: scale(1.1);
+    }
+    .bottom-nav a.active svg {
+      animation: pulse 1.5s infinite;
+    }
+    .bottom-nav .fab {
+      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
+      border-radius: 12px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transform: translateY(-10px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+      padding: 0;
+    }
+    .bottom-nav .fab:hover {
+      transform: translateY(-12px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    .bottom-nav .fab svg {
+      stroke: #fff;
+      width: 24px;
+      height: 24px;
+      margin: 0;
+    }
+    .badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ff3040;
+      color: #fff;
+      font-size: 10px;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1.1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Chat Area */
+    #messages {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 60vh;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    .message {
+      max-width: 75%;
+      padding: 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .message.sent {
+      background: #0095f6;
+      color: #fff;
+      margin-left: auto;
+    }
+    .message.received {
+      background: #e4e6eb;
+      color: #262626;
+    }
+    .message img.avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .message .timestamp {
+      font-size: 12px;
+      color: #737373;
+    }
+    .message .delivered {
+      font-size: 12px;
+      color: #34c759;
+    }
+
+    /* Message Form */
+    #messageForm {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #messageInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+    #emojiButton, #imageUploadBtn, #sendButton {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: background 0.3s ease;
+    }
+    #emojiButton:hover, #imageUploadBtn:hover, #sendButton:hover {
+      background: #f0f0f0;
+    }
+    #imageUpload {
+      display: none;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-black">
-
-<!-- Top Bar -->
-
-<div class="flex justify-between items-center bg-white shadow p-4 sticky top-0 z-50">
-  <button id="menuBtn" class="text-xl font-bold">☰</button>
-<div class="relative">
-  <h1 id="chatTitle" class="text-lg sm:text-xl font-bold">Chats</h1>
-  <span id="globalUnread" class="absolute -top-2 -right-3 hidden bg-red-600 text-white text-[11px] min-w-[20px] px-1 py-0.5 rounded-full text-center"></span>
-</div>
-
-</div>
-
-<!-- Sidebar Drawer -->
-
-<div id="drawer" class="fixed top-0 left-0 w-72 h-full bg-white shadow-lg z-50 transform -translate-x-full transition-transform duration-300 overflow-y-auto">
-  <div class="p-4 text-lg font-semibold border-b">Online Users</div>
-  <div class="p-3 border-b flex justify-end">
-    <button onclick="window.location.href='search.html'" title="Search">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z" />
+<body>
+  <!-- Header -->
+  <header>
+    <button id="burger" class="p-2 focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
     </button>
-  </div>
-  <div id="userList" class="p-4 space-y-2"></div>
-</div>
+    <h1 class="logo">Loopa</h1>
+    <div class="relative">
+      <span id="globalUnread" class="badge hidden"></span>
+    </div>
+  </header>
 
-<!-- Overlay -->
+  <!-- Drawer -->
+  <div id="overlay" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
+  <aside id="drawer" class="fixed inset-y-0 left-0 w-64 max-w-[80%] -translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
+    <div class="p-4 space-y-6">
+      <div class="text-xl font-bold">Online Users</div>
+      <div class="flex justify-end">
+        <a href="search.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z"/>
+          </svg>
+          Search
+        </a>
+      </div>
+      <div id="userList" class="space-y-2"></div>
+    </div>
+  </aside>
 
-<div id="overlay" class="fixed inset-0 bg-black bg-opacity-30 z-40 hidden"></div>
+  <!-- Main Chat Area -->
+  <main class="max-w-md mx-auto p-4">
+    <div class="flex items-center justify-between mb-4">
+      <h2 id="chatTitle" class="text-lg font-semibold">Chats</h2>
+    </div>
+    <div id="messages" class="space-y-4"></div>
+    <form id="messageForm" class="mt-4">
+      <div class="relative flex items-center">
+        <button type="button" id="emojiButton" aria-label="Emoji picker">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+            <line x1="9" y1="9" x2="9.01" y2="9" />
+            <line x1="15" y1="9" x2="15.01" y2="9" />
+          </svg>
+        </button>
+        <input id="messageInput" type="text" placeholder="Type your message…" class="pl-10 pr-20" />
+        <label id="imageUploadBtn" for="imageUpload" class="absolute right-10 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v12H3V7z" />
+            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
+          </svg>
+        </label>
+        <input id="imageUpload" type="file" accept="image/*" class="hidden" />
+        <button id="sendButton" type="submit">
+          <svg class="w-5 h-5 transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </form>
+  </main>
 
-<!-- Main Chat Area -->
-
-<div class="max-w-2xl mx-auto p-4 sm:p-6">
-  <div id="messages" class="bg-white rounded-lg p-3 h-[70vh] overflow-y-auto shadow mb-4 space-y-2"></div>
-
-  <!-- Call buttons -->
-
-  <div id="callButtons" class="flex gap-6 mb-4 justify-center">
-    <button id="videoCallBtn" class="bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-full flex items-center gap-3 shadow-md">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14" />
-        <rect x="3" y="7" width="12" height="10" rx="2" ry="2" stroke-linejoin="round" />
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="navigation" aria-label="Main Navigation">
+    <a href="home.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+      </svg>
+      Home
+    </a>
+    <a href="#" class="active" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v2a4 4 0 004-4h6a4 4 0 004 4v-2h-4"/>
+      </svg>
+      Chat
+      <span id="globalUnreadBadge" class="badge hidden"></span>
+    </a>
+    <button class="fab" id="fabBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
       </svg>
     </button>
-    <button id="voiceCallBtn" class="bg-black hover:bg-gray-800 text-white px-5 py-3 rounded-full flex items-center gap-3 shadow-md">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.5 4.5a1 1 0 01-.217 1.09l-2.2 2.2a11.042 11.042 0 005.516 5.516l2.2-2.2a1 1 0 011.09-.217l4.5 1.5a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+    <a href="requests.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 12h.5v2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8a4 4 0 000 8zM16 7a4 4 0 110 8"/>
       </svg>
-    </button>
-  </div>
-
-  <!-- Message form -->
-
- <form id="messageForm" class="flex gap-2">
-  <div class="relative flex items-center p-2 bg-white rounded-full shadow-md w-full max-w-md">
-    <button type="button" id="emojiButton" class="absolute left-3 text-gray-500 hover:text-black focus:outline-none" aria-label="Emoji picker">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-        <line x1="9" y1="9" x2="9.01" y2="9" />
-        <line x1="15" y1="9" x2="15.01" y2="9" />
+      Requests
+    </a>
+    <a href="profile.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10m0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
       </svg>
-    </button>
+      Profile
+    </a>
+  </nav>
 
-    <!-- Message input -->
-    <input id="messageInput" type="text" placeholder="Type your message…" class="flex-1 pl-10 py-2 rounded-full border border-gray-200 focus:outline-none text-sm" />
+  <script>
+    // Firebase initialization
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.appspot.com",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-    <!-- Image upload button with icon -->
-    <label for="imageUpload" class="ml-2 cursor-pointer text-gray-600 hover:text-black p-2 rounded-full hover:bg-gray-200 flex items-center justify-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h10l2 3h2v12H3V7z" />
-        <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
-      </svg>
-    </label>
-    <input id="imageUpload" type="file" accept="image/*" class="hidden" />
+    let currentUser = null;
+    let currentChatRoom = "public";
+    const unreadMap = {};
 
-    <!-- Send button -->
-    <button id="sendButton" type="submit" class="bg-black text-white p-2 rounded-full hover:bg-gray-800 flex items-center justify-center ml-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
-      </svg>
-    </button>
-  </div>
-</form>
+    // Drawer Logic
+    const burger = document.getElementById('burger');
+    const overlay = document.getElementById('overlay');
+    const drawer = document.getElementById('drawer');
+    function openDrawer() {
+      drawer.classList.remove('-translate-x-full');
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeDrawer() {
+      drawer.classList.add('-translate-x-full');
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+    }
+    burger.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
 
-  <!-- Video Call UI -->
+    // FAB opens drawer (alternative action since no create modal)
+    document.getElementById('fabBtn').addEventListener('click', openDrawer);
 
-  <div id="callContainer" class="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center hidden z-50">
-    <video id="localVideo" autoplay muted playsinline class="w-1/2 rounded-lg mb-4"></video>
-    <video id="remoteVideo" autoplay playsinline class="w-1/2 rounded-lg"></video>
-    <button id="endCallBtn" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-full">End Call</button>
-  </div>
-</div>
-
-<script>
-// Firebase init
-const firebaseConfig = {  apiKey:"AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc", authDomain:"fire-b-a8878.firebaseapp.com", databaseURL:"https://fire-b-a8878.firebaseio.com", projectId:"fire-b-a8878", storageBucket:"fire-b-a8878.firebasestorage.app", messagingSenderId:"658673187627", appId:"1:658673187627:web:6e4c29af661785f0afa36e" };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.database();
-
-let currentUser = null;
-let currentChatRoom = "public";
-
-/* 🔔 local map of unread counts */
-const unreadMap = {};
-
-function bindUnreadListeners(){
-  db.ref('chats').on('child_added', roomSnap=>{
-    const roomId = roomSnap.key;
-    if(!roomId.includes(currentUser.uid)) return;
-    roomSnap.ref.on('value', snap=>{
-      const friendUid = roomId.split('_').find(id=>id!==currentUser.uid);
-      let unseen=0;
-      snap.forEach(c=>{
-        const m=c.val();
-        if(m.uid!==currentUser.uid && m.status!=='seen') unseen++;
+    // Unread Messages
+    function bindUnreadListeners() {
+      db.ref('chats').on('child_added', roomSnap => {
+        const roomId = roomSnap.key;
+        if (!roomId.includes(currentUser.uid)) return;
+        roomSnap.ref.on('value', snap => {
+          const friendUid = roomId.split('_').find(id => id !== currentUser.uid);
+          let unseen = 0;
+          snap.forEach(c => {
+            const m = c.val();
+            if (m.uid !== currentUser.uid && m.status !== 'seen') unseen++;
+          });
+          unreadMap[friendUid] = unseen;
+          renderUserList();
+          updateGlobalUnread();
+        });
       });
-      unreadMap[friendUid]=unseen;
+    }
+
+    function updateGlobalUnread() {
+      const total = Object.values(unreadMap).reduce((a, b) => a + b, 0);
+      const badges = [document.getElementById('globalUnread'), document.getElementById('globalUnreadBadge')];
+      badges.forEach(badge => {
+        if (total > 0) {
+          badge.textContent = total > 99 ? '99+' : total;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      });
+    }
+
+    // Messages
+    function listenForMessages() {
+      const ref = db.ref(`chats/${currentChatRoom}`);
+      ref.off();
+      ref.on('child_added', s => displayMessage(s.val()));
+    }
+
+    function displayMessage(msg) {
+      const wrap = document.getElementById('messages');
+      const me = msg.uid === currentUser.uid;
+      const avatarUrl = msg.avatar || `https://i.pravatar.cc/150?u=${msg.uid}`;
+      const div = document.createElement('div');
+      div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
+      const deliveredText = msg.status === 'delivered' ? `<span class="delivered">Delivered</span>` : '';
+      div.innerHTML = `
+        <div class="flex items-start gap-2">
+          ${me ? '' : `<img src="${avatarUrl}" class="avatar" />`}
+          <div class="message ${me ? 'sent' : 'received'}">
+            <p class="font-semibold text-sm">${msg.name}</p>
+            <p>${msg.text}</p>
+            <div class="timestamp flex justify-end gap-2">
+              <span>${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
+              ${me ? deliveredText : ''}
+            </div>
+          </div>
+          ${me ? `<img src="${avatarUrl}" class="avatar" />` : ''}
+        </div>
+      `;
+      wrap.appendChild(div);
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+
+    function loadOnlineUsers() {
+      const userList = document.getElementById('userList');
+      db.ref('friends/' + currentUser.uid).once('value').then(snap => {
+        const friendUIDs = Object.keys(snap.val() || {});
+        Promise.all(friendUIDs.map(uid => db.ref('users/' + uid).once('value').then(u => ({ uid, user: u.val() })))).then(arr => {
+          userList.innerHTML = '';
+          arr.forEach(({ uid, user }) => {
+            const unseen = unreadMap[uid] || 0;
+            const card = document.createElement('div');
+            card.className = 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 cursor-pointer';
+            card.onclick = () => {
+              openChatWithUser(uid, user);
+              closeDrawer();
+            };
+            const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+            card.innerHTML = `
+              <img src="${avatarUrl}" class="w-10 h-10 rounded-full" />
+              <div class="flex-1">
+                <p class="font-semibold text-sm">${user.name}</p>
+              </div>
+              ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+            `;
+            userList.appendChild(card);
+          });
+        });
+      });
+    }
+
+    function openChatWithUser(uid, user) {
+      unreadMap[uid] = 0;
       renderUserList();
       updateGlobalUnread();
-    });
-  });
-}
+      currentChatRoom = [currentUser.uid, uid].sort().join('_');
+      document.getElementById('chatTitle').textContent = user.name;
+      document.getElementById('messages').innerHTML = '';
+      listenForMessages();
+      closeDrawer();
+    }
 
-function updateGlobalUnread(){
-  const total = Object.values(unreadMap).reduce((a,b)=>a+b,0);
-  const badge=document.getElementById('globalUnread');
-  if(total>0){ badge.textContent= total>99?'99+':total; badge.classList.remove('hidden'); }
-  else       { badge.classList.add('hidden'); }
-}
+    function openPublicChat() {
+      currentChatRoom = 'public';
+      document.getElementById('chatTitle').textContent = 'Chats';
+      document.getElementById('messages').innerHTML = '';
+      listenForMessages();
+    }
 
-// Drawer logic
-const drawer = document.getElementById("drawer");
-const overlay= document.getElementById("overlay");
-const menuBtn = document.getElementById("menuBtn");
-menuBtn.onclick=()=>{drawer.classList.toggle("-translate-x-full");overlay.classList.toggle("hidden");};
-overlay.onclick =()=>{drawer.classList.add("-translate-x-full");overlay.classList.add("hidden");};
+    function renderUserList() {
+      loadOnlineUsers();
+    }
 
-// Presence, messages, users
-function listenForMessages(){
-  const ref=db.ref(`chats/${currentChatRoom}`);
-  ref.off();
-  ref.on('child_added', s=>displayMessage(s.val()));
-}
-
-
-function displayMessage(msg) {
-  const wrap = document.getElementById('messages');
-  const me = msg.uid === currentUser.uid;
-  const avatarUrl = msg.avatar || `https://i.pravatar.cc/150?u=${msg.uid}`;
-
-  const deliveredText = msg.delivered ? `<span class="text-xs text-green-500 ml-2">Delivered</span>` : '';
-
-  const div = document.createElement('div');
-  div.className = `flex ${me ? 'justify-end' : 'justify-start'} mb-2`;
-
-  if (me) {
-    div.innerHTML = `
-      <div class="bg-black text-white rounded-2xl px-3 py-2 max-w-[75%] flex items-center gap-3">
-        <div class="flex flex-col">
-          <span class="font-semibold text-sm">${msg.name}</span>
-          <span class="text-sm">${msg.text}</span>
-          <div class="flex items-center mt-1 self-end">
-            <span class="text-xs text-gray-300">${new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
-            ${deliveredText}
-          </div>
-        </div>
-        <img src="${avatarUrl}" alt="avatar" class="w-8 h-8 rounded-full object-cover" />
-      </div>
-    `;
-  } else {
-    div.innerHTML = `
-      <div class="bg-gray-200 rounded-2xl px-3 py-2 max-w-[75%] flex items-center gap-3">
-        <img src="${avatarUrl}" alt="avatar" class="w-8 h-8 rounded-full object-cover" />
-        <div class="flex flex-col">
-          <span class="font-semibold text-sm">${msg.name}</span>
-          <span class="text-sm">${msg.text}</span>
-          <span class="text-xs text-gray-500 mt-1 self-end">${new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
-        </div>
-      </div>
-    `;
-  }
-
-  wrap.appendChild(div);
-  wrap.scrollTop = wrap.scrollHeight;
-}
-
-
-
-
-function loadOnlineUsers(){
-  const userList=document.getElementById('userList');
-  db.ref('friends/'+currentUser.uid).once('value').then(fSnap=>{
-    const friendUIDs=Object.keys(fSnap.val()||{});
-    Promise.all(friendUIDs.map(uid=>db.ref('users/'+uid).once('value').then(u=>({uid,user:u.val()})))).then(arr=>{
-      userList.innerHTML='';
-      arr.forEach(({uid,user})=>{
-        const unseen=unreadMap[uid]||0;
-        const card=document.createElement('div');
-        card.className="bg-white rounded-xl p-3 shadow flex gap-3 items-start cursor-pointer hover:bg-gray-100";
-        card.onclick=()=>{openChatWithUser(uid,user);drawer.classList.add('-translate-x-full');overlay.classList.add('hidden');};
-        const avatarUrl=user.avatar&&user.avatar.trim()!==''?user.avatar:`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff&size=128`;
-        card.innerHTML=`<img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover"/>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2"><div class="font-semibold truncate">${user.name}</div></div>
-          </div>
-          ${unseen>0?`<span class="ml-auto bg-red-600 text-white text-[10px] min-w-[18px] px-1 py-0.5 rounded-full text-center self-start">${unseen>99?'99+':unseen}</span>`:''}`;
-        userList.appendChild(card);
+    // Emoji Picker
+    document.addEventListener('DOMContentLoaded', () => {
+      const picker = new EmojiButton({ position: 'top-start', theme: 'light' });
+      picker.on('emoji', e => {
+        const inp = document.getElementById('messageInput');
+        const { selectionStart: s, selectionEnd: t } = inp;
+        inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
+        inp.focus();
+        inp.selectionStart = inp.selectionEnd = s + e.length;
       });
+      document.getElementById('emojiButton').addEventListener('click', () => picker.togglePicker(document.getElementById('emojiButton')));
     });
-  });
-}
 
-function openChatWithUser(uid, user) {
-  unreadMap[uid] = 0;
-  renderUserList();
-  updateGlobalUnread();
+    // Message Send
+    document.getElementById('messageForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const text = document.getElementById('messageInput').value.trim();
+      if (!text) return;
+      const msg = {
+        uid: currentUser.uid,
+        name: currentUser.displayName || 'User',
+        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        text,
+        timestamp: Date.now(),
+        status: 'delivered'
+      };
+      db.ref(`chats/${currentChatRoom}`).push(msg);
+      document.getElementById('messageInput').value = '';
+    });
 
-  currentChatRoom = [currentUser.uid, uid].sort().join('_');
-
-  // Update the chat title to show the chatting user's name
-  const chatTitle = document.getElementById('chatTitle');
-  chatTitle.textContent = user.name;
-
-  // Clear previous messages and listen for new ones
-  document.getElementById('messages').innerHTML = '';
-  listenForMessages();
-
-  // Optionally close the drawer and overlay
-  drawer.classList.add('-translate-x-full');
-  overlay.classList.add('hidden');
-}
-
-function openPublicChat() {
-  currentChatRoom = "public";
-  const chatTitle = document.getElementById('chatTitle');
-  chatTitle.textContent = "Chats";
-  
-  document.getElementById('messages').innerHTML = '';
-  listenForMessages();
-}
-
-
-
-function renderUserList(){loadOnlineUsers();}
-
-// Emoji picker
-document.addEventListener('DOMContentLoaded',()=>{
-  const picker=new EmojiButton({position:'top-start',theme:'light'});
-  picker.on('emoji',e=>{const inp=document.getElementById('messageInput');const{selectionStart:s,selectionEnd:t}=inp;inp.value=inp.value.slice(0,s)+e+inp.value.slice(t);inp.focus();inp.selectionStart=inp.selectionEnd=s+e.length;});
-  document.getElementById('emojiButton').addEventListener('click',()=>picker.togglePicker(document.getElementById('emojiButton')));
-});
-
-// Message send
-document.getElementById('messageForm').addEventListener('submit',e=>{
-  e.preventDefault();
-  const text=document.getElementById('messageInput').value.trim(); if(!text) return;
-  const msg={uid:currentUser.uid,name:currentUser.displayName||'User',avatar:currentUser.photoURL||`https://i.pravatar.cc/150?u=${currentUser.uid}`,text,timestamp:Date.now(),status:'delivered'};
-  db.ref(`chats/${currentChatRoom}`).push(msg);
-  document.getElementById('messageInput').value='';
-});
-
-// Auth flow
-auth.onAuthStateChanged(user=>{
-  if(!user){window.location.href='index.html';return;}
-  currentUser=user;
-  db.ref(`users/${user.uid}`).set({name:user.displayName||'User',avatar:user.photoURL||`https://i.pravatar.cc/150?u=${user.uid}`});
-  bindUnreadListeners();
-  listenForMessages();
-  loadOnlineUsers();
-});
-</script>
-
+    // Auth
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = 'index.html';
+      currentUser = user;
+      db.ref(`users/${user.uid}`).set({
+        name: user.displayName || 'User',
+        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`
+      });
+      bindUnreadListeners();
+      listenForMessages();
+      loadOnlineUsers();
+    });
+  </script>
 </body>
 </html>
-
