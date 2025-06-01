@@ -170,45 +170,52 @@
 
   <!-- Firebase Script -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js";
-    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-database.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-auth.js";
+    // Firebase Initialization
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
-      authDomain: "fire-b-a8878.firebaseapp.com",
-      databaseURL: "https://fire-b-a8878.firebaseio.com",
-      projectId: "fire-b-a8878",
-      storageBucket: "fire-b-a8878.appspot.com",
-      messagingSenderId: "658673187627",
-      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
-      measurementId: "G-V4W97VMSKL"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+  authDomain: "fire-b-a8878.firebaseapp.com",
+  databaseURL: "https://fire-b-a8878.firebaseio.com",
+  projectId: "fire-b-a8878",
+  storageBucket: "fire-b-a8878.appspot.com",
+  messagingSenderId: "658673187627",
+  appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+  measurementId: "G-V4W97VMSKL"
+};
 
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth();
+const restaurantMenuList = document.getElementById('restaurantMenuList');
+const categoryList = document.getElementById('categoryList');
+const searchInput = document.getElementById('searchInput');
+const userName = document.getElementById('userName');
+const userProfilePic = document.getElementById('userProfilePic');
+const signOutBtn = document.getElementById('signOutBtn');
+const cartBtn = document.getElementById('cartBtn'); // Ensure cartBtn exists in HTML
+const cartCount = document.getElementById('cartCount'); // Ensure cartCount exists in HTML
+const spinner = document.getElementById('spinner');
 
-    const restaurantMenuList = document.getElementById('restaurantMenuList');
-    const categoryList = document.getElementById('categoryList');
-    const searchInput = document.getElementById('searchInput');
-    const userName = document.getElementById('userName');
-    const userProfilePic = document.getElementById('userProfilePic');
-    const signOutBtn = document.getElementById('signOutBtn');
-    const cartBtn = document.getElementById('cartBtn');
-    const cartCount = document.getElementById('cartCount');
-    const spinner = document.getElementById('spinner');
+const categories = [
+  "All", "Hot Deals", "Chicken", "Pizza", "Sushi", "Burgers",
+  "Asian", "Seafood", "African", "Health", "Grilled", "Kotas"
+];
 
-    const categories = [
-      "All", "Hot Deals", "Chicken", "Pizza", "Sushi", "Burgers",
-      "Asian", "Seafood", "African", "Health", "Grilled", "Kotas"
-    ];
+let allRestaurants = [];
+let cartItems = 0;
+let activeCategory = "All";
 
-    let allRestaurants = [];
-    let cartItems = 0; // Initialize cart count
-
- let activeCategory = "All"; // Default active category
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
 
 function createCategoryButtons() {
   const categoryIcons = {
@@ -226,173 +233,173 @@ function createCategoryButtons() {
     "Kotas": "fa-bread-slice"
   };
 
-  categoryList.innerHTML = ""; // Clear old buttons
-
+  categoryList.innerHTML = "";
   categories.forEach(category => {
     const isActive = category === activeCategory;
-
     const btn = document.createElement('button');
     btn.className = `
       flex items-center space-x-2 px-4 py-2 rounded-full text-sm 
       transition-all duration-300 group
-      ${isActive 
-        ? "bg-orange-500 text-white" 
-        : "bg-gray-200 text-gray-700 hover:bg-orange-100"}
+      ${isActive ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700 hover:bg-orange-100"}
     `;
-
     const icon = document.createElement('i');
     icon.className = `fas ${categoryIcons[category] || 'fa-utensils'} 
-      ${isActive 
-        ? "text-white" 
-        : "text-orange-400 group-hover:text-orange-600"} 
+      ${isActive ? "text-white" : "text-orange-400 group-hover:text-orange-600"} 
       transition-transform duration-300 transform group-hover:scale-110`;
-
     const span = document.createElement('span');
     span.textContent = category;
-
     btn.appendChild(icon);
     btn.appendChild(span);
-
     btn.addEventListener('click', () => {
       activeCategory = category;
       filterRestaurants(category);
-      createCategoryButtons(); // Rerender to update active state
+      createCategoryButtons();
     });
-
     categoryList.appendChild(btn);
   });
 }
 
-
-
-
-    function renderRestaurants(data) {
-      restaurantMenuList.innerHTML = '';
-      data.forEach(({ id, restaurant }) => {
-        const card = document.createElement('div');
-        card.className = "p-4 bg-white shadow rounded cursor-pointer";
-        card.innerHTML = ` 
-          <img src="${restaurant.image}" class="w-full h-40 object-cover rounded mb-2" />
-          <h4 class="text-lg font-semibold">${restaurant.name}</h4>
-          <p class="text-sm text-gray-600">${restaurant.description}</p>
-          
-          <!-- Rating Section -->
-          <div class="flex items-center mt-2">
-            <span class="text-yellow-500">
-              ${renderStars(restaurant.rating || 0)}
-            </span>
-          </div>
-
-          <div class="flex justify-between items-center mt-2">
-            <div class="text-sm text-gray-500">Favorites: <span id="favoriteCount-${id}">${restaurant.favorites || 0}</span></div>
-            <button 
-              id="favoriteBtn-${id}" 
-              class="text-red-500 hover:text-red-600 focus:outline-none"
-              onclick="toggleFavorite('${id}')"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21l-6-6m6 6l6-6m-6 6l-6-6"/>
-              </svg>
-            </button>
-          </div>
-        `;
-        card.addEventListener('click', () => {
-          window.location.href = `restaurant_menu.html?restaurantId=${id}`;
-        });
-        restaurantMenuList.appendChild(card);
-      });
-    }
-
-    function renderStars(rating) {
-      let stars = '';
-      for (let i = 1; i <= 5; i++) {
-        stars += ` 
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block ${i <= rating ? 'text-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20" stroke="currentColor">
-            <path d="M10 15l-3.6 2.3 1-4.3L3 8.9l4.5-.4L10 4l2.5 4.5 4.5.4-3.4 4.1 1 4.3L10 15z" />
+function renderRestaurants(data) {
+  restaurantMenuList.innerHTML = '';
+  data.forEach(({ id, restaurant }) => {
+    const card = document.createElement('div');
+    card.className = "p-4 bg-white shadow rounded cursor-pointer";
+    card.innerHTML = `
+      <img src="${restaurant.image}" class="w-full h-40 object-cover rounded mb-2" />
+      <h4 class="text-lg font-semibold">${restaurant.name}</h4>
+      <p class="text-sm text-gray-600">${restaurant.description}</p>
+      <div class="flex items-center mt-2">
+        <span class="text-yellow-500">${renderStars(restaurant.rating || 0)}</span>
+      </div>
+      <div class="flex justify-between items-center mt-2">
+        <div class="text-sm text-gray-500">Favorites: <span id="favoriteCount-${id}">${restaurant.favorites || 0}</span></div>
+        <button 
+          id="favoriteBtn-${id}" 
+          class="text-red-500 hover:text-red-600 focus:outline-none"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-        `;
-      }
-      return stars;
-    }
+        </button>
+      </div>
+    `;
+    card.addEventListener('click', () => {
+      window.location.href = `restaurant_menu.html?restaurantId=${id}`;
+    });
+    card.querySelector(`#favoriteBtn-${id}`).addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(id);
+    });
+    restaurantMenuList.appendChild(card);
+  });
+}
 
-    function toggleFavorite(id) {
-      const restaurantRef = ref(db, `restaurants/${id}`);
-      onValue(restaurantRef, snapshot => {
-        const restaurant = snapshot.val();
-        const newFavoritesCount = (restaurant.favorites || 0) + 1;
-        update(restaurantRef, { favorites: newFavoritesCount });
+function renderStars(rating) {
+  let stars = '';
+  for (let i = 1; i <= 5; i++) {
+    stars += `
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 inline-block ${i <= rating ? 'text-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20" stroke="currentColor">
+        <path d="M10 15l-3.6 2.3 1-4.3L3 8.9l4.5-.4L10 4l2.5 4.5 4.5.4-3.4 4.1 1 4.3L10 15z" />
+      </svg>
+    `;
+  }
+  return stars;
+}
+
+function toggleFavorite(id) {
+  const restaurantRef = ref(db, `restaurants/${id}`);
+  onValue(restaurantRef, snapshot => {
+    const restaurant = snapshot.val();
+    const newFavoritesCount = (restaurant.favorites || 0) + 1;
+    update(restaurantRef, { favorites: newFavoritesCount })
+      .then(() => {
         document.getElementById(`favoriteCount-${id}`).textContent = newFavoritesCount;
+        showToast("Added to favorites!");
+      })
+      .catch(error => {
+        console.error("Error updating favorites:", error);
+        showToast("Failed to update favorites.");
       });
-    }
+  }, { onlyOnce: true });
+}
 
-    function filterRestaurants(category) {
-      const keyword = searchInput.value.toLowerCase().trim();
-      let filtered = allRestaurants;
+function filterRestaurants(category) {
+  const keyword = searchInput.value.toLowerCase().trim();
+  let filtered = allRestaurants;
 
-      if (category !== "All") {
-        filtered = filtered.filter(item =>
-          (item.restaurant.category || "").toLowerCase().includes(category.toLowerCase())
-        );
+  if (category !== "All") {
+    filtered = filtered.filter(item =>
+      (item.restaurant.category || "").toLowerCase().includes(category.toLowerCase())
+    );
+  }
+
+  if (keyword) {
+    filtered = filtered.filter(item =>
+      (item.restaurant.name || "").toLowerCase().includes(keyword)
+    );
+  }
+
+  renderRestaurants(filtered);
+}
+
+function loadRestaurants() {
+  const restaurantsRef = ref(db, 'restaurants');
+  spinner.classList.remove('hidden');
+  onValue(restaurantsRef, snapshot => {
+    const data = snapshot.val();
+    allRestaurants = [];
+    if (data) {
+      for (let id in data) {
+        allRestaurants.push({ id, restaurant: data[id] });
       }
-
-      if (keyword) {
-        filtered = filtered.filter(item =>
-          (item.restaurant.name || "").toLowerCase().includes(keyword)
-        );
-      }
-
-      renderRestaurants(filtered);
     }
+    renderRestaurants(allRestaurants);
+    spinner.classList.add('hidden');
+  }, (error) => {
+    console.error("Error loading restaurants:", error);
+    spinner.classList.add('hidden');
+    showToast("Failed to load restaurants.");
+  });
+}
 
-    function loadRestaurants() {
-      const restaurantsRef = ref(db, 'restaurants');
-      spinner.classList.remove('hidden');  // Show the spinner
-      onValue(restaurantsRef, snapshot => {
-        const data = snapshot.val();
-        allRestaurants = [];
-        if (data) {
-          for (let id in data) {
-            allRestaurants.push({ id, restaurant: data[id] });
-          }
-        }
-        renderRestaurants(allRestaurants);
-        spinner.classList.add('hidden');  // Hide the spinner once data is loaded
-      });
-    }
+searchInput.addEventListener('input', () => {
+  filterRestaurants(activeCategory);
+});
+
+onAuthStateChanged(auth, (user) => {
+  spinner.classList.remove('hidden');
+  if (user) {
+    userName.textContent = user.displayName || "User";
+    userProfilePic.src = user.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+    signOutBtn.style.display = "inline-block";
+    spinner.classList.add('hidden');
+  } else {
+    spinner.classList.add('hidden');
+    window.location.href = "login.html";
+  }
+}, (error) => {
+  console.error("Auth error:", error);
+  spinner.classList.add('hidden');
+  showToast("Failed to authenticate. Please try again.");
+});
+
+signOutBtn.addEventListener('click', () => {
+  signOut(auth).then(() => {
+    window.location.href = "login.html";
+  }).catch((error) => {
+    console.error("Sign Out Error", error);
+    showToast("Failed to sign out.");
+  });
+});
+
+createCategoryButtons();
+loadRestaurants();
 
 
 
+    
 
-  
-
-    searchInput.addEventListener('input', () => {
-      filterRestaurants("All");
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userName.textContent = user.displayName || "User";
-        userProfilePic.src = user.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
-        signOutBtn.style.display = "inline-block";  // Show the sign-out button
-      } else {
-        userName.textContent = "";
-        userProfilePic.src = "";
-        signOutBtn.style.display = "none";  // Hide the sign-out button when the user is not logged in
-        window.location.href = "login.html";  // Redirect to login page if not logged in
-      }
-    });
-
-    // Sign Out Functionality
-    signOutBtn.addEventListener('click', () => {
-      signOut(auth).then(() => {
-        window.location.href = "login.html";
-      }).catch((error) => {
-        console.error("Sign Out Error", error);
-      });
-    });
-
-    createCategoryButtons();
-    loadRestaurants();
+    
   </script>
 
   <!-- Drawer Toggle Script -->
