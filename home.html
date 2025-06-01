@@ -80,21 +80,25 @@
       align-items: center;
       transition: color 0.3s ease;
     }
-    .bottom-nav a i {
+    .bottom-nav a svg {
       width: 24px;
       height: 24px;
+      fill: none;
+      stroke: #262626;
+      stroke-width: 2;
       margin-bottom: 2px;
-      transition: transform 0.3s ease;
+      transition: stroke 0.3s ease, transform 0.3s ease;
     }
     .bottom-nav a.active,
     .bottom-nav a:hover {
       color: #0095f6;
     }
-    .bottom-nav a.active i,
-    .bottom-nav a:hover i {
+    .bottom-nav a.active svg,
+    .bottom-nav a:hover svg {
+      stroke: #0095f6;
       transform: scale(1.1);
     }
-    .bottom-nav a.active i {
+    .bottom-nav a.active svg {
       animation: pulse 1.5s infinite;
     }
     .bottom-nav .fab {
@@ -115,8 +119,8 @@
       transform: translateY(-12px);
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
-    .bottom-nav .fab i {
-      color: #fff;
+    .bottom-nav .fab svg {
+      stroke: #fff;
       width: 24px;
       height: 24px;
       margin: 0;
@@ -194,167 +198,49 @@
       text-overflow: ellipsis;
     }
 
-    /* Instagram-Like Post Card */
-    .post-card {
+    /* Posts */
+    .post {
       background: #fff;
       border: 1px solid #dbdbdb;
       border-radius: 12px;
       margin-bottom: 16px;
       overflow: hidden;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
     }
     .post-header {
       display: flex;
       align-items: center;
       padding: 12px 16px;
-      gap: 10px;
-    }
-    .post-header img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .post-header .username {
-      font-weight: 600;
-      font-size: 14px;
-      line-height: 18px;
-    }
-    .post-header .timestamp {
-      font-size: 12px;
-      color: #8e8e8e;
-      line-height: 16px;
-    }
-    .post-header .sponsored {
-      font-size: 12px;
-      color: #8e8e8e;
-      font-weight: 500;
-      background: #f0f0f0;
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-    .post-header .actions {
-      margin-left: auto;
-      display: flex;
-      gap: 8px;
-    }
-    .post-image {
-      width: 100%;
-      max-height: 600px;
-      object-fit: cover;
-      display: block;
+      gap: 12px;
     }
     .post-content {
       padding: 12px 16px;
       font-size: 14px;
-      line-height: 20px;
-      color: #262626;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      line-height: 1.5;
+    }
+    .post-image {
+      width: 100%;
+      max-height: 500px;
+      object-fit: cover;
     }
     .post-actions {
       display: flex;
-      align-items: center;
+      gap: 16px;
       padding: 8px 16px;
-      gap: 12px;
     }
     .post-actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: transform 0.2s ease;
-    }
-    .post-actions button:hover {
-      transform: scale(1.1);
-    }
-    .post-actions button i {
-      width: 24px;
-      height: 24px;
-      color: #262626;
-    }
-    .post-actions .like-btn.liked i {
-      color: #ed4956;
-    }
-    .post-actions .repost-btn.reposted i {
-      color: #0095f6;
-    }
-    .post-actions span {
       font-size: 14px;
       color: #262626;
     }
-    .comments-section {
-      padding: 0 16px 12px;
+    .post-actions button svg {
+      width: 20px;
+      height: 20px;
     }
-    .comment {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .comment img {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .comment-content {
-      flex: 1;
-      background: #f0f0f0;
-      border-radius: 12px;
-      padding: 8px 12px;
-    }
-    .comment-content .username {
-      font-weight: 600;
-      font-size: 13px;
-      margin-bottom: 2px;
-    }
-    .comment-content p {
-      font-size: 13px;
-      color: #262626;
-      margin: 0;
-    }
-    .comment-content .timestamp {
-      font-size: 11px;
-      color: #8e8e8e;
-      margin-top: 2px;
-    }
-    .comment .delete-comment {
-      font-size: 12px;
-      color: #ed4956;
-      cursor: pointer;
-      padding: 4px 8px;
-    }
-    .comment-input-container {
-      display: flex;
-      align-items: center;
-      padding: 8px 16px;
-      border-top: 1px solid #dbdbdb;
-    }
-    .comment-input {
-      flex: 1;
-      border: none;
-      background: #f0f0f0;
-      border-radius: 20px;
-      padding: 8px 12px;
-      font-size: 14px;
-      outline: none;
-    }
-    .comment-submit-btn {
-      background: none;
-      border: none;
-      color: #0095f6;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      padding: 0 8px;
+    .repost-btn.reposted svg {
+      stroke: #0095f6;
+      fill: #0095f6;
     }
 
     /* Modals */
@@ -369,9 +255,7 @@
       max-width: 400px;
     }
     .modal textarea,
-    .modal input[type="text"],
-    .modal input[type="number"],
-    .modal select {
+    .modal input[type="text"] {
       border: 1px solid #dbdbdb;
       border-radius: 8px;
       padding: 12px;
@@ -420,18 +304,12 @@
       color: #fff;
       cursor: pointer;
     }
-
-    @media (min-width: 768px) {
-      .post-card {
-        max-width: 600px;
-      }
-    }
   </style>
 </head>
 <body>
   <!-- Header -->
   <header>
-    <button id="burger" class="p-2 focus:outline-none" aria-label="Open menu">
+    <button id="burger" class="p-2 focus:outline-none">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
@@ -497,22 +375,22 @@
           </svg>
           Settings
         </a>
-        <button id="logout-btn" class="drawer-link text-red-500 text-left">Logout</button>
+        <button class="drawer-link text-red-500 text-left">Log out</button>
       </nav>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="max-w-[600px] mx-auto p-4">
+  <main class="max-w-md mx-auto p-4">
     <!-- Reels -->
     <div class="flex items-center justify-between mb-4 px-2">
       <h2 class="text-lg font-semibold">Just Reels</h2>
       <a href="https://www.chatbase.co/chatbot-iframe/WadQfJamkW2Hl2U4NbGbH">
-        <button id="ai-button" class="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1 rounded-full flex items-center gap-2 hover:from-purple-600 hover:to-pink-600 transition">
+        <button id="ai-button" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm px-4 py-1 rounded-full flex items-center gap-2 hover:from-purple-600 hover:to-pink-600 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <rect x="6" y="0" width="12" height="8" rx="2" ry="2"/>
-            <circle cx="9" cy="35" r="1" fill="currentColor"/>
-            <circle cx="30" cy="12" r="1" fill="noneColor"/>
+            <rect x="6" y="8" width="12" height="8" rx="2" ry="2"/>
+            <circle cx="9" cy="12" r="1" fill="currentColor"/>
+            <circle cx="15" cy="12" r="1" fill="currentColor"/>
             <path d="M12 16v2" stroke-linecap="round"/>
           </svg>
           NexoraAI
@@ -521,55 +399,34 @@
     </div>
     <div class="reels-container"></div>
 
-    <!-- Posts -->
+    <!-- Feed -->
     <div id="posts" class="space-y-4"></div>
   </main>
 
   <!-- Create Modal -->
-  <div id="createModal" class="modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden z-50">
+  <div id="createModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create</h3>
-      <button id="createPostOption" class="w-full bg-gray-100 text-gray-800 py-2 mb-2 rounded-lg hover:bg-gray-200 transition">Create Post</button>
-      <button id="createReelOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg mb-2 hover:bg-gray-200 transition">Create Reel</button>
-      <button id="createAdOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg hover:bg-gray-200 transition hidden">Create Ad</button>
+      <button id="createPostOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg mb-2 hover:bg-gray-200 transition">Create Post</button>
+      <button id="createReelOption" class="w-full bg-gray-100 text-gray-800 py-2 rounded-lg hover:bg-gray-200 transition">Create Reel</button>
     </div>
+  </div>
+
   <!-- Post Modal -->
-  <div id="postInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden z-50">
+  <div id="postInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create a Post</h3>
-      <textarea id="postInput" placeholder="modal" content="What's on your mind?" class="mb-4"></textarea>
+      <textarea id="postInput" placeholder="What's on your mind?" class="mb-4"></textarea>
       <input type="text" id="postImageUrl" placeholder="Image URL (optional)" class="mb-4"/>
       <div class="flex justify-end gap-2">
         <button id="cancelPost" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
         <button id="postBtn" class="bg-blue-500 text-white rounded-full">Post</button>
       </div>
     </div>
-  <!-- Ad Modal -->
-  <div id="adInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden z-50">
-    <div class="modal-content">
-      <h3 class="text-lg font-bold mb-3">Create an Ad</h3>
-      <textarea id="adContent" placeholder="Ad content" maxlength="255" aria-label="Ad content" class="mb-4"></textarea>
-      <input type="text" id="adImageUrl" placeholder="Image URL (optional)" aria-label="Ad image URL" class="mb-4"/>
-      <select id="adTargetAudience" aria-label="Select target audience">
-        <option value="all">All Users</option>
-        <option value="18-24">18-24 years</option>
-        <option value="25-34">25-34 years</option>
-        <option value="35+">35+ years</option>
-      </select>
-      <input type="number" id="adBudget" placeholder="Budget (ZAR)" min="100" step="50" aria-label="Ad budget in ZAR" class="mb-4"/>
-      <select id="adDuration" aria-label="Select ad duration">
-        <option value="1">1 day</option>
-        <option value="3">3 days</option>
-        <option value="7">7 days</option>
-      </select>
-      <div class="flex justify-end gap-2">
-        <button id="cancelAd" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
-        <button id="postAdBtn" class="bg-blue-500 text-white rounded-full">Submit Ad</button>
-      </div>
-    </div>
   </div>
+
   <!-- Reel Modal -->
-  <div id="reelInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 hidden z-50">
+  <div id="reelInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
     <div class="modal-content">
       <h3 class="text-lg font-semibold mb-3">Create a Reel</h3>
       <textarea id="reelText" placeholder="What's on your mind?" maxlength="100" class="mb-4"></textarea>
@@ -579,6 +436,8 @@
         <button id="postReel" class="bg-blue-500 text-white rounded-full">Post</button>
       </div>
     </div>
+  </div>
+
   <!-- Reel Viewer Modal -->
   <div id="reelViewerModal" class="reel-viewer-modal fixed inset-0 z-50 hidden">
     <div class="reel-viewer-content">
@@ -590,568 +449,503 @@
         </svg>
       </button>
     </div>
+  </div>
 
-<!-- Bottom Navigation -->
-<div class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
-  <a href="#home" class="active" aria-current="page">
-    <i data-lucide="home"></i>
-    <div>Home</div>
-    <span id="postCountBadge" class="badge hidden"></span>
-  </a>
-  <a href="chat.html">
-    <i data-lucide="message-circle"></i>
-    Chat
-  </a>
-  <a href="#create" class="fab">
-    <i data-lucide="plus"></i>
-  </a>
-  <a href="requests.html">
-    <i data-lucide="users"></i>
-    Requests
-  </a>
-  <a href="profile.html">
-    <i data-lucide="user"></i>
-    Profile
-  </a>
-</nav>
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+    <a href="#home" class="active" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+      </svg>
+      Home
+      <span id="postCountBadge" class="badge hidden"></span>
+    </a>
+    <a href="chat.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
+      </svg>
+      Chat
+    </a>
+    <a href="#create" class="fab">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+    </a>
+    <a href="requests.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+      </svg>
+      Requests
+    </a>
+    <a href="profile.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+      </svg>
+      Profile
+    </a>
+  </nav>
 
-<script>
-  lucide.createIcons();
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "fire-b-a8878.firebaseapp.com",
-    databaseURL: "https://fire-b-a8878.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "fire-b-a8878.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
+  <!-- Scripts -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.appspot.com",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-  let currentUser = null;
+    let currentUser = null;
 
-  auth.onAuthStateChanged(user => {
-    if (!user)) return window.location.href = "index.html";
-    currentUser = user;
-    checkBusinessStatus();
-    loadPosts();
-    loadReels();
-  });
-
-  // Check if user to show ad creation option
-  async function checkBusinessStatus() {
-    const userRef = db.ref('users/' + db.ref(`${currentUser.uid}`);
-    userRef.once('value', snap => {
-      const userData = snap.val();
-      if (userData?.isBusiness) {
-        document.getElementById('createAdOption').classList.remove('hidden');
-      }
-      // Update follower count
-      db.ref('follows').orderByChild(currentUser.uid).once('value', followSnap => {
-        const followerCount = followSnap.numChildren() || 0;
-        userRef.update({ followersCount: followerCount });
-      });
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "index.html";
+      currentUser = user;
+      loadPosts();
+      loadReels();
     });
-  // Drawer
-  const burger = document.getElementById('burger');
-  const overlay = document.getElementsById('overlay');
-  const drawer = document.getElementById('drawer');
 
-  function openDrawer() {
-    drawer.classList.remove('-translate-x-full');
-    overlay.classList.remove('opacity-0', 'pointer-events-none');
-  }
-  function closeDrawer() {
-    drawer.classList.add('-translate-x-full');
-    overlay.classList.add('opacity-0', 'pointer-events-none');
-  }
-  burger.addEventListener('click', openDrawer);
-  overlay.addEventListener('click', closeDrawer);
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    auth.signOut().then(() => window.location.href = 'index.html');
-  });
-  drawer.querySelectorAll('.drawer-link').forEach(link => {
-    link.addEventListener('click', closeDrawer);
-  });
+    // Drawer
+    const burger = document.getElementById('burger');
+    const overlay = document.getElementById('overlay');
+    const drawer = document.getElementById('drawer');
 
-  // Create Modal
-  const createModal = document.getElementById('createModal');
-  const createPostOption = document.getElementById('createPostOption');
-  const createReelOption = document.getElementById('createReelOption');
-  const createAdOption = document.getElementById('createAdOption');
-  document.querySelector('.bottom-nav .fab').addEventListener('click', () => {
-    createModal.classList.remove('hidden');
-  });
-  createPostOption.addEventListener('click', () => {
-    createModal.classList.add('hidden');
-    document.getElementById('postInputModal').classList.remove('hidden');
-  });
-  createReelOption.addEventListener('click', () => {
-    createModal.classList.add('hidden');
-    document.getElementById('reelInputModal').classList.remove('hidden');
-  });
-  createAdOption.addEventListener('click', () => {
-    createModal.classList.add('hidden');
-    document.getElementById('adInputModal').classList.remove('hidden');
-  });
-
-  // Post Modal Content
-  const postInputModal = document.getElementById('postInputModal');
-  const postInput = document.getElementById('postInput');
-  const postImageUrl = document.getElementById('postImageUrl');
-  const postBtn = document.getElementById('postBtn');
-  const cancelPost = document.getElementById('cancelPost');
-
-  cancelPostBtn.addEventListener('click', () => {
-    postInputModal.classList.add('hidden');
-    postInput.value = '';
-    postImageUrl.value = '';
-  });
-
-  postBtn.addEventListener('click', () => {
-    const content = postInput.value.trim();
-    const imageUrl = postImageUrl.value.trim();
-    if (!content) return alert('Please enter post content.');
-    const postRef = db.ref('posts').push();
-    const postData = {
-      uid: currentUser.uid,
-      name: currentUser.displayName || 'Anonymous',
-      email: currentUser.email,
-      avatar: currentUser.photoURL || `https://i.pravatar.cc/150/150?u=${currentUser.uid}`,
-      content,
-      timestamp: Date.now(),
-      isAd: false
-    };
-    if (imageUrl) postData.imageUrl = imageUrl;
-
-    postRef.set(postData);
-    postInputModal.classList.add('hidden');
-    postInput.value = '';
-    postImageUrl.value = '';
-  });
-
-  // Ad Modal Creation
-  const adInputModal = document.getElementById('adInputModal').id;
-  const adContentInput = document.getElementById('adContent');
-  const adImageUrlInput = document.getElementById('adImageUrl');
-  const adTargetAudienceInput = document.getElementById('adTargetAudience');
-  const adBudgetInput = document.getElementById('adBudget');
-  const adDurationInput = document.getElementById('adDuration');
-  const postAdBtn = document.getElementById('postAdBtn');
-  const cancelAd = document.getElementById('cancelAd');
-
-  cancelAd.addEventListener('click', () => {
-    adInputModal.classList.add('hidden');
-    adContentInput.value = '';
-    adImageUrlInput.value = '';
-    adTargetAudienceInput.selectedIndex = 0;
-    adBudgetInput.value = '';
-    adDurationInput.selectedIndex = 0;
-  });
-
-  postAdBtn.addEventListener('click', async () => {
-    const content = adContentInput.value.trim();
-    const imageUrl = adImageUrlInput.value.trim();
-    const targetAudience = adTargetAudienceInput.value;
-    const budget = parseFloat(adBudgetInput.value);
-    const duration = parseInt(adDurationInput.value);
-
-    if (!content || !budget || budget < 100)) return alert('Please complete all fields with a minimum budget of R100.');
-
-    // Validate business status and followers
-    const userRef = db.ref('users/' + db.ref(`${currentUser.uid}`);
-    const userSnap = await userRef.once('value');
-    const userData = userSnap.val();
-    if (!userData?.isBusiness || userData?.followerCount < 500) {
-      alert('Only business accounts with 500+ followers can create ads.');
-      return;
+    function openDrawer() {
+      drawer.classList.remove('-translate-x-full');
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
     }
-
-    // Basic content filter (extend as needed)
-    const badWords = ['badword1', 'badword2']; // Replace with actual filter
-    if (badWords.some(word => content.toLowerCase().includes(word)))) {
-      return alert('Inappropriate content detected.');
+    function closeDrawer() {
+      drawer.classList.add('-translate-x-full');
+      overlay.classList.add('opacity-0', 'pointer-events-none');
     }
+    burger.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('.drawer-link').forEach(link => {
+      link.addEventListener('click', closeDrawer);
+    });
 
-    const adData = {
-      uid: currentUser.uid,
-      name: currentUser.displayName || 'Business',
-      avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
-      content,
-      imageUrl: imageUrl || '',
-      timestamp: Date.now(),
-      isAd: true,
-      approved: true, // Auto-approved
-      targetAudience,
-      budget,
-      duration: duration * 86400000, // Convert days to ms
-      impressions: 0
-    };
-    const adRef = db.ref('posts').push();
-    adRef.set(adData);
-    adInputModal.classList.add('hidden');
-    adContentInput.value = '';
-    adImageUrlInput.value = '';
-    adTargetAudienceInput.selectedIndex = 0;
-    adBudgetInput.value = '';
-    adDurationInput.selectedIndex = 0;
-    alert('Ad submitted and approved!');
-  });
+    // Create Modal
+    const createModal = document.getElementById('createModal');
+    const createPostOption = document.getElementById('createPostOption');
+    const createReelOption = document.getElementById('createReelOption');
+    document.querySelector('.bottom-nav .fab').addEventListener('click', () => {
+      createModal.classList.remove('hidden');
+    });
+    createPostOption.addEventListener('click', () => {
+      createModal.classList.add('hidden');
+      document.getElementById('postInputModal').classList.remove('hidden');
+    });
+    createReelOption.addEventListener('click', () => {
+      createModal.classList.add('hidden');
+      document.getElementById('reelInputModal').classList.remove('hidden');
+    });
 
-  // Reel Modal
-  const reelModal = document.getElementById('reelInputModal');
-  const cancelReel = document.getElementById('cancelReel');
-  const postReel = document.getElementById('postReel');
-  const reelTextInput = document.getElementById('reelText');
-  const reelImageUrl = document.getElementById('reelImageUrl');
+    // Post Modal
+    const postInputModal = document.getElementById('postInputModal');
+    const postInput = document.getElementById('postInput');
+    const postImageUrl = document.getElementById('postImageUrl');
+    const postBtn = document.getElementById('postBtn');
+    const cancelPost = document.getElementById('cancelPost');
 
-  cancelReel.addEventListener('click', () => {
-    reelModal.classList.add('hidden');
-    reelTextInput.value = '';
-    reelImageUrl.value = '';
-  });
+    cancelPost.addEventListener('click', () => {
+      postInputModal.classList.add('hidden');
+      postInput.value = '';
+      postImageUrl.value = '';
+    });
 
-  postReel.addEventListener('click', () => {
-    const text = reelTextInput.value.trim();
-    const imageUrl = reelImageUrl.value.trim();
-    if (!text)) return alert('Reel content cannot be empty.');
-    const user = firebase.auth().currentUser;
-    if (!user)) return alert('Please log in to post a reel.');
+    postBtn.addEventListener('click', () => {
+      const content = postInput.value.trim();
+      const imageUrl = postImageUrl.value.trim();
+      if (!content) return alert('Post content cannot be empty.');
 
-    const reelData = {
-      name: user.displayName || 'Anonymous',
-      uid: user.uid,
-      text,
-      timestamp: Date.now()
-    };
-    if (imageUrl)) reelData.imageUrl = imageUrl;
+      const postRef = db.ref('posts').push();
+      const postData = {
+        uid: currentUser.uid,
+        name: currentUser.displayName || 'Anonymous',
+        email: currentUser.email,
+        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        content,
+        timestamp: Date.now()
+      };
+      if (imageUrl) postData.imageUrl = imageUrl;
 
-    firebase.database().ref('reels').push().set(reelData).then(() => {
+      postRef.set(postData);
+      postInputModal.classList.add('hidden');
+      postInput.value = '';
+      postImageUrl.value = '';
+    });
+
+    // Reel Modal
+    const reelModal = document.getElementById('reelInputModal');
+    const cancelReel = document.getElementById('cancelReel');
+    const postReel = document.getElementById('postReel');
+    const reelTextInput = document.getElementById('reelText');
+    const reelImageUrl = document.getElementById('reelImageUrl');
+
+    cancelReel.addEventListener('click', () => {
       reelModal.classList.add('hidden');
       reelTextInput.value = '';
       reelImageUrl.value = '';
     });
-  });
 
-  // Reel Viewer Modal
-  const reelViewerModal = document.getElementById('reelViewerModal');
-  const reelViewerText = document.getElementById('reelViewerText');
-  const reelViewerImage = document.getElementById('reelViewerImage');
-  const closeReelViewer = document.getElementById('closeReelViewer');
+    postReel.addEventListener('click', () => {
+      const text = reelTextInput.value.trim();
+      const imageUrl = reelImageUrl.value.trim();
+      if (!text) return alert('Reel content cannot be empty.');
 
-  closeReelViewer.addEventListener('click', () => {
-    reelViewerModal.classList.add('hidden');
-    reelViewerImage.style.display = 'none';
-    reelViewerImage.src = '';
-  });
+      const user = firebase.auth().currentUser;
+      if (!user) return alert('Please log in to post a reel.');
 
-  function loadReels() {
-    const reelsContainer = document.querySelector('.reels-container');
-    const now = Date.now();
+      const reelData = {
+        name: user.displayName || 'Anonymous',
+        uid: user.uid,
+        text,
+        timestamp: Date.now()
+      };
+      if (imageUrl) reelData.imageUrl = imageUrl;
 
-    firebase.database().ref('reels').on('value', snapshot => {
-      reelsContainer.innerHTML = '';
-      const reels = snapshot.val() || {};
-
-      Object.entries(reels).forEach(([id], reel]) => {
-        const age = now - reel.timestamp;
-        if (age > 86400000) {
-          firebase.database().ref('reels/' + id).remove();
-        } else {
-          const reelEl = document.createElement('div');
-          reelEl.className = 'reel-item';
-          reelEl.innerHTML = `
-            <div class="avatar">
-              <div>${reel.text.length > 30 ? reel.text.slice(0, 28) + '…' : reel.text}</div>
-            </div>
-            <p>${reel.name}</p>
-          `;
-          reelEl.addEventListener('click', () => {
-            reelViewerText.textContent = reel.text;
-            if (reel.imageUrl)) {
-              reelViewerImage.src = reel.imageUrl;
-              reelViewerImage.style.display = 'block';
-            } else {
-              reelViewerImage.style.display = 'none';
-              reelViewerImage.src = '';
-            }
-            reelViewerModal.classList.remove('hidden');
-          });
-          reelsContainer.appendChild(reelEl);
-        }
+      firebase.database().ref('reels').push(reelData).then(() => {
+        reelModal.classList.add('hidden');
+        reelTextInput.value = '';
+        reelImageUrl.value = '';
       });
     });
-  }
 
-  function formatTimestamp(timestamp) {
-    const now = new Date();
-    const postDate = new Date(timestamp);
-    const diffMs = now - postDate;
-    const diffMinutes = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 8640000);
+    // Reel Viewer Modal
+    const reelViewerModal = document.getElementById('reelViewerModal');
+    const reelViewerText = document.getElementById('reelViewerText');
+    const reelViewerImage = document.getElementById('reelViewerImage');
+    const closeReelViewer = document.getElementById('closeReelViewer');
 
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays === 1) return `Yesterday at ${postDate.toLocaleTimeString([], { hour: '2'2-digit', minute: '2-digit' })}`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-
-    return postDate.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    closeReelViewer.addEventListener('click', () => {
+      reelViewerModal.classList.add('hidden');
+      reelViewerImage.style.display = 'none';
+      reelViewerImage.src = '';
     });
-  }
 
-  async function loadPosts() {
-    db.ref('posts').on('value', async snapshot => {
-      const posts = snapshot.val() || {};
-      const postsContainer = document.getElementById('posts');
-      postsContainer.innerHTML = '';
+    function loadReels() {
+      const reelsContainer = document.querySelector('.reels-container');
+      const now = Date.now();
 
-      for (const [postId, postData] of Object.entries(posts).reverse()) {
-        // Track ad impressions
-        if (postData.isAd && postData.approved) {
-          db.ref(`ads/postId}/${postId}/impressions`).transaction(count => (count || 0) + 1);
-          // Check if ad is still active
-          const now = Date.now();
-          if ((postData.budget / (180 / 1000)) * 1000 < postData.impressions || now > postData.timestamp + postData.duration) {
-            db.ref(`posts/postId}/${postId}`).remove();
-            continue;
-          }
-        }
+      firebase.database().ref('reels').on('value', snapshot => {
+        reelsContainer.innerHTML = '';
+        const reels = snapshot.val() || {};
 
-        let originalPost = {};
-        if (postData.originalPostId) {
-          const originalSnapshot = await db.ref(`posts/${postData.originalPostId}`).once('value');
-          originalPost = originalSnapshot.val() || {};
-        }
-
-        const isOwnPost = postData.uid === currentUser.uid;
-        const postEl = document.createElement('div');
-        postEl.className = 'post-card';
-        postEl.innerHTML = `
-          <div class="post-header">
-            <img src="${post.avatar}" alt="${postData.name}'s" avatar="${postData.avatar}" aria-hidden="true"/>
-            <div>
-              <div class="username">${postData.name}${postData.isAd ? ` • <span class="sponsored">Sponsored</span>` : ''}${postData.originalPostId ? ` • Reposted from ${originalPostData.name || 'someone'}` : ''}</div>
-            <div class="timestamp">${formatTimestamp(postData.timestamp)}</div>
-            </div>
-            <div class="actions">
-              ${isOwnPost ? `
-                <button class="edit-post-btn" data-id="${postId}" title="Edit post" aria-label="Edit post">
-                  <i data-lucide="edit" class="w-5 h-5"></i>
-                </button>
-                <button class="delete-post-btn" data-id="${postId}" title="Delete post" aria-label="Delete post">
-                  <i data-lucide="trash-2" class="w-5 h-5"></i>
-                </button>
-              ` : `}
-              <button class="follow-btn hidden bg-blue-500 text-white text-xs px-3 py-1 px-2 rounded-full py-1"> data-user="${postData.uid}" aria-label="Follow ${postData.name}">${postData.name} Follow"></button>
-              </div>}
-            </div>
-          }
-          ${postData.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="${postData.imageUrl ? 'Post image' : 'Ad image'}" loading="lazy"/>` : ''}`}
-          <div class="post-content" id="content-${postId}">${postData.content}</div>
-          <div class="post-actions">
-            <button class="like-btn" data-id="${postId}" aria-label="Like post">
-              <i data-lucide="heart" class="w-6 h-6"></i>
-              <span id="like-count">${postId}" class="text-sm">0</span>
-            </button>
-            <button class="comment-btn" data-id="${postId}" aria-label="View comments">
-              <i data-lucide="message-circle" class="w-6 h-6"></i>
-              <span id="comment-count">${postId}" class="text-sm">0</span>
-            </button>
-            <button class="repost-btn" data-id="${postId}" aria-label="Repost">
-              <i data-lucide="share-2" class="w-6 h-6"></i>
-              <span id="repost-count">${postId}" class="text-sm">0</span>
-            </button>
-          </div>
-          <div class="comments-section" id="comments-${postId}"></div>
-          <div class="comment-input-container">
-            <input type="text" class="comment-input" data-id="${postId}" placeholder="Add a comment..." aria-label="Comment input field"/>
-            <button class="comment-submit-btn" data-id="${postId}" aria-label="Submit comment">Post</button>
-          </div>
-        `;
-      postsContainer.appendChild(postEl);
-
-      // Follow button logic
-      if (!isOwnPost) {
-        const followBtn = postEl.querySelector('.follow-btn');
-        const followRef = db.ref('follows/${currentUser.uid}/${postData.uid}');
-        followRef.once('value', snap => {
-          if (!snap.exists()) {
-            followBtn.classList.remove('hidden');
-          }
-        });
-        followBtn.addEventListener('click', () => {
-          db.ref('follows/${currentUser.uid}/${postData.uid}').set(true);
-          followBtn.classList.add('hidden');
-          alert('You followed ${postData.name}');
-        });
-      }
-
-      // Like logic
-      const likeRef = db.ref('likes/${postId}/${currentUser.uid}');
-      likeRef.on('value', snap => {
-        const likeBtn = postEl.querySelector('.like-btn');
-        if (likeBtn) {
-          likeBtn.classList.toggle('liked', snap.exists());
-          lucide.createIcons({nodes: [likeBtn]});
-        }
-      });
-      db.ref('likes/${postId}').on('value', snap => {
-        const likes = snap.val() || {};
-        const countEl = document.getElementById('like-count-${postId}');
-        if (countEl) countEl.textContent = Object.keys(likes).length;
-      });
-
-      // Comment count
-      db.ref('comments/${postId}').on('value', snap => {
-        const comments = snap.val() || {};
-        const commentCountEl = document.getElementById('comment-count-${postId}');
-        if (commentCountEl) commentCountEl.textContent = Object.keys(comments).length;
-      });
-
-      // Repost logic
-      db.ref('reposts/${postId}/${currentUser.uid}').on('value', snap => {
-        const repostBtn = postEl.querySelector('.repost-btn');
-        if (repostBtn) {
-          repostBtn.classList.toggle('reposted', snap.exists());
-          lucide.createIcons({nodes: [repostBtn]});
-        }
-      });
-        db.ref('reposts/${postId}').on('value', snap => {
-          const reposts = snap.val() || {};
-          const countEl = document.getElementById('repost-count-${postId}');
-          if (countEl) countEl.textContent = Object.keys(reposts).length;
-        });
-
-        loadComments(postId);
-      });
-
-      function loadComments(postId) {
-        const container = document.getElementById('comments-${postId}');
-        db.ref('comments/${postId}').on('value', snapshot => {
-          container.innerHTML = '';
-          const comments = snapshot.val() || {};
-
-          Object.entries(comments).forEach(([key, cmt]) => {
-            const commentEl = document.createElement('div');
-            commentEl.className = 'comment';
-            commentEl.innerHTML = `
-              <img src="${cmt.avatar}" alt="${cmt.name}'s" avatar=" aria-hidden="true"/>
-              <div class="comment-content">
-                <div class="username">${cmt.name}</div>
-                <p>${cmt.text}</p>
-                <div class="timestamp">${cmt.formatTimestamp(cmt.timestamp)}</div>
+        Object.entries(reels).forEach(([id, reel]) => {
+          const age = now - reel.timestamp;
+          if (age > 86400000) {
+            firebase.database().ref('reels/' + id).remove();
+          } else {
+            const reelEl = document.createElement('div');
+            reelEl.className = 'reel-item';
+            reelEl.innerHTML = `
+              <div class="avatar">
+                <div>${reel.text.length > 30 ? reel.text.slice(0, 28) + '…' : reel.text}</div>
               </div>
-              ${cmt.uid === currentUser.uid ? `<button class="delete-comment-btn" data-id="${key}" aria-label="Delete comment">Delete</button>` : ''}
-                `;
-            container.appendChild(commentEl);
+              <p>${reel.name}</p>
+            `;
+            reelEl.addEventListener('click', () => {
+              reelViewerText.textContent = reel.text;
+              if (reel.imageUrl) {
+                reelViewerImage.src = reel.imageUrl;
+                reelViewerImage.style.display = 'block';
+              } else {
+                reelViewerImage.style.display = 'none';
+                reelViewerImage.src = '';
+              }
+              reelViewerModal.classList.remove('hidden');
+            });
+            reelsContainer.appendChild(reelEl);
+          }
+        });
+      });
+    }
 
-            const delBtn = commentEl.querySelector('.delete-comment-btn');
-            if (delBtn) {
-              delBtn.addEventListener('click', () => {
-                db.ref('comments/${postId}/${key}').remove();
-              });
+    function formatTimestamp(timestamp) {
+      const now = new Date();
+      const postDate = new Date(timestamp);
+      const diffMs = now - postDate;
+      const diffMinutes = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMinutes < 1) return 'Just now';
+      if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      if (diffDays === 1) return `Yesterday at ${postDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+      return postDate.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    async function loadPosts() {
+      db.ref('posts').on('value', async snapshot => {
+        const posts = snapshot.val() || {};
+        const postsContainer = document.getElementById('posts');
+        postsContainer.innerHTML = '';
+
+        for (const [postId, post] of Object.entries(posts).reverse()) {
+          let originalPost = {};
+          if (post.originalPostId) {
+            const originalSnapshot = await db.ref(`posts/${post.originalPostId}`).once('value');
+            originalPost = originalSnapshot.val() || {};
+          }
+
+          const isOwnPost = post.uid === currentUser.uid;
+          const postEl = document.createElement('div');
+          postEl.className = 'post';
+          postEl.innerHTML = `
+            <div class="post-header">
+              <img src="${post.avatar}" class="w-8 h-8 rounded-full"/>
+              <div class="flex-1">
+                <p class="font-semibold text-sm">${post.name}${post.originalPostId ? ` (Reposted from ${originalPost.name || 'someone'})` : ''}</p>
+                <span class="text-xs text-gray-500">${formatTimestamp(post.timestamp)}</span>
+              </div>
+              ${isOwnPost ? `
+                <div class="flex gap-2">
+                  <button class="edit-post-btn text-gray-500 p-1" data-id="${postId}" title="Edit">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11.5A1.5 1.5 0 005.5 20H17a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button class="delete-post-btn text-gray-500 p-1" data-id="${postId}" title="Delete">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>` : `
+                <button class="follow-btn bg-blue-500 text-white text-xs px-3 py-1 rounded-full hidden" data-user="${post.uid}">Follow</button>`}
+            </div>
+            ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="Post image"/>` : ''}
+            <div class="post-content" id="content-${postId}">${post.content}</div>
+            <div class="post-actions">
+              <button class="like-btn" data-id="${postId}">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+                <span id="like-count-${postId}" class="text-sm">0</span>
+              </button>
+              <button class="comment-btn" data-id="${postId}">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+              </button>
+              <button class="repost-btn" data-id="${postId}">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+                <span id="repost-count-${postId}" class="text-sm">0</span>
+              </button>
+            </div>
+            <div id="comments-${postId}" class="px-4 py-2 space-y-2"></div>
+            <div class="px-4 py-2 border-t border-gray-200">
+              <div class="flex items-center gap-2">
+                <input type="text" placeholder="Write a comment..." class="comment-input flex-1 border-0 bg-gray-100 rounded-full px-4 py-2 text-sm focus:ring-0" data-id="${postId}"/>
+                <button class="comment-btn bg-blue-500 text-white p-2 rounded-full" data-id="${postId}" title="Post Comment">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-6 9 6-9 6-9-6z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21V9l3-2 3 2v12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+
+          postsContainer.appendChild(postEl);
+
+          if (!isOwnPost) {
+            const followBtn = postEl.querySelector('.follow-btn');
+            const followRef = db.ref(`follows/${currentUser.uid}/${post.uid}`);
+            followRef.once('value', snap => {
+              if (!snap.exists()) {
+                followBtn.classList.remove('hidden');
+              }
+            });
+            followBtn?.addEventListener('click', () => {
+              db.ref(`follows/${currentUser.uid}/${post.uid}`).set(true);
+              followBtn.classList.add('hidden');
+              alert(`You followed ${post.name}`);
+            });
+          }
+
+          // Like count
+          db.ref(`likes/${postId}`).on('value', snap => {
+            const likes = snap.val() || {};
+            document.getElementById(`like-count-${postId}`).textContent = Object.keys(likes).length;
+          });
+
+          // Repost count and state
+          db.ref(`reposts/${postId}`).on('value', snap => {
+            const reposts = snap.val() || {};
+            document.getElementById(`repost-count-${postId}`).textContent = Object.keys(reposts).length;
+          });
+          db.ref(`reposts/${postId}/${currentUser.uid}`).once('value', snap => {
+            if (snap.exists()) {
+              postEl.querySelector('.repost-btn').classList.add('reposted');
             }
           });
-        });
 
-        // Event Listeners (using delegation)
-        document.getElementById('posts').addEventListener('click', async e => {
-          const target = e.target.closest('button');
-          if (!target) return;
-          const postId = target.getAttribute('data-id');
-          if (target.classList.contains('like-btn')) {
-            const likeRef = db.ref('likes/${postId}/${currentUser.uid}');
-            const snap = await likeRef.once('value');
-            if (snap.exists()) {
-              likeRef.remove();
-            } else {
-              likeRef.set(true);
-            }
-          } else if (target.classList.contains('comment-submit-btn')) {
-            const input = document.querySelector('.comment-input-container .comment-input[data-id="${postId}"]');
+          postEl.querySelector('.like-btn').addEventListener('click', () => {
+            const likeRef = db.ref(`likes/${postId}/${currentUser.uid}`);
+            likeRef.once('value', snap => {
+              if (snap.exists()) likeRef.remove();
+              else likeRef.set(true);
+            });
+          });
+
+          postEl.querySelector('.comment-btn').addEventListener('click', () => {
+            const input = postEl.querySelector(`.comment-input[data-id="${postId}"]`);
             const text = input.value.trim();
-            if (text) {
-              db.ref('comments/${postId}').push({
-                uid: currentUser.uid,
-                name: currentUser.displayName || 'User',
-                avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
-                text,
-                timestamp: Date.now()
-              });
-              input.value = '';
-            }
-          } else if (target.classList.contains('repost-btn')) {
-            const repostRef = db.ref('reposts/${postId}/${currentUser.uid}');
-            const repostSnap = await repostRef.once('value');
-            if (repostSnap.exists()) {
-              alert('You have already reposted this post.');
-              return;
-            }
-            const postSnap = await db.ref('posts/${postId}').once('value');
-            const originalPost = postSnap.val();
-            const newPost = {
-              content: post.originalPost.content,
+            if (!text) return;
+            db.ref(`comments/${postId}`).push({
               uid: currentUser.uid,
-              name: currentUser.displayName || 'Anonymous',
+              name: currentUser.displayName || 'User',
               avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
-              originalPostId: postId,
+              text,
               timestamp: Date.now()
             });
-            if (originalPost.imageUrl)) {
-              newPost.imageUrl = originalPost.imageUrl;
-            }
-            await db.ref('posts').push(newPost);
-            await repostRef.set(true);
-            alert('Reposted!');
-          } else if (target.classList.contains('delete-post-btn')) {
-            if (confirm('Are you sure you want to delete this post?')) {
-              await db.ref('posts/${postId}').remove();
-              await db.ref('likes').${postId}').remove();
-              await db.ref('comments').${postId}').remove();
-              await db.ref('reposts').${postId}').remove();
-            }
-          } else if (target.classList.contains('edit-post-btn')) {
-            const postSnap = await db.ref('posts/${postId}').once('value');
-            const post = postSnap.val();
-            const newContent = prompt('Edit your post:', post.content);
-            const newImageUrl = prompt('Edit your image URL (optional, leave blank to remove):', post.imageUrl || '');
-            if (newContent && newContent !== post.content)) {
-              const updates = { content: newContent };
-              if (newImageUrl)) {
-                updates.imageUrl = newImageUrl;
-              } else if (post.imageUrl)) {
-                updates.imageUrl = null;
-              }
-              await db.ref('posts/${postId}').update(updates);
-            }
-          }
-        });
+            input.value = '';
+          });
 
-        // Post Counter
-      .function bindPostCounter() {
-        const badge = document.getElementById('postCountBadge');
-        db.ref('posts').on('value', snap => {
-          const count = snap.numChildren();
-          if (count === 0) {
-            badge.classList.add('hidden');
-            } else {
-            badge.textContent = count > 99 ? '99+' : count;
-            badge.classList.remove('hidden');
+          const deleteBtn = postEl.querySelector('.delete-post-btn');
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+              if (confirm('Delete this post?')) {
+                db.ref(`posts/${postId}`).remove();
+                db.ref(`likes/${postId}`).remove();
+                db.ref(`comments/${postId}`).remove();
+                db.ref(`reposts/${postId}`).remove();
+              }
+            });
+          }
+
+          const editBtn = postEl.querySelector('.edit-post-btn');
+          if (editBtn) {
+            editBtn.addEventListener('click', () => {
+              const newContent = prompt('Edit your post:', post.content);
+              const newImageUrl = prompt('Edit image URL (optional, leave blank to remove):', post.imageUrl || '');
+              if (newContent && newContent !== post.content) {
+                const updates = { content: newContent };
+                if (newImageUrl) updates.imageUrl = newImageUrl;
+                else if (post.imageUrl) updates.imageUrl = null;
+                db.ref(`posts/${postId}`).update(updates);
+              }
+            });
+          }
+
+          loadComments(postId);
+        }
+      });
+    }
+
+    function loadComments(postId) {
+      const container = document.getElementById(`comments-${postId}`);
+      db.ref(`comments/${postId}`).on('value', snapshot => {
+        const comments = snapshot.val() || {};
+        container.innerHTML = '';
+
+        Object.entries(comments).forEach(([key, cmt]) => {
+          const commentEl = document.createElement('div');
+          commentEl.className = 'flex items-start gap-2';
+          commentEl.innerHTML = `
+            <img src="${cmt.avatar}" class="w-6 h-6 rounded-full mt-1"/>
+            <div class="bg-gray-100 px-3 py-2 rounded-xl w-full">
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-medium text-xs">${cmt.name}</span>
+                ${cmt.uid === currentUser.uid ? `<button class="delete-comment text-red-500 text-xs" data-id="${key}">Delete</button>` : ''}
+              </div>
+              <p class="text-xs">${cmt.text}</p>
+              <p class="text-[10px] text-gray-500 mt-1">${new Date(cmt.timestamp).toLocaleTimeString()}</p>
+            </div>
+          `;
+          container.appendChild(commentEl);
+
+          const delBtn = commentEl.querySelector('.delete-comment');
+          if (delBtn) {
+            delBtn.addEventListener('click', () => {
+              db.ref(`comments/${postId}/${key}`).remove();
+            });
           }
         });
-      }
-      bindPostCounter();
+      });
     }
+
+    // Repost Event Listener (using event delegation)
+    document.getElementById('posts').addEventListener('click', async (event) => {
+      if (event.target.closest('.repost-btn')) {
+        const button = event.target.closest('.repost-btn');
+        const postId = button.getAttribute('data-id');
+        const postRef = db.ref('posts/' + postId);
+        const repostRef = db.ref(`reposts/${postId}/${auth.currentUser?.uid}`);
+
+        try {
+          // Check if user has already reposted
+          const repostSnapshot = await repostRef.once('value');
+          if (repostSnapshot.exists()) {
+            alert('You have already reposted this post.');
+            return;
+          }
+
+          const snapshot = await postRef.once('value');
+          if (!snapshot.exists()) {
+            alert('Post not found.');
+            return;
+          }
+
+          const originalPost = snapshot.val();
+          const currentUser = auth.currentUser;
+
+          if (!currentUser) {
+            alert('Please log in to repost.');
+            return;
+          }
+
+          const newPost = {
+            content: originalPost.content,
+            uid: currentUser.uid,
+            name: currentUser.displayName || 'Anonymous',
+            avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+            originalPostId: postId,
+            timestamp: Date.now()
+          };
+          if (originalPost.imageUrl) newPost.imageUrl = originalPost.imageUrl;
+
+          await db.ref('posts').push(newPost);
+          await repostRef.set(true); // Track the repost
+          button.classList.add('reposted');
+          alert('Reposted!');
+        } catch (err) {
+          console.error('Repost error:', err);
+          alert('Failed to repost. Please try again.');
+        }
+      }
+    });
+
+    // Post Counter
+    function bindPostCounter() {
+      const badge = document.getElementById('postCountBadge');
+      db.ref('posts').on('value', snap => {
+        const count = snap.numChildren();
+        if (count === 0) {
+          badge.classList.add('hidden');
+        } else {
+          badge.textContent = count > 99 ? '99+' : count;
+          badge.classList.remove('hidden');
+        }
+      });
+    }
+    bindPostCounter();
   </script>
 </body>
 </html>
