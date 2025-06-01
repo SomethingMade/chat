@@ -10,41 +10,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <style>
-    /* CSS Variables for Light and Dark Mode */
-    :root {
-      --bg-primary: #fafafa;
-      --bg-secondary: #fff;
-      --text-primary: #262626;
-      --text-secondary: #8e8e8e;
-      --border: #dbdbdb;
-      --accent: #0095f6;
-      --modal-bg: rgba(0, 0, 0, 0.6);
-      --post-bg: #fff;
-      --input-bg: #f0f0f0;
-      --button-bg: #0095f6;
-      --button-text: #fff;
-    }
-    [data-theme="dark"] {
-      --bg-primary: #1a1a1a;
-      --bg-secondary: #2d2d2d;
-      --text-primary: #e0e0e0;
-      --text-secondary: #a0a0a0;
-      --border: #444;
-      --accent: #4dabf7;
-      --modal-bg: rgba(0, 0, 0, 0.8);
-      --post-bg: #2d2d2d;
-      --input-bg: #3a3a3a;
-      --button-bg: #4dabf7;
-      --button-text: #fff;
-    }
-
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background: #fafafa;
+      color: #262626;
       margin: 0;
       padding-bottom: 70px;
-      transition: background 0.3s ease, color 0.3s ease;
     }
     ::-webkit-scrollbar {
       display: none;
@@ -52,8 +23,8 @@
 
     /* Header */
     header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
       height: 54px;
       display: flex;
       align-items: center;
@@ -62,36 +33,23 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      transition: background 0.3s ease, border 0.3s ease;
     }
     .logo {
       font-family: 'Lobster', cursive;
       font-size: 24px;
       font-weight: 600;
-      color: var(--text-primary);
     }
 
     /* Drawer */
     #drawer {
       width: 280px;
       max-width: 80%;
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border);
+      background: #fff;
+      border-right: 1px solid #dbdbdb;
       z-index: 40;
-      transition: background 0.3s ease, border 0.3s ease;
     }
     .drawer-link {
-      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium hover:bg-gray-100 hover:text-blue-500 transition;
-      color: var(--text-primary);
-    }
-    .drawer-link:hover {
-      background: var(--input-bg);
-      color: var(--accent);
-    }
-    #dark-mode-toggle svg {
-      width: 20px;
-      height: 20px;
-      stroke: var(--text-primary);
+      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
     }
 
     /* Bottom Navigation */
@@ -100,8 +58,8 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background: var(--bg-secondary);
-      border-top: 1px solid var(--border);
+      background: #fff;
+      border-top: 1px solid #dbdbdb;
       height: 60px;
       display: flex;
       justify-content: space-around;
@@ -110,12 +68,11 @@
       border-top-left-radius: 12px;
       border-top-right-radius: 12px;
       z-index: 1000;
-      transition: background 0.3s ease, border 0.3s ease;
     }
     .bottom-nav a {
       flex: 1;
       text-align: center;
-      color: var(--text-primary);
+      color: #262626;
       font-size: 12px;
       padding: 8px 0;
       display: flex;
@@ -127,18 +84,18 @@
       width: 24px;
       height: 24px;
       fill: none;
-      stroke: var(--text-primary);
+      stroke: #262626;
       stroke-width: 2;
       margin-bottom: 2px;
       transition: stroke 0.3s ease, transform 0.3s ease;
     }
     .bottom-nav a.active,
     .bottom-nav a:hover {
-      color: var(--accent);
+      color: #0095f6;
     }
     .bottom-nav a.active svg,
     .bottom-nav a:hover svg {
-      stroke: var(--accent);
+      stroke: #0095f6;
       transform: scale(1.1);
     }
     .bottom-nav a.active svg {
@@ -218,8 +175,8 @@
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      border: 2px solid var(--bg-secondary);
-      background: var(--bg-secondary);
+      border: 2px solid #fff;
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -230,11 +187,10 @@
       padding: 4px;
       text-overflow: ellipsis;
       white-space: nowrap;
-      color: var(--text-primary);
     }
     .reel-item p {
       font-size: 12px;
-      color: var(--text-primary);
+      color: #262626;
       margin-top: 4px;
       max-width: 64px;
       white-space: nowrap;
@@ -244,12 +200,11 @@
 
     /* Posts */
     .post {
-      background: var(--post-bg);
-      border: 1px solid var(--border);
+      background: #fff;
+      border: 1px solid #dbdbdb;
       border-radius: 12px;
       margin-bottom: 16px;
       overflow: hidden;
-      transition: background 0.3s ease, border 0.3s ease;
     }
     .post-header {
       display: flex;
@@ -261,7 +216,6 @@
       padding: 12px 16px;
       font-size: 14px;
       line-height: 1.5;
-      color: var(--text-primary);
     }
     .post-image {
       width: 100%;
@@ -278,58 +232,47 @@
       align-items: center;
       gap: 4px;
       font-size: 14px;
-      color: var(--text-primary);
+      color: #262626;
     }
     .post-actions button svg {
       width: 20px;
       height: 20px;
-      stroke: var(--text-primary);
     }
     .repost-btn.reposted svg {
-      stroke: var(--accent);
-      fill: var(--accent);
+      stroke: #0095f6;
+      fill: #0095f6;
     }
 
     /* Modals */
     .modal {
-      background: var(--modal-bg);
+      background: rgba(0, 0, 0, 0.6);
     }
     .modal-content {
-      background: var(--bg-secondary);
+      background: #fff;
       border-radius: 16px;
       padding: 16px;
       width: 90%;
       max-width: 400px;
-      color: var(--text-primary);
-      transition: background 0.3s ease;
     }
     .modal textarea,
     .modal input[type="text"] {
-      border: 1px solid var(--border);
+      border: 1px solid #dbdbdb;
       border-radius: 8px;
       padding: 12px;
       font-size: 14px;
       width: 100%;
       box-sizing: border-box;
       margin-bottom: 12px;
-      background: var(--input-bg);
-      color: var(--text-primary);
     }
     .modal button {
       padding: 8px 16px;
       border-radius: 8px;
       font-size: 14px;
-      background: var(--button-bg);
-      color: var(--button-text);
-    }
-    .modal button.bg-gray-200 {
-      background: var(--input-bg);
-      color: var(--text-primary);
     }
 
     /* Reel Viewer Modal */
     .reel-viewer-modal {
-      background: var(--modal-bg);
+      background: rgba(0, 0, 0, 0.9);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -432,12 +375,6 @@
           </svg>
           Settings
         </a>
-        <button id="dark-mode-toggle" class="drawer-link">
-          <svg id="dark-mode-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-          Dark Mode
-        </button>
         <button class="drawer-link text-red-500 text-left">Log out</button>
       </nav>
     </div>
@@ -591,38 +528,6 @@
     drawer.querySelectorAll('.drawer-link').forEach(link => {
       link.addEventListener('click', closeDrawer);
     });
-
-    // Dark Mode Toggle
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const darkModeIcon = document.getElementById('dark-mode-icon');
-    function toggleDarkMode() {
-      const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-      if (isDarkMode) {
-        document.documentElement.removeAttribute('data-theme');
-        darkModeIcon.innerHTML = `
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-        `;
-        darkModeToggle.querySelector('span') ? darkModeToggle.querySelector('span').textContent = 'Dark Mode' : darkModeToggle.appendChild(document.createTextNode(' Dark Mode'));
-        localStorage.setItem('theme', 'light');
-      } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        darkModeIcon.innerHTML = `
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-        `;
-        darkModeToggle.querySelector('span') ? darkModeToggle.querySelector('span').textContent = 'Light Mode' : darkModeToggle.appendChild(document.createTextNode(' Light Mode'));
-        localStorage.setItem('theme', 'dark');
-      }
-    }
-    darkModeToggle.addEventListener('click', toggleDarkMode);
-
-    // Initialize theme based on local storage
-    if (localStorage.getItem('theme') === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      darkModeIcon.innerHTML = `
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-      `;
-      darkModeToggle.querySelector('span') ? darkModeToggle.querySelector('span').textContent = 'Light Mode' : darkModeToggle.appendChild(document.createTextNode(' Light Mode'));
-    }
 
     // Create Modal
     const createModal = document.getElementById('createModal');
@@ -903,7 +808,7 @@
             const input = postEl.querySelector(`.comment-input[data-id="${postId}"]`);
             const text = input.value.trim();
             if (!text) return;
-            db.ref(`comments/${postId`).push({
+            db.ref(`comments/${postId}`).push({
               uid: currentUser.uid,
               name: currentUser.displayName || 'User',
               avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
