@@ -27,8 +27,8 @@
 
     /* Header */
     header {
-      background: #075E54;
-      color: #FFF;
+      background: #FFFFFF;
+      color: #000000;
       height: 60px;
       display: flex;
       align-items: center;
@@ -36,7 +36,8 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid #E0E0E0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
     header .back-btn, header .menu-btn {
       width: 24px;
@@ -206,11 +207,11 @@
       background: #F0F0F0;
     }
     #sendButton {
-      background: #075E54;
+      background: #25D366;
       color: #FFF;
     }
     #sendButton:hover {
-      background: #064A3F;
+      background: #1EBE57;
     }
     #imageUpload {
       display: none;
@@ -220,7 +221,7 @@
 <body>
   <!-- Header -->
   <header>
-    <button class="back-btn" id="backBtn">
+    <button class="back-btn" id="backBtn" style="display: none;">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
       </svg>
@@ -303,6 +304,9 @@
     let currentChatUser = null;
     const unreadMap = {};
 
+    // Message sent sound
+    const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c44.mp3'); // WhatsApp-like sent sound
+
     // Drawer Logic
     const burger = document.getElementById('burger');
     const backBtn = document.getElementById('backBtn');
@@ -378,6 +382,10 @@
         const friendUIDs = Object.keys(snap.val() || {});
         Promise.all(friendUIDs.map(uid => db.ref('users/' + uid).once('value').then(u => ({ uid, user: u.val() })))).then(arr => {
           friendList.innerHTML = '';
+          if (arr.length === 0) {
+            friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
+            return;
+          }
           arr.forEach(({ uid, user }) => {
             const unseen = unreadMap[uid] || 0;
             const item = document.createElement('div');
@@ -421,9 +429,9 @@
       chatAvatar.src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
       document.getElementById('friendList').style.display = 'none';
       document.getElementById('messages').style.display = 'block';
-      document.getElementById('messages').innerHTML = '';
       document.getElementById('messageForm').style.display = 'flex';
       document.getElementById('backBtn').style.display = 'block';
+      document.getElementById('messages').innerHTML = '';
       listenForMessages();
       closeDrawer();
     }
@@ -454,8 +462,10 @@
         timestamp: Date.now(),
         status: 'delivered'
       };
-      db.ref(`chats/${currentChatRoom}`).push(msg);
-      document.getElementById('messageInput').value = '';
+      db.ref(`chats/${currentChatRoom}`).push(msg).then(() => {
+        sendSound.play().catch(err => console.error('Audio play error:', err));
+        document.getElementById('messageInput').value = '';
+      });
     });
 
     // Auth
