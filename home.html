@@ -304,6 +304,58 @@
       color: #fff;
       cursor: pointer;
     }
+/* Ads */
+.ad {
+  background: #fff;
+  border: 2px solid #0095f6; /* Blue border to indicate sponsored content */
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.ad::before {
+  content: 'Sponsored';
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0095f6;
+}
+.ad-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+}
+.ad-content {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.ad-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+}
+.ad-cta {
+  padding: 12px 16px;
+  border-top: 1px solid #dbdbdb;
+}
+.ad-cta a {
+  display: inline-block;
+  background: #0095f6;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+  text-align: center;
+}
+.ad-cta a:hover {
+  background: #0077cc;
+}
+    
   </style>
 </head>
 <body>
@@ -450,6 +502,21 @@
       </button>
     </div>
   </div>
+
+<!-- Ad Modal -->
+<div id="adInputModal" class="modal fixed inset-0 flex items-center justify-center bg-black/60 z-50 hidden">
+  <div class="modal-content">
+    <h3 class="text-lg font-semibold mb-3">Create an Ad</h3>
+    <textarea id="adInput" placeholder="Ad content (max 280 characters)" maxlength="280" class="mb-4"></textarea>
+    <input type="text" id="adImageUrl" placeholder="Image URL (optional)" class="mb-4"/>
+    <input type="text" id="adCtaLink" placeholder="Call-to-Action URL (e.g., https://yourwebsite.com)" class="mb-4"/>
+    <div class="flex justify-end gap-2">
+      <button id="cancelAd" class="bg-gray-200 text-gray-800 rounded-full">Cancel</button>
+      <button id="postAd" class="bg-blue-500 text-white rounded-full">Post Ad</button>
+    </div>
+  </div>
+</div>
+  
 
   <!-- Bottom Navigation -->
   <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
