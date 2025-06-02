@@ -56,10 +56,15 @@
       height: 36px;
       border-radius: 50%;
       object-fit: cover;
+      cursor: pointer;
     }
     .chat-info .name {
       font-size: 16px;
       font-weight: 500;
+      cursor: pointer;
+    }
+    .chat-info .name:hover {
+      color: #0095f6;
     }
     .action-btn {
       display: flex;
@@ -234,11 +239,23 @@
       min-height: calc(100vh - 180px);
       overflow-y: auto;
       display: none;
+      padding-bottom: 80px; /* Space for message input */
+    }
+    .message-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .message-wrap.sent {
+      flex-direction: row-reverse;
+    }
+    .message-wrap.received {
+      flex-direction: row;
     }
     .message {
       max-width: 70%;
       padding: 8px 12px;
-      margin-bottom: 12px;
       font-size: 14px;
       line-height: 1.4;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -247,7 +264,6 @@
     }
     .message.sent {
       background: #e6f3ff;
-      margin-left: auto;
       border-radius: 8px 8px 2px 8px;
     }
     .message.received {
@@ -304,6 +320,13 @@
       display: flex;
       align-items: center;
       gap: 2px;
+    }
+    .message-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
     }
 
     /* Message Input */
@@ -562,6 +585,9 @@
       link.addEventListener('click', closeDrawer);
     });
 
+    // Back Button Logic
+    backBtn.addEventListener('click', showFriendList);
+
     // Call and Video Call Placeholders
     document.getElementById('callBtn').addEventListener('click', () => {
       alert('Call feature not implemented. This is a placeholder.');
@@ -713,7 +739,7 @@
       const wrap = document.getElementById('messages');
       const me = msg.uid === currentUser.uid;
       const div = document.createElement('div');
-      div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
+      div.className = `message-wrap ${me ? 'sent' : 'received'}`;
       const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
       let content = '';
       if (msg.audioUrl) content = `<audio controls src="${msg.audioUrl}"></audio>`;
@@ -731,6 +757,7 @@
       `).join('');
 
       div.innerHTML = `
+        <img src="${msg.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${msg.name}" class="message-avatar" data-uid="${msg.uid}" />
         <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
           <div class="name" data-uid="${msg.uid}">${msg.name}</div>
           ${content}
@@ -752,8 +779,11 @@
       });
 
       const nameEl = div.querySelector('.name');
-      nameEl.addEventListener('click', () => {
-        window.location.href = `profile.html?uid=${msg.uid}`;
+      const avatarEl = div.querySelector('.message-avatar');
+      [nameEl, avatarEl].forEach(el => {
+        el.addEventListener('click', () => {
+          window.location.href = `profile.html?uid=${msg.uid}`;
+        });
       });
     }
 
@@ -767,8 +797,8 @@
       }
       const friends = await Promise.all(friendUIDs.map(async uid => {
         const userSnap = await db.ref('users/' + uid).once('value');
-        const presenceSnap = await db.ref('presence/' + uid).once('value');
-        const chatRoomId = [currentUser.uid, uid].sort().join('_');
+        const presenceSnap = await db.ref('presence/' + uid).get();
+        const chatRoomId = [currentUser.uid(), uid].join('_');
         const lastMessage = await getLastMessage(chatRoomId);
         return {
           uid,
@@ -784,16 +814,25 @@
         const item = document.createElement('div');
         item.className = 'friend-item';
         item.innerHTML = `
-          <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${user.name}" />
+          <img id="avatar" src="${user.photoURL || 'https://www.gravatar.com/avatar?d=80" alt="${user.name}" />
           <div class="info">
-            <div class="name">${user.name || 'Unnamed User'}</div>
-            <div class="last-message">${lastMessage || 'No messages yet'}</div>
-            <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
+            <div class="message-name">${user.name}</div>
+            <div class="message-last-message">${lastMessage || 'No messages'}</div>
+            <div class="message-last-seen">${formatLastMessage}</div>
           </div>
-          ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+          ${unseen > 0 ? `<span class="message-badge">${unseen}` : ''}</span>
         `;
         item.addEventListener('click', () => openChatWithUser(uid, user));
         friendList.appendChild(item);
+
+        const nameEl = item.querySelector('.name');
+        const avatarEl = item.querySelector('img');
+        [avatarEl].forEach(el => {
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.location.href = `profile.html?uid=${uid}`;
+          });
+        });
       });
     }
 
@@ -814,8 +853,8 @@
     function openChatWithUser(uid, user) {
       unreadMap[uid] = 0;
       renderFriendList();
-      currentChatRoom = [currentUser.uid, uid].sort().join('_');
-      currentChatUser = user;
+      currentChatRoom = [currentUser.uid(), uid].sort().join('_');
+      currentChat = user;
       document.getElementById('chatTitle').textContent = user.name || 'Unnamed User';
       document.getElementById('chatAvatar').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
       document.getElementById('friendList').style.display = 'none';
@@ -828,17 +867,17 @@
       closeDrawer();
     }
 
-    // Emoji Picker
+    // Emoji
     document.addEventListener('DOMContentLoaded', () => {
-      const inputPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
-      inputPicker.on('emoji', e => {
+      const emojiPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
+      emojiPicker.on('emoji', e => {
         const inp = document.getElementById('messageInput');
         const { selectionStart: s, selectionEnd: t } = inp;
         inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
         inp.focus();
         inp.selectionStart = inp.selectionEnd = s + e.length;
       });
-      document.getElementById('emojiButton').addEventListener('click', () => inputPicker.togglePicker(document.getElementById('emojiButton')));
+      document.getElementById('emojiButton').addEventListener('click', () => emojiPicker.togglePicker(document.getElementById('emojiButton')));
 
       reactionPicker = new EmojiButton({ position: 'auto', theme: 'light' });
       reactionPicker.on('emoji', async emoji => {
@@ -868,13 +907,13 @@
         status: 'delivered'
       };
       db.ref(`chats/${currentChatRoom}`).push(msg).then(() => {
-        sendSound.play().catch(err => console.error('Audio play error:', err));
+        sendSound.play().catch(() => {});
         document.getElementById('messageInput').value = '';
       });
     });
 
     // Auth
-    auth.onAuthStateChanged(user => {
+    auth.on('authStateChanged', user => {
       if (!user) return window.location.href = 'index.html';
       currentUser = user;
       db.ref(`users/${user.uid}`).update({
@@ -882,8 +921,8 @@
         email: user.email || '',
         photoURL: user.photoURL || 'https://www.gravatar.com/avatar?d=mp'
       });
-      document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-      document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
+      document.getElementById('drawer-profile-img.src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
+      document.getElementById('drawer-profile-name').textContent = 'user.displayName || 'Hi, User!';
       setupPresence(user);
       bindUnreadListeners();
       showFriendList();
