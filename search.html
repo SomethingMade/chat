@@ -3,55 +3,357 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Search Users</title>
+  <title>Search Users - Loopa</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      color: #262626;
+      margin: 0;
+      padding-bottom: 70px;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      font-family: 'Lobster', cursive;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    /* Drawer */
+    #drawer {
+      width: 280px;
+      max-width: 80%;
+      background: #fff;
+      border-right: 1px solid #dbdbdb;
+      z-index: 40;
+    }
+    .drawer-link {
+      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      border-top: 1px solid #dbdbdb;
+      height: 60px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      z-index: 1000;
+    }
+    .bottom-nav a {
+      flex: 1;
+      text-align: center;
+      color: #262626;
+      font-size: 12px;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: color 0.3s ease;
+    }
+    .bottom-nav a svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #262626;
+      stroke-width: 2;
+      margin-bottom: 2px;
+      transition: stroke 0.3s ease, transform 0.3s ease;
+    }
+    .bottom-nav a.active,
+    .bottom-nav a:hover {
+      color: #0095f6;
+    }
+    .bottom-nav a.active svg,
+    .bottom-nav a:hover svg {
+      stroke: #0095f6;
+      transform: scale(1.05);
+    }
+    .bottom-nav a.active svg {
+      animation: pulse 0.8s infinite;
+    }
+    .bottom-nav .fab {
+      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584);
+      border-radius: 6px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      transform: translateY(-8px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+      padding: 0;
+    }
+    .bottom-nav .fab:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+    }
+    .bottom-nav .fab svg {
+      stroke: #fff;
+      width: 20px;
+      height: 20px;
+      margin: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Search Styles */
+    .search-container {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .search-container input {
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .search-container input:focus {
+      outline: none;
+      border-color: #0095f6;
+    }
+    .user-card {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .user-card button {
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
+    .user-card img {
+      border: 1px solid #dbdbdb;
+    }
+    .user-list {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .profile-link {
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    .profile-link:hover {
+      color: #0095f6;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-xl w-full bg-white rounded-lg shadow-md p-6 sm:p-8">
-    <h1 class="text-2xl font-bold mb-6 text-center">Search Users</h1>
+<body>
+  <!-- Header -->
+  <header>
+    <button id="burger" class="p-2 focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <h1 class="logo">Loopa</h1>
+    <div class="w-6"></div>
+  </header>
 
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search by name or email..."
-      class="w-full p-3 mb-6 border border-gray-300 rounded-full text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-black"
-    />
+  <!-- Drawer -->
+  <div id="overlay" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
+  <aside id="drawer" class="fixed inset-y-0 left-0 w-64 max-w-[80%] -translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
+    <div class="p-4 space-y-6">
+      <div class="text-xl font-bold">Menu</div>
+      <div class="flex items-center space-x-3">
+        <img id="drawer-profile-img" src="https://i.pravatar.cc/40" alt="avatar" class="rounded-full w-10 h-10"/>
+        <div>
+          <p id="drawer-profile-name" class="font-medium">Hi, There!</p>
+          <a href="profile.html" class="text-sm text-blue-500">View profile</a>
+        </div>
+      </div>
+      <nav class="flex flex-col space-y-2">
+        <a href="home.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+          </svg>
+          Home
+        </a>
+        <a href="ride.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          Get a Ride
+        </a>
+        <a href="food.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3V3z"/>
+          </svg>
+          Order Food
+        </a>
+        <a href="study.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Study Materials
+        </a>
+        <a href="chat.html" class="drawer-link active">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          Search For Friends
+        </a>
+        <a href="requests.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 seminal 0 4px 6px rgba(0,0,0,0.2) 0 0 8zM16 7a4 4 0 110 8"/>
+          </svg>
+          Requests
+        </a>
+        <hr class="border-gray-200"/>
+        <a href="settings.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+          </svg>
+          Settings
+        </a>
+        <button class="drawer-link text-red-500 text-left">Log out</button>
+      </nav>
+    </div>
+  </aside>
 
-    <div id="userList" class="space-y-4 max-h-[60vh] overflow-y-auto"></div>
-  </div>
+  <!-- Main Content -->
+  <main class="max-w-md mx-auto p-4">
+    <div class="search-container">
+      <h1 class="text-xl font-semibold mb-4 text-center">Search Users</h1>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by name or email..."
+        class="mb-4"
+      />
+      <div id="userList" class="user-list space-y-3"></div>
+    </div>
+  </main>
 
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+    <a href="home.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+      </svg>
+      Home
+    </a>
+    <a href="chat.html" class="active" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
+      </svg>
+      Chat
+    </a>
+    <a href="#create" class="fab">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+    </a>
+    <a href="requests.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+      </svg>
+      Requests
+    </a>
+    <a href="profile.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+      </svg>
+      Profile
+    </a>
+  </nav>
+
+  <!-- Firebase Script -->
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
       databaseURL: "https://fire-b-a8878.firebaseio.com",
       projectId: "fire-b-a8878",
-      storageBucket: "fire-b-a8878.firebasestorage.app",
+      storageBucket: "fire-b-a8878.appspot.com",
       messagingSenderId: "658673187627",
       appId: "1:658673187627:web:6e4c29af661785f0afa36e"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
     const searchInput = document.getElementById('searchInput');
     const userList = document.getElementById('userList');
+    const drawerProfileImg = document.getElementById('drawer-profile-img');
+    const drawerProfileName = document.getElementById('drawer-profile-name');
 
     let allUsers = [];
 
+    // Drawer
+    const burger = document.getElementById('burger');
+    const overlay = document.getElementById('overlay');
+    const drawer = document.getElementById('drawer');
+
+    function openDrawer() {
+      drawer.classList.remove('-translate-x-full');
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeDrawer() {
+      drawer.classList.add('-translate-x-full');
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+    }
+    burger.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('.drawer-link').forEach(link => {
+      link.addEventListener('click', closeDrawer);
+    });
+
     auth.onAuthStateChanged(user => {
-      if (!user) return (window.location.href = "/login.html");
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+      drawerProfileImg.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
+      drawerProfileName.textContent = user.displayName || "Hi, There!";
       fetchUsers();
     });
 
     function fetchUsers() {
-      userList.innerHTML = `<p class="text-center text-gray-400">Loading users...</p>`;
+      userList.innerHTML = `<p class="text-center text-gray-500">Loading users...</p>`;
       db.ref("users").once("value", snapshot => {
         const users = snapshot.val();
         allUsers = [];
@@ -79,18 +381,18 @@
         if (user.uid === currentUserId) return;
 
         const userCard = document.createElement("div");
-        userCard.className = "bg-white p-4 rounded-lg shadow flex items-center justify-between";
+        userCard.className = "user-card flex items-center justify-between";
 
         userCard.innerHTML = `
-          <div class="flex items-center gap-4">
-            <img src="${user.avatar || `https://i.pravatar.cc/150?u=${user.uid}`}" alt="Avatar" class="w-12 h-12 rounded-full object-cover">
-            <div class="min-w-0">
-              <p class="font-semibold truncate">${user.name || "Unnamed User"}</p>
-              <p class="text-sm text-gray-500 truncate">${user.email || ""}</p>
+          <div class="flex items-center gap-3 flex-1" data-uid="${user.uid}">
+            <img src="${user.photoURL || `https://www.gravatar.com/avatar?d=mp`}" alt="Avatar" class="w-10 h-10 rounded-full object-cover profile-link">
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-sm truncate profile-link">${user.name || "Unnamed User"}</p>
+              <p class="text-xs text-gray-500 truncate">${user.email || ""}</p>
             </div>
           </div>
           <button
-            class="send-request-btn bg-black hover:bg-gray-900 text-white px-5 py-2 rounded-full text-sm sm:text-base transition-colors duration-200"
+            class="send-request-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 text-sm rounded-full transition-colors duration-200"
             data-target="${user.uid}"
           >
             Send Request
@@ -99,20 +401,27 @@
 
         userList.appendChild(userCard);
 
-        // Check if request already sent and disable button if so
+        // Check if request already sent
         const requestRef = db.ref(`friend_requests/${user.uid}/${currentUserId}`);
         requestRef.once("value", snapshot => {
           if (snapshot.exists()) {
             const btn = userCard.querySelector(".send-request-btn");
             btn.innerText = "Requested";
             btn.disabled = true;
-            btn.classList.replace("bg-black", "bg-gray-400");
-            btn.classList.add("cursor-not-allowed");
+            btn.classList.replace("bg-blue-500", "bg-gray-400");
+            btn.classList.replace("hover:bg-blue-600", "cursor-not-allowed");
           }
+        });
+
+        // Add profile navigation
+        userCard.querySelectorAll('.profile-link').forEach(element => {
+          element.addEventListener('click', () => {
+            window.location.href = `profile.html?uid=${user.uid}`;
+          });
         });
       });
 
-      // Add event listeners
+      // Add event listeners for send request buttons
       document.querySelectorAll(".send-request-btn").forEach(btn => {
         btn.addEventListener("click", e => {
           const targetUid = e.target.getAttribute("data-target");
@@ -137,10 +446,11 @@
           }).then(() => {
             buttonElement.innerText = "Requested";
             buttonElement.disabled = true;
-            buttonElement.classList.replace("bg-black", "bg-gray-400");
-            buttonElement.classList.add("cursor-not-allowed");
+            buttonElement.classList.replace("bg-blue-500", "bg-gray-400");
+            buttonElement.classList.replace("hover:bg-blue-600", "cursor-not-allowed");
           }).catch(err => {
             console.error("Error sending request:", err);
+            alert("Failed to send friend request.");
           });
         }
       });
@@ -153,6 +463,13 @@
         (user.email || "").toLowerCase().includes(query)
       );
       displayUsers(filtered);
+    });
+
+    // Logout
+    document.querySelector('.drawer-link.text-red-500').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location.href = 'index.html';
+      });
     });
   </script>
 </body>
