@@ -739,19 +739,6 @@
       }
     });
 
-    // Emoji Picker
-    reactionPicker = new EmojiButton({
-      position: 'auto',
-      theme: 'light',
-      zIndex: 1000
-    });
-    document.getElementById('emojiButton').addEventListener('click', () => {
-      reactionPicker.togglePicker(document.getElementById('emojiButton'));
-    });
-    reactionPicker.on('emoji', emoji => {
-      document.getElementById('messageInput').value += emoji;
-    });
-
     // Manage User Presence
     function setupPresence(user) {
       const presenceRef = db.ref(`presence/${user.uid}`);
@@ -923,28 +910,43 @@
     }
 
     // Reaction Picker for Messages
-    reactionPicker.on('emoji', async emoji => {
-      if (!reactionPicker.messageKey) return;
-      const refPath = reactionPicker.isGroup ? `group_messages/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}` : `chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`;
-      const reactionRef = db.ref(refPath);
-      const snap = await reactionRef.once('value');
-      if (snap.val() === emoji) {
-        await reactionRef.remove();
-      } else {
-        await reactionRef.set(emoji);
-      }
-      reactionPicker.messageKey = null;
-      reactionPicker.isGroup = false;
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
+      inputPicker.on('emoji', e => {
+        const inp = document.getElementById('messageInput');
+        const { selectionStart: s, selectionEnd: t } = inp;
+        inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
+        inp.focus();
+        inp.selectionStart = inp.selectionEnd = s + e.length;
+      });
+      document.getElementById('emojiButton').addEventListener('click', () => inputPicker.togglePicker(document.getElementById('emojiButton')));
+
+      reactionPicker = new EmojiButton({ position: 'auto', theme: 'light' });
+      reactionPicker.on('emoji', async emoji => {
+        if (!reactionPicker.messageKey) return;
+        const refPath = reactionPicker.isGroup ? `group_messages/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}` : `chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`;
+        const reactionRef = db.ref(refPath);
+        const snap = await reactionRef.once('value');
+        if (snap.val() === emoji) {
+          await reactionRef.remove();
+        } else {
+          await reactionRef.set(emoji);
+        }
+        reactionPicker.messageKey = null;
+        reactionPicker.isGroup = false;
+      });
     });
 
     // Friend List Rendering
     async function renderFriendList() {
+      console.log('Rendering friend list for user:', currentUser?.uid);
       const friendList = document.getElementById('friendList');
       friendList.innerHTML = '';
 
       // Fetch one-on-one friends
       const friendSnap = await db.ref('friends/' + currentUser.uid).once('value');
       const friendUIDs = Object.keys(friendSnap.val() || {});
+      console.log('Friend UIDs:', friendUIDs);
 
       const friends = await Promise.all(friendUIDs.map(async uid => {
         const userSnap = await db.ref('users/' + uid).once('value');
@@ -959,6 +961,7 @@
           lastMessage
         };
       }));
+      console.log('Friends:', friends);
 
       // Fetch group chats
       const groupSnap = await db.ref('group_chats').orderByChild(`members/${currentUser.uid}`).equalTo(true).once('value');
@@ -971,11 +974,13 @@
           lastMessage: getLastMessage(group.key, true)
         });
       });
+      console.log('Groups:', groups);
 
       // Combine and render
       const combinedList = [...friends, ...groups];
       if (combinedList.length === 0) {
-        friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends or groups yet.</div>';
+        console.log('No friends or groups to display');
+        friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends or groups yet. Add some friends or create a group to start chatting!</div>';
         return;
       }
 
@@ -1014,7 +1019,6 @@
       });
     }
 
-    // Open Chat with User
     function openChatWithUser(uid, user) {
       unreadMap[uid] = 0;
       renderFriendList();
@@ -1032,7 +1036,6 @@
       closeDrawer();
     }
 
-    // Open Group Chat
     function openGroupChat(groupId, group) {
       unreadMap[groupId] = 0;
       renderFriendList();
@@ -1064,9 +1067,10 @@
       db.ref(`chats/${currentChatRoom}`).off();
       db.ref(`group_messages/${currentChatRoom}`).off();
       renderFriendList();
+      closeDrawer();
     }
 
-    // Send Message
+    // Message Send
     document.getElementById('messageForm').addEventListener('submit', e => {
       e.preventDefault();
       const text = document.getElementById('messageInput').value.trim();
@@ -1086,23 +1090,20 @@
       });
     });
 
-    // Auth State Listener
-    auth.onAuthStateChanged(async user => {
-      if (user) {
-        currentUser = user;
-        document.getElementById('drawer-profile-name').textContent = user.displayName || 'User';
-        document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-        await db.ref(`users/${user.uid}`).update({
-          name: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL
-        });
-        setupPresence(user);
-        renderFriendList();
-        bindUnreadListeners();
-      } else {
-        window.location.href = 'index.html';
-      }
+    // Auth
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = 'index.html';
+      currentUser = user;
+      db.ref(`users/${user.uid}`).update({
+        name: user.displayName || 'User',
+        email: user.email || '',
+        photoURL: user.photoURL || 'https://www.gravatar.com/avatar?d=mp'
+      });
+      document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
+      document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
+      setupPresence(user);
+      bindUnreadListeners();
+      showFriendList();
     });
 
     // Logout
