@@ -157,6 +157,7 @@
       text-align: center;
       cursor: pointer;
       transition: transform 0.2s ease;
+      position: relative; /* Added for reel count badge positioning */
     }
     .reel-item:hover {
       transform: scale(1.05);
@@ -196,6 +197,21 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .reel-count-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #ff3040;
+      color: #fff;
+      font-size: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
     }
 
     /* Posts */
@@ -304,6 +320,45 @@
       color: #fff;
       cursor: pointer;
     }
+    .reel-nav {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+    }
+    .reel-nav button {
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .reel-nav button:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .reel-nav button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .reel-index {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
   </style>
 </head>
 <body>
@@ -333,13 +388,13 @@
       <nav class="flex flex-col space-y-2">
         <a href="home.html" class="drawer-link">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3 v-9z"/>
           </svg>
           Home
         </a>
         <a href="ride.html" class="drawer-link">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l6-7m0 0l7 7m-7-7v18"/>
           </svg>
           Get a Ride
         </a>
@@ -448,6 +503,20 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
+      <!-- Added navigation for multiple reels -->
+      <div class="reel-nav">
+        <button id="prevReel" aria-label="Previous reel">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <button id="nextReel" aria-label="Next reel">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+      <div id="reelIndex" class="reel-index" aria-live="polite"></div>
     </div>
   </div>
 
@@ -621,11 +690,48 @@
     const reelViewerText = document.getElementById('reelViewerText');
     const reelViewerImage = document.getElementById('reelViewerImage');
     const closeReelViewer = document.getElementById('closeReelViewer');
+    const prevReelBtn = document.getElementById('prevReel');
+    const nextReelBtn = document.getElementById('nextReel');
+    const reelIndexEl = document.getElementById('reelIndex');
+
+    let currentReels = []; // Store the current user's reels
+    let currentReelIndex = 0; // Track the current reel index
 
     closeReelViewer.addEventListener('click', () => {
       reelViewerModal.classList.add('hidden');
       reelViewerImage.style.display = 'none';
       reelViewerImage.src = '';
+      currentReels = [];
+      currentReelIndex = 0;
+    });
+
+    function showReel(index) {
+      const reel = currentReels[index];
+      reelViewerText.textContent = reel.text;
+      if (reel.imageUrl) {
+        reelViewerImage.src = reel.imageUrl;
+        reelViewerImage.style.display = 'block';
+      } else {
+        reelViewerImage.style.display = 'none';
+        reelViewerImage.src = '';
+      }
+      reelIndexEl.textContent = `${index + 1}/${currentReels.length}`;
+      prevReelBtn.disabled = index === 0;
+      nextReelBtn.disabled = index === currentReels.length - 1;
+    }
+
+    prevReelBtn.addEventListener('click', () => {
+      if (currentReelIndex > 0) {
+        currentReelIndex--;
+        showReel(currentReelIndex);
+      }
+    });
+
+    nextReelBtn.addEventListener('click', () => {
+      if (currentReelIndex < currentReels.length - 1) {
+        currentReelIndex++;
+        showReel(currentReelIndex);
+      }
     });
 
     function loadReels() {
@@ -636,32 +742,42 @@
         reelsContainer.innerHTML = '';
         const reels = snapshot.val() || {};
 
+        // Group reels by user
+        const userReels = {};
         Object.entries(reels).forEach(([id, reel]) => {
           const age = now - reel.timestamp;
           if (age > 86400000) {
-            firebase.database().ref('reels/' + id).remove();
+            firebase.database().ref(`reels/${id}`).remove();
           } else {
-            const reelEl = document.createElement('div');
-            reelEl.className = 'reel-item';
-            reelEl.innerHTML = `
-              <div class="avatar">
-                <div>${reel.text.length > 30 ? reel.text.slice(0, 28) + '…' : reel.text}</div>
-              </div>
-              <p>${reel.name}</p>
-            `;
-            reelEl.addEventListener('click', () => {
-              reelViewerText.textContent = reel.text;
-              if (reel.imageUrl) {
-                reelViewerImage.src = reel.imageUrl;
-                reelViewerImage.style.display = 'block';
-              } else {
-                reelViewerImage.style.display = 'none';
-                reelViewerImage.src = '';
-              }
-              reelViewerModal.classList.remove('hidden');
-            });
-            reelsContainer.appendChild(reelEl);
+            if (!userReels[reel.uid]) {
+              userReels[reel.uid] = { name: reel.name, reels: [] };
+            }
+            userReels[reel.uid].reels.push({ id, ...reel });
           }
+        });
+
+        // Render one reel item per user
+        Object.entries(userReels).forEach(([uid, { name, reels }]) => {
+          // Sort reels by timestamp (newest first)
+          reels.sort((a, b) => b.timestamp - a.timestamp);
+          const latestReel = reels[0]; // Show the most recent reel in the avatar
+
+          const reelEl = document.createElement('div');
+          reelEl.className = 'reel-item';
+          reelEl.innerHTML = `
+            <div class="avatar">
+              <div>${latestReel.text.length > 30 ? latestReel.text.slice(0, 28) + '…' : latestReel.text}</div>
+            </div>
+            <p>${name}</p>
+            ${reels.length > 1 ? `<span class="reel-count-badge" aria-label="${reels.length} reels">${reels.length}</span>` : ''}
+          `;
+          reelEl.addEventListener('click', () => {
+            currentReels = reels;
+            currentReelIndex = 0;
+            showReel(currentReelIndex);
+            reelViewerModal.classList.remove('hidden');
+          });
+          reelsContainer.appendChild(reelEl);
         });
       });
     }
