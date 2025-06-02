@@ -15,6 +15,7 @@
       background: #fafafa;
       color: #262626;
       margin: 0;
+      padding-bottom: 70px;
     }
     ::-webkit-scrollbar {
       display: none;
@@ -156,7 +157,6 @@
       text-align: center;
       cursor: pointer;
       transition: transform 0.2s ease;
-      position: relative;
     }
     .reel-item:hover {
       transform: scale(1.05);
@@ -197,21 +197,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .reel-count-badge {
-      position: absolute;
-      top: 0;
-      right: 0;
-      background: #ff3040;
-      color: #fff;
-      font-size: 10px;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #fff;
-    }
 
     /* Posts */
     .post {
@@ -220,7 +205,6 @@
       border-radius: 12px;
       margin-bottom: 16px;
       overflow: hidden;
-      z-index: 1;
     }
     .post-header {
       display: flex;
@@ -259,19 +243,9 @@
       fill: #0095f6;
     }
 
-    /* Main Content */
-    main {
-      padding-top: 70px;
-      padding-bottom: 76px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
     /* Modals */
     .modal {
       background: rgba(0, 0, 0, 0.6);
-      z-index: 2000;
     }
     .modal-content {
       background: #fff;
@@ -302,7 +276,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 2000;
     }
     .reel-viewer-content {
       position: relative;
@@ -330,45 +303,6 @@
       right: 16px;
       color: #fff;
       cursor: pointer;
-    }
-    .reel-nav {
-      position: absolute;
-      top: 50%;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      transform: translateY(-50%);
-    }
-    .reel-nav button {
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .reel-nav button:hover {
-      background: rgba(0, 0, 0, 0.7);
-    }
-    .reel-nav button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .reel-index {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 12px;
     }
   </style>
 </head>
@@ -514,19 +448,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
-      <div class="reel-nav">
-        <button id="prevReel" aria-label="Previous reel">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-          </svg>
-        </button>
-        <button id="nextReel" aria-label="Next reel">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-      </div>
-      <div id="reelIndex" class="reel-index" aria-live="polite"></div>
     </div>
   </div>
 
@@ -700,48 +621,11 @@
     const reelViewerText = document.getElementById('reelViewerText');
     const reelViewerImage = document.getElementById('reelViewerImage');
     const closeReelViewer = document.getElementById('closeReelViewer');
-    const prevReelBtn = document.getElementById('prevReel');
-    const nextReelBtn = document.getElementById('nextReel');
-    const reelIndexEl = document.getElementById('reelIndex');
-
-    let currentReels = [];
-    let currentReelIndex = 0;
 
     closeReelViewer.addEventListener('click', () => {
       reelViewerModal.classList.add('hidden');
       reelViewerImage.style.display = 'none';
       reelViewerImage.src = '';
-      currentReels = [];
-      currentReelIndex = 0;
-    });
-
-    function showReel(index) {
-      const reel = currentReels[index];
-      reelViewerText.textContent = reel.text;
-      if (reel.imageUrl) {
-        reelViewerImage.src = reel.imageUrl;
-        reelViewerImage.style.display = 'block';
-      } else {
-        reelViewerImage.style.display = 'none';
-        reelViewerImage.src = '';
-      }
-      reelIndexEl.textContent = `${index + 1}/${currentReels.length}`;
-      prevReelBtn.disabled = index === 0;
-      nextReelBtn.disabled = index === currentReels.length - 1;
-    }
-
-    prevReelBtn.addEventListener('click', () => {
-      if (currentReelIndex > 0) {
-        currentReelIndex--;
-        showReel(currentReelIndex);
-      }
-    });
-
-    nextReelBtn.addEventListener('click', () => {
-      if (currentReelIndex < currentReels.length - 1) {
-        currentReelIndex++;
-        showReel(currentReelIndex);
-      }
     });
 
     function loadReels() {
@@ -752,39 +636,32 @@
         reelsContainer.innerHTML = '';
         const reels = snapshot.val() || {};
 
-        const userReels = {};
         Object.entries(reels).forEach(([id, reel]) => {
           const age = now - reel.timestamp;
           if (age > 86400000) {
-            firebase.database().ref(`reels/${id}`).remove();
+            firebase.database().ref('reels/' + id).remove();
           } else {
-            if (!userReels[reel.uid]) {
-              userReels[reel.uid] = { name: reel.name, reels: [] };
-            }
-            userReels[reel.uid].reels.push({ id, ...reel });
+            const reelEl = document.createElement('div');
+            reelEl.className = 'reel-item';
+            reelEl.innerHTML = `
+              <div class="avatar">
+                <div>${reel.text.length > 30 ? reel.text.slice(0, 28) + '…' : reel.text}</div>
+              </div>
+              <p>${reel.name}</p>
+            `;
+            reelEl.addEventListener('click', () => {
+              reelViewerText.textContent = reel.text;
+              if (reel.imageUrl) {
+                reelViewerImage.src = reel.imageUrl;
+                reelViewerImage.style.display = 'block';
+              } else {
+                reelViewerImage.style.display = 'none';
+                reelViewerImage.src = '';
+              }
+              reelViewerModal.classList.remove('hidden');
+            });
+            reelsContainer.appendChild(reelEl);
           }
-        });
-
-        Object.entries(userReels).forEach(([uid, { name, reels }]) => {
-          reels.sort((a, b) => b.timestamp - a.timestamp);
-          const latestReel = reels[0];
-
-          const reelEl = document.createElement('div');
-          reelEl.className = 'reel-item';
-          reelEl.innerHTML = `
-            <div class="avatar">
-              <div>${latestReel.text.length > 30 ? latestReel.text.slice(0, 28) + '…' : latestReel.text}</div>
-            </div>
-            <p>${name}</p>
-            ${reels.length > 1 ? `<span class="reel-count-badge" aria-label="${reels.length} reels">${reels.length}</span>` : ''}
-          `;
-          reelEl.addEventListener('click', () => {
-            currentReels = reels;
-            currentReelIndex = 0;
-            showReel(currentReelIndex);
-            reelViewerModal.classList.remove('hidden');
-          });
-          reelsContainer.appendChild(reelEl);
         });
       });
     }
@@ -801,7 +678,7 @@
       if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes > 1 ? 's' : ''} ago`;
       if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
       if (diffDays === 1) return `Yesterday at ${postDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 
       return postDate.toLocaleDateString(undefined, {
         month: 'short',
@@ -833,51 +710,52 @@
               <img src="${post.avatar}" class="w-8 h-8 rounded-full"/>
               <div class="flex-1">
                 <p class="font-semibold text-sm">${post.name}${post.originalPostId ? ` (Reposted from ${originalPost.name || 'someone'})` : ''}</p>
-                <span class="text-xs text-gray-600">${formatTimestamp(post.timestamp)}</span>
+                <span class="text-xs text-gray-500">${formatTimestamp(post.timestamp)}</span>
               </div>
               ${isOwnPost ? `
                 <div class="flex gap-2">
                   <button class="edit-post-btn text-gray-500 p-1" data-id="${postId}" title="Edit">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6 a2 2 0 00-2 2 v11.5 a1.5 1.5 0 005.5 v0 H17 a2 v2 0 002-2 v-5 M18.5 2.5 a2.121 2.121 v0 0 013 3 L12 15 l-4 1 1-4 l9.5-9.5 z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11.5A1.5 1.5 0 005.5 20H17a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
                   </button>
                   <button class="delete-post-btn text-gray-500 p-1" data-id="${postId}" title="Delete">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6 l12 12"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                  </div>` : `
+                  </button>
+                </div>` : `
                 <button class="follow-btn bg-blue-500 text-white text-xs px-3 py-1 rounded-full hidden" data-user="${post.uid}">Follow</button>`}
-              </div>
-              ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="Post image"/>` : ''}>
-              <div class="post-content" id="content">${post.content}</div>
+            </div>
+            ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="Post image"/>` : ''}
+            <div class="post-content" id="content-${postId}">${post.content}</div>
             <div class="post-actions">
               <button class="like-btn" data-id="${postId}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke="roundcap-" stroke="roundjoin-" stroke-width="2" d="M4.318 6.318 a4.5 4.5 4.5 0 000 6.364 L12 20.364 l7.682-7.682 a4.364 4.5 0 00-6.364-6.364 L12 7.636 l-1.318-1.318 a4.5 a4.5 0 0 00-6.364 0"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                 </svg>
-                <span id="like-count">${postId}" class="text-sm">0</span>
+                <span id="like-count-${postId}" class="text-sm">0</span>
               </button>
               <button class="comment-btn" data-id="${postId}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke="m" stroke-width="2" d="M8 12 h.01 M12 h.01 M16 h.01 M21 12 c0 4.418-4.03 8-9 c0 8 a9.863 9.863 0 01-4.255-.949 L3 20 l1.395-3.72 C3.512 15.042 3 042 3 13.574 3 12 c0-4.418 0 0-4 c0-8 s9 3.582 9 8"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                 </svg>
               </button>
               <button class="repost-btn" data-id="${postId}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke="roundcap-" stroke="round" stroke-width="2" d="M8.684 13.342 C8.886 12.938 9 12 c0-.482-.114-.938-.316-1.342 m0 2.684 a3 m0 110-2.684 m0 2.684 l6.632 3.316 m-6.632-6 l6.632-3.316 m0 0 a3 m0 0 0 105 5.367-2.684 a3 3 a3 a0 0 00-5.367 2.684 zm0 9.316 a3 zm0 105 a3 0 105 2.368 a3 a3 0 00-5.368-2.684 z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                 </svg>
-                <span id="repost-count">${postId}" class="text-sm">${0}</span>
+                <span id="repost-count-${postId}" class="text-sm">0</span>
               </button>
             </div>
-            <div class="id="comments">${postId}" class="comments" px="4 py-2 space-y-2 space-y-4"></div>
+            <div id="comments-${postId}" class="px-4 py-2 space-y-2"></div>
             <div class="px-4 py-2 border-t border-gray-200">
               <div class="flex items-center gap-2">
-                <input type="flex-1 border-0" placeholder="Write comment..." class="comment-input flex-1 border-0 bg-gray-100 rounded-full px-4 py-2 text-sm focus:ring-0" data-input="${idId}"/>
+                <input type="text" placeholder="Write a comment..." class="comment-input flex-1 border-0 bg-gray-100 rounded-full px-4 py-2 text-sm focus:ring-0" data-id="${postId}"/>
                 <button class="comment-btn bg-blue-500 text-white p-2 rounded-full" data-id="${postId}" title="Post Comment">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10 l9 6-9 6 l-9-6 z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21 V9 l3-2 3 2 v12"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-6 9 6-9 6-9-6z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21V9l3-2 3 2v12"/>
                   </svg>
                 </button>
               </div>
@@ -901,11 +779,13 @@
             });
           }
 
+          // Like count
           db.ref(`likes/${postId}`).on('value', snap => {
             const likes = snap.val() || {};
             document.getElementById(`like-count-${postId}`).textContent = Object.keys(likes).length;
           });
 
+          // Repost count and state
           db.ref(`reposts/${postId}`).on('value', snap => {
             const reposts = snap.val() || {};
             document.getElementById(`repost-count-${postId}`).textContent = Object.keys(reposts).length;
@@ -1001,6 +881,7 @@
       });
     }
 
+    // Repost Event Listener (using event delegation)
     document.getElementById('posts').addEventListener('click', async (event) => {
       if (event.target.closest('.repost-btn')) {
         const button = event.target.closest('.repost-btn');
@@ -1009,6 +890,7 @@
         const repostRef = db.ref(`reposts/${postId}/${auth.currentUser?.uid}`);
 
         try {
+          // Check if user has already reposted
           const repostSnapshot = await repostRef.once('value');
           if (repostSnapshot.exists()) {
             alert('You have already reposted this post.');
@@ -1040,7 +922,7 @@
           if (originalPost.imageUrl) newPost.imageUrl = originalPost.imageUrl;
 
           await db.ref('posts').push(newPost);
-          await repostRef.set(true);
+          await repostRef.set(true); // Track the repost
           button.classList.add('reposted');
           alert('Reposted!');
         } catch (err) {
@@ -1050,6 +932,7 @@
       }
     });
 
+    // Post Counter
     function bindPostCounter() {
       const badge = document.getElementById('postCountBadge');
       db.ref('posts').on('value', snap => {
