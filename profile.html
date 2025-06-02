@@ -96,38 +96,38 @@
     .bottom-nav a.active svg,
     .bottom-nav a:hover svg {
       stroke: #0095f6;
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
     .bottom-nav a.active svg {
-      animation: pulse 1.5s infinite;
+      animation: pulse 0.8s infinite;
     }
     .bottom-nav .fab {
-      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
-      border-radius: 12px;
-      width: 50px;
-      height: 50px;
+      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584);
+      border-radius: 6px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transform: translateY(-10px);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      transform: translateY(-8px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       overflow: hidden;
       padding: 0;
     }
     .bottom-nav .fab:hover {
-      transform: translateY(-12px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      transform: translateY(-10px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
     }
     .bottom-nav .fab svg {
       stroke: #fff;
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       margin: 0;
     }
     @keyframes pulse {
-      0%, 100% { transform: scale(1.1); }
-      50% { transform: scale(1.2); }
+      0%, 100% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
     }
 
     /* Profile Styles */
@@ -149,10 +149,6 @@
     .profile-card input:focus {
       outline: none;
       border-color: #0095f6;
-    }
-    .profile-card input[readonly] {
-      background: #f0f0f0;
-      cursor: not-allowed;
     }
     .profile-card button {
       border-radius: 8px;
@@ -190,6 +186,25 @@
     .modal button {
       padding: 8px 16px;
       border-radius: 8px;
+      font-size: 14px;
+    }
+    .edit-form {
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      overflow: hidden;
+    }
+    .edit-form.hidden {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+    }
+    .edit-form:not(.hidden) {
+      max-height: 300px;
+      opacity: 1;
+      margin-top: 12px;
+    }
+    .follow-stats {
+      display: flex;
+      gap: 16px;
       font-size: 14px;
     }
   </style>
@@ -273,23 +288,32 @@
     <div class="profile-card">
       <div class="flex items-center gap-4 mb-4">
         <img id="profile-img" class="w-20 h-20 rounded-full object-cover" src="https://www.gravatar.com/avatar?d=mp" alt="Profile Picture" />
-        <div>
+        <div class="flex-1">
           <p id="profile-name" class="font-semibold text-base"></p>
           <p id="profile-email" class="text-sm text-gray-500"></p>
+          <div class="follow-stats mt-1">
+            <span><span id="follower-count">0</span> Followers</span>
+            <span><span id="following-count">0</span> Following</span>
+          </div>
         </div>
       </div>
 
-      <!-- Profile Edit Form -->
-      <div class="space-y-3">
-        <input type="text" id="name" class="w-full" placeholder="Full Name" />
-        <input type="text" id="photo-url" class="w-full" placeholder="Photo URL" />
-        <button id="save-btn" class="w-full bg-blue-500 text-white py-2 mt-4 hover:bg-blue-600">Save Changes</button>
-        <p id="error-message" class="text-sm text-red-500 text-center mt-2"></p>
+      <!-- Edit Button (Own Profile Only) -->
+      <button id="edit-btn" class="w-full bg-blue-500 text-white py-2 mb-4 hover:bg-blue-600 hidden">Edit Profile</button>
+
+      <!-- Profile Edit Form (Own Profile Only) -->
+      <div id="edit-form" class="edit-form hidden">
+        <div class="space-y-3">
+          <input type="text" id="name" class="w-full" placeholder="Full Name" />
+          <input type="text" id="photo-url" class="w-full" placeholder="Photo URL" />
+          <button id="save-btn" class="w-full bg-blue-500 text-white py-2 hover:bg-blue-600">Save Changes</button>
+          <p id="error-message" class="text-sm text-red-500 text-center"></p>
+        </div>
       </div>
 
       <!-- Photo Grid -->
       <div class="mt-6">
-        <h3 class="font-semibold text-base mb-2">Your Photos</h3>
+        <h3 class="font-semibold text-base mb-2">Photos</h3>
         <div id="photo-grid" class="photo-grid"></div>
       </div>
     </div>
@@ -359,6 +383,10 @@
     const profileImg = document.getElementById("profile-img");
     const profileName = document.getElementById("profile-name");
     const profileEmail = document.getElementById("profile-email");
+    const followerCount = document.getElementById("follower-count");
+    const followingCount = document.getElementById("following-count");
+    const editBtn = document.getElementById("edit-btn");
+    const editForm = document.getElementById("edit-form");
     const nameInput = document.getElementById("name");
     const photoInput = document.getElementById("photo-url");
     const saveBtn = document.getElementById("save-btn");
@@ -410,32 +438,68 @@
       });
     }
 
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        nameInput.value = user.displayName || "";
-        profileName.textContent = user.displayName || "Hi, There!";
-        profileEmail.textContent = user.email;
-        profileImg.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
-        photoInput.value = user.photoURL || "";
-        drawerProfileImg.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
-        drawerProfileName.textContent = user.displayName || "Hi, There!";
+    // Load Follow Stats
+    function loadFollowStats(uid) {
+      db.ref(`followers/${uid}`).on('value', snapshot => {
+        followerCount.textContent = snapshot.numChildren() || 0;
+      });
+      db.ref(`follows/${uid}`).on('value', snapshot => {
+        followingCount.textContent = snapshot.numChildren() || 0;
+      });
+    }
 
-        const userRef = db.ref('users/' + user.uid);
-        const snapshot = await userRef.once('value');
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      // Get profile UID from URL parameter or use current user's UID
+      const urlParams = new URLSearchParams(window.location.search);
+      const profileUid = urlParams.get('uid') || user.uid;
+      const isOwnProfile = profileUid === user.uid;
+
+      // Load profile data
+      const userRef = db.ref(`users/${profileUid}`);
+      const snapshot = await userRef.once('value');
+      let profileData = snapshot.val() || {};
+
+      // If no profile data exists, use default values
+      profileName.textContent = profileData.name || "Anonymous";
+      profileEmail.textContent = profileData.email || "";
+      profileImg.src = profileData.photoURL || "https://www.gravatar.com/avatar?d=mp";
+
+      // Update drawer for current user
+      drawerProfileImg.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
+      drawerProfileName.textContent = user.displayName || "Hi, There!";
+
+      // Load photos and follow stats
+      loadUserPhotos(profileUid);
+      loadFollowStats(profileUid);
+
+      if (isOwnProfile) {
+        // Show edit button and handle profile creation
+        editBtn.classList.remove('hidden');
+        nameInput.value = profileData.name || user.displayName || "";
+        photoInput.value = profileData.photoURL || user.photoURL || "";
+
         if (snapshot.exists()) {
           modal.classList.remove("hidden");
-
           continueBtn.addEventListener("click", () => {
             window.location.href = "home.html";
           });
-
           updateBtn.addEventListener("click", () => {
             modal.classList.add("hidden");
+            editBtn.click(); // Open edit form
           });
         }
 
-        loadUserPhotos(user.uid);
+        // Toggle edit form
+        editBtn.addEventListener('click', () => {
+          editForm.classList.toggle('hidden');
+        });
 
+        // Save profile changes
         saveBtn.addEventListener("click", async () => {
           const updatedName = nameInput.value.trim();
           const updatedPhoto = photoInput.value.trim();
@@ -451,16 +515,17 @@
               photoURL: updatedPhoto || user.photoURL
             });
 
-            await db.ref('users/' + user.uid).set({
+            await db.ref(`users/${user.uid}`).set({
               name: updatedName,
               email: user.email,
               photoURL: updatedPhoto || user.photoURL
             });
 
             profileImg.src = updatedPhoto || "https://www.gravatar.com/avatar?d=mp";
-            profileName.textContent = updatedName || "Hi, There!";
+            profileName.textContent = updatedName || "Anonymous";
             drawerProfileImg.src = updatedPhoto || "https://www.gravatar.com/avatar?d=mp";
             drawerProfileName.textContent = updatedName || "Hi, There!";
+            editForm.classList.add('hidden');
             window.location.href = "home.html";
           } catch (error) {
             console.error("Error updating profile:", error);
@@ -468,7 +533,9 @@
           }
         });
       } else {
-        window.location.href = "index.html";
+        // Hide edit button and form for other users
+        editBtn.classList.add('hidden');
+        editForm.classList.add('hidden');
       }
     });
 
