@@ -3,88 +3,363 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Profile</title>
+  <title>User Profile - Loopa</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <style>
-    input:focus, select:focus {
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      color: #262626;
+      margin: 0;
+      padding-bottom: 70px;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      font-family: 'Lobster', cursive;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    /* Drawer */
+    #drawer {
+      width: 280px;
+      max-width: 80%;
+      background: #fff;
+      border-right: 1px solid #dbdbdb;
+      z-index: 40;
+    }
+    .drawer-link {
+      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      border-top: 1px solid #dbdbdb;
+      height: 60px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      z-index: 1000;
+    }
+    .bottom-nav a {
+      flex: 1;
+      text-align: center;
+      color: #262626;
+      font-size: 12px;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: color 0.3s ease;
+    }
+    .bottom-nav a svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: #262626;
+      stroke-width: 2;
+      margin-bottom: 2px;
+      transition: stroke 0.3s ease, transform 0.3s ease;
+    }
+    .bottom-nav a.active,
+    .bottom-nav a:hover {
+      color: #0095f6;
+    }
+    .bottom-nav a.active svg,
+    .bottom-nav a:hover svg {
+      stroke: #0095f6;
+      transform: scale(1.1);
+    }
+    .bottom-nav a.active svg {
+      animation: pulse 1.5s infinite;
+    }
+    .bottom-nav .fab {
+      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
+      border-radius: 12px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transform: translateY(-10px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+      padding: 0;
+    }
+    .bottom-nav .fab:hover {
+      transform: translateY(-12px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    .bottom-nav .fab svg {
+      stroke: #fff;
+      width: 24px;
+      height: 24px;
+      margin: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1.1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Profile Styles */
+    .profile-card {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .profile-card input,
+    .profile-card select {
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .profile-card input:focus,
+    .profile-card select:focus {
       outline: none;
-      box-shadow: 0 0 0 2px #00000033;
+      border-color: #0095f6;
     }
-    .fade-in {
-      animation: fadeIn 0.3s ease-in-out forwards;
+    .profile-card input[readonly] {
+      background: #f0f0f0;
+      cursor: not-allowed;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.98); }
-      to { opacity: 1; transform: scale(1); }
+    .profile-card button {
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
+    .profile-card img {
+      border: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .business-section {
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+    .business-section button {
+      border-radius: 8px;
+    }
+    .modal {
+      background: rgba(0, 0, 0, 0.6);
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .modal button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
     }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
-  <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md fade-in">
-    <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">User Profile</h2>
+<body>
+  <!-- Header -->
+  <header>
+    <button id="burger" class="p-2 focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <h1 class="logo">Loopa</h1>
+    <div class="w-6"></div>
+  </header>
 
-    <!-- Profile Picture -->
-    <div class="flex justify-center mb-4">
-      <img id="profile-img" class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-md" src="https://www.gravatar.com/avatar?d=mp" alt="Profile Picture" />
+  <!-- Drawer -->
+  <div id="overlay" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
+  <aside id="drawer" class="fixed inset-y-0 left-0 w-64 max-w-[80%] -translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
+    <div class="p-4 space-y-6">
+      <div class="text-xl font-bold">Menu</div>
+      <div class="flex items-center space-x-3">
+        <img id="drawer-profile-img" src="https://i.pravatar.cc/40" alt="avatar" class="rounded-full w-10 h-10"/>
+        <div>
+          <p id="drawer-profile-name" class="font-medium">Hi, There!</p>
+          <a href="profile.html" class="text-sm text-blue-500">View profile</a>
+        </div>
+      </div>
+      <nav class="flex flex-col space-y-2">
+        <a href="home.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+          </svg>
+          Home
+        </a>
+        <a href="ride.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          Get a Ride
+        </a>
+        <a href="food.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3V3z"/>
+          </svg>
+          Order Food
+        </a>
+        <a href="study.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Study Materials
+        </a>
+        <a href="chat.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          Search For Friends
+        </a>
+        <a href="requests.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+          </svg>
+          Requests
+        </a>
+        <hr class="border-gray-200"/>
+        <a href="settings.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+          </svg>
+          Settings
+        </a>
+        <button class="drawer-link text-red-500 text-left">Log out</button>
+      </nav>
     </div>
+  </aside>
 
-    <!-- Profile Picture URL Input -->
-    <input type="text" id="photo-url" class="w-full px-4 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-black" placeholder="Photo URL" />
+  <!-- Main Content -->
+  <main class="max-w-md mx-auto p-4">
+    <div class="profile-card">
+      <h2 class="text-xl font-semibold mb-4 text-center">User Profile</h2>
 
-    <!-- User Info -->
-    <div class="space-y-4">
-      <input type="text" id="name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black" placeholder="Full Name" />
-      <input type="email" id="email" class="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed" placeholder="Email" readonly />
-      
-      <!-- Account Type Selector -->
-      <select id="account-type" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
-        <option value="personal">Personal</option>
-        <option value="business">Business</option>
-      </select>
+      <!-- Profile Picture -->
+      <div class="flex justify-center mb-4">
+        <img id="profile-img" class="w-20 h-20 rounded-full object-cover" src="https://www.gravatar.com/avatar?d=mp" alt="Profile Picture" />
+      </div>
+
+      <!-- Profile Picture URL Input -->
+      <input type="text" id="photo-url" class="mb-4" placeholder="Photo URL" />
+
+      <!-- User Info -->
+      <div class="space-y-3">
+        <input type="text" id="name" class="w-full" placeholder="Full Name" />
+        <input type="email" id="email" class="w-full" placeholder="Email" readonly />
+        <select id="account-type" class="w-full">
+          <option value="personal">Personal</option>
+          <option value="business">Business</option>
+        </select>
+      </div>
+
+      <!-- Save Button -->
+      <button id="save-btn" class="w-full bg-blue-500 text-white py-2 mt-4 hover:bg-blue-600">Save Changes</button>
+
+      <!-- Error Message -->
+      <p id="error-message" class="text-sm text-red-500 text-center mt-2"></p>
+
+      <!-- Business Section -->
+      <div id="business-section" class="business-section hidden">
+        <h3 class="font-semibold text-gray-800 mb-2">Business Features</h3>
+        <p class="text-sm text-gray-600 mb-3">Add restaurant details, manage your menu, and handle orders here.</p>
+        <div id="restaurant-details" class="space-y-3">
+          <input type="text" id="restaurant-name" class="w-full" placeholder="Restaurant Name" />
+          <input type="text" id="restaurant-location" class="w-full" placeholder="Restaurant Location" />
+          <div>
+            <h4 class="font-medium text-gray-700 mb-2">Menu Items</h4>
+            <div id="menu-items" class="space-y-2"></div>
+            <button id="add-item-btn" type="button" class="mt-2 px-4 py-1 text-sm rounded-full bg-blue-500 text-white hover:bg-blue-600">+ Add Menu Item</button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- Save Button -->
-    <button id="save-btn" class="w-full bg-black text-white py-2 rounded-full mt-6 hover:bg-gray-900 transition-all">Save Changes</button>
-
-    <!-- Error Message -->
-    <p id="error-message" class="text-sm text-red-500 text-center mt-2"></p>
-
-    <!-- Business Section -->
-    <div id="business-section" class="mt-6 p-4 bg-yellow-50 border border-yellow-400 rounded-lg hidden transition-opacity duration-300">
-      <h3 class="font-semibold text-yellow-800 mb-1">Business Features</h3>
-      <p class="text-sm text-yellow-700">Add restaurant details, manage your menu, and handle orders here.</p>
-      <div id="restaurant-details" class="mt-4 space-y-4">
-  <input type="text" id="restaurant-name" class="w-full px-4 py-2 border rounded-lg" placeholder="Restaurant Name" />
-  <input type="text" id="restaurant-location" class="w-full px-4 py-2 border rounded-lg" placeholder="Restaurant Location" />
-
-  <div>
-    <h4 class="font-medium text-gray-700 mb-2">Menu Items</h4>
-    <div id="menu-items" class="space-y-2"></div>
-    <button id="add-item-btn" type="button" class="mt-2 px-4 py-1 text-sm rounded-full bg-yellow-500 text-white hover:bg-yellow-600">+ Add Menu Item</button>
-  </div>
-</div>
-
-    </div>
-  </div>
+  </main>
 
   <!-- Modal -->
-  <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm w-full fade-in">
+  <div id="modal" class="modal fixed inset-0 flex items-center justify-center hidden z-50">
+    <div class="modal-content">
       <h3 class="text-lg font-semibold text-gray-800 mb-3">Profile Already Exists</h3>
       <p class="text-sm text-gray-600 mb-4">Do you want to continue or update your profile?</p>
       <div class="flex justify-center gap-4">
-        <button id="continue-btn" class="px-5 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-900">Continue</button>
-        <button id="update-btn" class="px-5 py-2 bg-white text-gray-800 border border-gray-300 rounded-full hover:bg-gray-100">Update</button>
+        <button id="continue-btn" class="bg-blue-500 text-white hover:bg-blue-600">Continue</button>
+        <button id="update-btn" class="bg-gray-200 text-gray-800 hover:bg-gray-300">Update</button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-app.js";
-    import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-auth.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.11/firebase-database.js";
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+    <a href="home.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+      </svg>
+      Home
+    </a>
+    <a href="chat.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
+      </svg>
+      Chat
+    </a>
+    <a href="#create" class="fab">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+    </a>
+    <a href="requests.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+      </svg>
+      Requests
+    </a>
+    <a href="profile.html" class="active" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+      </svg>
+      Profile
+    </a>
+  </nav>
 
+  <!-- Firebase Script -->
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
@@ -92,13 +367,12 @@
       projectId: "fire-b-a8878",
       storageBucket: "fire-b-a8878.appspot.com",
       messagingSenderId: "658673187627",
-      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
-      measurementId: "G-V4W97VMSKL"
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
     const profileImg = document.getElementById("profile-img");
     const nameInput = document.getElementById("name");
@@ -111,6 +385,27 @@
     const modal = document.getElementById("modal");
     const continueBtn = document.getElementById("continue-btn");
     const updateBtn = document.getElementById("update-btn");
+    const drawerProfileImg = document.getElementById("drawer-profile-img");
+    const drawerProfileName = document.getElementById("drawer-profile-name");
+
+    // Drawer
+    const burger = document.getElementById('burger');
+    const overlay = document.getElementById('overlay');
+    const drawer = document.getElementById('drawer');
+
+    function openDrawer() {
+      drawer.classList.remove('-translate-x-full');
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+    }
+    function closeDrawer() {
+      drawer.classList.add('-translate-x-full');
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+    }
+    burger.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('.drawer-link').forEach(link => {
+      link.addEventListener('click', closeDrawer);
+    });
 
     function toggleBusinessSection(type) {
       if (type === "business") {
@@ -120,15 +415,17 @@
       }
     }
 
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
         nameInput.value = user.displayName || "";
         emailInput.value = user.email;
         profileImg.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
         photoInput.value = user.photoURL || "";
+        drawerProfileImg.src = user.photoURL || "https://www.gravatar.com/avatar?d=mp";
+        drawerProfileName.textContent = user.displayName || "Hi, There!";
 
-        const userRef = ref(db, 'users/' + user.uid);
-        const snapshot = await get(userRef);
+        const userRef = db.ref('users/' + user.uid);
+        const snapshot = await userRef.once('value');
         if (snapshot.exists()) {
           modal.classList.remove("hidden");
 
@@ -160,12 +457,12 @@
           }
 
           try {
-            await updateProfile(user, {
+            await auth.currentUser.updateProfile({
               displayName: updatedName,
               photoURL: updatedPhoto || user.photoURL
             });
 
-            await set(userRef, {
+            await db.ref('users/' + user.uid).set({
               name: updatedName,
               email: user.email,
               photoURL: updatedPhoto || user.photoURL,
@@ -173,6 +470,8 @@
             });
 
             profileImg.src = updatedPhoto || "https://www.gravatar.com/avatar?d=mp";
+            drawerProfileImg.src = updatedPhoto || "https://www.gravatar.com/avatar?d=mp";
+            drawerProfileName.textContent = updatedName || "Hi, There!";
             window.location.href = "home.html";
           } catch (error) {
             console.error("Error updating profile:", error);
@@ -183,7 +482,13 @@
         window.location.href = "index.html";
       }
     });
+
+    // Logout
+    document.querySelector('.drawer-link.text-red-500').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location.href = 'index.html';
+      });
+    });
   </script>
 </body>
 </html>
-
