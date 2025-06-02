@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Messages - Loopa</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lobster&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -51,7 +50,6 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      cursor: pointer; /* Fix: Make clickable */
     }
     .chat-info img {
       width: 36px;
@@ -193,7 +191,6 @@
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      cursor: pointer; /* Fix: Clickable avatars */
     }
     .friend-item .info {
       flex: 1;
@@ -237,23 +234,11 @@
       min-height: calc(100vh - 180px);
       overflow-y: auto;
       display: none;
-      padding-bottom: 80px; /* Fix: Prevent input overlap */
-    }
-    .message-wrap {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .message-wrap.sent {
-      flex-direction: row-reverse;
-    }
-    .message-wrap.received {
-      flex-direction: row;
     }
     .message {
       max-width: 70%;
       padding: 8px 12px;
+      margin-bottom: 12px;
       font-size: 14px;
       line-height: 1.4;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -262,6 +247,7 @@
     }
     .message.sent {
       background: #e6f3ff;
+      margin-left: auto;
       border-radius: 8px 8px 2px 8px;
     }
     .message.received {
@@ -319,13 +305,6 @@
       align-items: center;
       gap: 2px;
     }
-    .message-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      object-fit: cover;
-      cursor: pointer; /* Fix: Clickable avatars */
-    }
 
     /* Message Input */
     #messageForm {
@@ -377,16 +356,6 @@
     #imageUpload {
       display: none;
     }
-
-    /* Loading and Error States */
-    .loading, .error {
-      text-align: center;
-      padding: 16px;
-      color: #666;
-    }
-    .error {
-      color: #ff3b30;
-    }
   </style>
 </head>
 <body>
@@ -397,9 +366,9 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
     </button>
-    <div class="chat-info" id="chatInfo">
+    <div class="chat-info">
       <img id="chatAvatar" src="https://www.gravatar.com/avatar?d=mp" alt="Chat avatar" />
-      <span id="chatTitle" class="name logo">Messages</span> <!-- Fix: Add logo class -->
+      <span id="chatTitle" class="name">Messages</span>
     </div>
     <div class="action-btns" id="actionButtons" style="display: none;">
       <button class="action-btn" id="callBtn" title="Call">
@@ -477,7 +446,7 @@
           </svg>
           Settings
         </a>
-        <button id="logoutBtn" class="drawer-link text-red-500 text-left">Log out</button> <!-- Fix: Add ID -->
+        <button class="drawer-link text-red-500 text-left">Log out</button>
       </nav>
     </div>
   </aside>
@@ -550,13 +519,13 @@
 
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPFy_SPsC6m6vqtN4",
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
-      databaseURL: "https://fire-b-a8878-default-rtdb.firebaseio.com", // Fix: Corrected databaseURL
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
       projectId: "fire-b-a8878",
       storageBucket: "fire-b-a8878.appspot.com",
       messagingSenderId: "658673187627",
-      appId: "1:658673187627:web:6e4c29a6f61785f0afa36e"
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -567,7 +536,7 @@
     let currentUser = null;
     let currentChatRoom = null;
     let currentChatUser = null;
-    const unreadMap = new Map(); // Fix: Use Map for reliability
+    const unreadMap = {};
     let mediaRecorder = null;
     let audioChunks = [];
     let reactionPicker = null;
@@ -576,7 +545,6 @@
 
     // Drawer Logic
     const burger = document.getElementById('burger');
-    const backBtn = document.getElementById('backBtn');
     const overlay = document.getElementById('overlay');
     const drawer = document.getElementById('drawer');
     function openDrawer() {
@@ -593,15 +561,12 @@
       link.addEventListener('click', closeDrawer);
     });
 
-    // Back Button Logic
-    backBtn.addEventListener('click', showFriendList); // Fix: Ensure back button navigates to friend list
-
     // Call and Video Call Placeholders
     document.getElementById('callBtn').addEventListener('click', () => {
-      alert('Call feature not implemented.');
+      alert('Call feature not implemented. This is a placeholder.');
     });
     document.getElementById('videoCallBtn').addEventListener('click', () => {
-      alert('Video call feature not implemented.');
+      alert('Video call feature not implemented. This is a placeholder.');
     });
 
     // Voice Note Recording
@@ -617,25 +582,20 @@
           audioChunks = [];
           mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
           mediaRecorder.onstop = async () => {
-            try {
-              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-              const storageRef = storage.ref(`voice_notes/${currentChatRoom}/${Date.now()}.wav`);
-              await storageRef.put(audioBlob);
-              const downloadUrl = await storageRef.getDownloadURL();
-              const msg = {
-                uid: currentUser.uid,
-                name: currentUser.displayName || 'User',
-                photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
-                audioUrl: downloadUrl,
-                timestamp: firebase.database.ServerValue.TIMESTAMP, // Fix: Use Firebase timestamp
-                status: 'delivered'
-              };
-              await db.ref(`chats/${currentChatRoom}`).push(msg);
-              stream.getTracks().forEach(track => track.stop());
-            } catch (err) {
-              console.error('Error uploading audio:', err);
-              alert('Failed to upload voice note');
-            }
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const storageRef = storage.ref(`voice_notes/${currentChatRoom}/${Date.now()}.wav`);
+            await storageRef.put(audioBlob);
+            const downloadUrl = await storageRef.getDownloadURL();
+            const msg = {
+              uid: currentUser.uid,
+              name: currentUser.displayName || 'User',
+              photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
+              audioUrl: downloadUrl,
+              timestamp: Date.now(),
+              status: 'delivered'
+            };
+            await db.ref(`chats/${currentChatRoom}`).push(msg);
+            stream.getTracks().forEach(track => track.stop());
           };
           mediaRecorder.start();
           micButton.classList.add('recording');
@@ -650,8 +610,8 @@
     document.getElementById('imageUpload').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
+      const storageRef = storage.ref(`chat_images/${currentChatRoom}/${Date.now()}_${file.name}`);
       try {
-        const storageRef = storage.ref(`chat_images/${currentChatRoom}/${Date.now()}_${file.name}`);
         await storageRef.put(file);
         const downloadUrl = await storageRef.getDownloadURL();
         const msg = {
@@ -659,7 +619,7 @@
           name: currentUser.displayName || 'User',
           photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
           imageUrl: downloadUrl,
-          timestamp: firebase.database.ServerValue.TIMESTAMP, // Fix: Use Firebase timestamp
+          timestamp: Date.now(),
           status: 'delivered'
         };
         await db.ref(`chats/${currentChatRoom}`).push(msg);
@@ -685,7 +645,7 @@
     // Format Last Seen
     function formatLastSeen(isOnline, lastOnline) {
       if (isOnline) return 'Online';
-      if (!lastOnline) return 'Offline';
+      if (!lastOnline) return '';
       const date = new Date(lastOnline);
       const now = new Date();
       const diffMinutes = Math.floor((now - date) / (1000 * 60));
@@ -695,20 +655,15 @@
 
     // Get Last Message
     async function getLastMessage(chatRoomId) {
-      try {
-        const snap = await db.ref(`chats/${chatRoomId}`).orderByChild('timestamp').limitToLast(1).once('value');
-        let lastMessage = '';
-        snap.forEach(child => {
-          const msg = child.val();
-          if (msg.audioUrl) lastMessage = 'Voice note';
-          else if (msg.imageUrl) lastMessage = 'Image';
-          else lastMessage = (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
-        });
-        return lastMessage;
-      } catch (err) {
-        console.error('Error fetching last message:', err);
-        return '';
-      }
+      const snap = await db.ref(`chats/${chatRoomId}`).orderByChild('timestamp').limitToLast(1).once('value');
+      let lastMessage = '';
+      snap.forEach(child => {
+        const msg = child.val();
+        if (msg.audioUrl) lastMessage = 'Voice note';
+        else if (msg.imageUrl) lastMessage = 'Image';
+        else lastMessage = (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
+      });
+      return lastMessage;
     }
 
     // Unread Messages
@@ -723,10 +678,10 @@
             const m = c.val();
             if (m.uid !== currentUser.uid && m.status !== 'seen') unseen++;
           });
-          unreadMap.set(friendUid, unseen); // Fix: Use Map
+          unreadMap[friendUid] = unseen;
           renderFriendList();
-        }, err => console.error('Error reading chat room:', err));
-      }, err => console.error('Error reading chats:', err));
+        });
+      });
     }
 
     // Messages
@@ -734,135 +689,111 @@
       if (!currentChatRoom) return;
       const ref = db.ref(`chats/${currentChatRoom}`);
       ref.off();
-      ref.on('child_added', snap => {
-        const msg = snap.val();
-        const key = snap.key;
+      ref.on('child_added', s => {
+        const msg = s.val();
+        const key = s.key;
         displayMessage(key, msg);
         if (msg.uid !== currentUser.uid && currentChatRoom) {
-          snap.ref.update({ status: 'seen' });
+          s.ref.update({ status: 'seen' });
         }
-      }, err => console.error('Error listening to messages:', err));
-      ref.on('child_changed', snap => {
-        const msg = snap.val();
-        const key = snap.key;
+      });
+      ref.on('child_changed', s => {
+        const msg = s.val();
+        const key = s.key;
         const existing = document.querySelector(`.message[data-key="${key}"]`);
         if (existing) {
           existing.parentElement.remove();
           displayMessage(key, msg);
         }
-      }, err => console.error('Error on message update:', err));
+      });
     }
 
     async function displayMessage(key, msg) {
-      try {
-        const wrap = document.getElementById('messages');
-        if (!wrap) throw new Error('Messages container not found');
-        const me = msg.uid === currentUser.uid;
-        const div = document.createElement('div');
-        div.className = `message-wrap ${me ? 'sent' : 'received'}`;
-        const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
-        let content = '';
-        if (msg.audioUrl) content = `<audio controls src="${msg.audioUrl}"></audio>`;
-        else if (msg.imageUrl) content = `<img src="${msg.imageUrl}" alt="Chat image" />`;
-        else content = `<div class="message-text">${msg.text}</div>`;
+      const wrap = document.getElementById('messages');
+      const me = msg.uid === currentUser.uid;
+      const div = document.createElement('div');
+      div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
+      const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
+      let content = '';
+      if (msg.audioUrl) content = `<audio controls src="${msg.audioUrl}"></audio>`;
+      else if (msg.imageUrl) content = `<img src="${msg.imageUrl}" alt="Chat image" />`;
+      else content = `<div class="message-text">${msg.text}</div>`;
 
-        const reactionSnap = await db.ref(`chats/${currentChatRoom}/${key}/reactions`).once('value');
-        const reactions = reactionSnap.val() || {};
-        const reactionCounts = {};
-        Object.values(reactions).forEach(emoji => {
-          reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
-        });
-        const reactionHtml = Object.entries(reactionCounts).map(([emoji, count]) => `
-          <span class="reaction">${emoji}${count > 1 ? ` ${count}` : ''}</span>
-        `).join('');
+      const reactionSnap = await db.ref(`chats/${currentChatRoom}/${key}/reactions`).once('value');
+      const reactions = reactionSnap.val() || {};
+      const reactionCounts = {};
+      Object.values(reactions).forEach(emoji => {
+        reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
+      });
+      const reactionHtml = Object.entries(reactionCounts).map(([emoji, count]) => `
+        <span class="reaction">${emoji}${count > 1 ? ` ${count}` : ''}</span>
+      `).join('');
 
-        div.innerHTML = `
-          <img src="${msg.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${msg.name}" class="message-avatar" data-uid="${msg.uid}" />
-          <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
-            <div class="name" data-uid="${msg.uid}">${msg.name}</div>
-            ${content}
-            <div class="timestamp">
-              ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              ${me ? deliveredText : ''}
-            </div>
-            ${reactionHtml ? `<div class="reactions">${reactionHtml}</div>` : ''}
+      div.innerHTML = `
+        <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
+          <div class="name" data-uid="${msg.uid}">${msg.name}</div>
+          ${content}
+          <div class="timestamp">
+            ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            ${me ? deliveredText : ''}
           </div>
-        `;
-        wrap.appendChild(div);
-        wrap.scrollTop = wrap.scrollHeight;
+          ${reactionHtml ? `<div class="reactions">${reactionHtml}</div>` : ''}
+        </div>
+      `;
+      wrap.appendChild(div);
+      wrap.scrollTop = wrap.scrollHeight;
 
-        const messageEl = div.querySelector('.message');
-        messageEl.addEventListener('contextmenu', e => {
-          e.preventDefault();
-          reactionPicker.togglePicker(messageEl);
-          reactionPicker.messageKey = key;
-        });
+      const messageEl = div.querySelector('.message');
+      messageEl.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        reactionPicker.togglePicker(messageEl);
+        reactionPicker.messageKey = key;
+      });
 
-        const nameEl = div.querySelector('.name');
-        const avatarEl = div.querySelector('.message-avatar');
-        [nameEl, avatarEl].forEach(el => {
-          el.addEventListener('click', () => {
-            window.location.href = `profile.html?uid=${msg.uid}`;
-          });
-        });
-      } catch (err) {
-        console.error('Error displaying message:', err);
-      }
+      const nameEl = div.querySelector('.name');
+      nameEl.addEventListener('click', () => {
+        window.location.href = `profile.html?uid=${msg.uid}`;
+      });
     }
 
     async function renderFriendList() {
       const friendList = document.getElementById('friendList');
-      if (!friendList) {
-        console.error('FriendList element not found');
+      const snap = await db.ref('friends/' + currentUser.uid).once('value');
+      const friendUIDs = Object.keys(snap.val() || {});
+      if (friendUIDs.length === 0) {
+        friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
         return;
       }
-      friendList.innerHTML = '<div class="loading">Loading friends...</div>'; // Fix: Show loading state
-      try {
-        const snap = await db.ref(`friends/${currentUser.uid}`).once('value');
-        const friendUIDs = snap.val() ? Object.keys(snap.val()) : [];
-        if (friendUIDs.length === 0) {
-          friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>'; // Fix: Fallback UI
-          return;
-        }
-        const friends = await Promise.all(friendUIDs.map(async uid => {
-          const userSnap = await db.ref(`users/${uid}`).once('value');
-          const presenceSnap = await db.ref(`presence/${uid}`).once('value');
-          const chatRoomId = [currentUser.uid, uid].sort().join('_');
-          const lastMessage = await getLastMessage(chatRoomId);
-          return {
-            uid,
-            user: userSnap.val() || { name: 'Unknown User', photoURL: 'https://www.gravatar.com/avatar?d=mp' },
-            presence: presenceSnap.val() || { isOnline: false, lastOnline: null },
-            lastMessage
-          };
-        }));
-        friendList.innerHTML = '';
-        friends.forEach(f => {
-          const { uid, user, presence, lastMessage } = f;
-          const unseen = unreadMap.get(uid) || 0;
-          const item = document.createElement('div');
-          item.className = 'friend-item';
-          item.innerHTML = `
-            <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${user.name}" data-uid="${uid}" />
-            <div class="info">
-              <div class="name">${user.name || 'Unnamed User'}</div>
-              <div class="last-message">${lastMessage || 'No messages yet'}</div>
-              <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
-            </div>
-            ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
-          `;
-          item.addEventListener('click', () => openChatWithUser(uid, user));
-          const avatarEl = item.querySelector('img');
-          avatarEl.addEventListener('click', e => {
-            e.stopPropagation();
-            window.location.href = `profile.html?uid=${uid}`;
-          });
-          friendList.appendChild(item);
-        });
-      } catch (err) {
-        console.error('Error rendering friend list:', err);
-        friendList.innerHTML = '<div class="error">Failed to load friends. Please try again.</div>'; // Fix: Show error state
-      }
+      const friends = await Promise.all(friendUIDs.map(async uid => {
+        const userSnap = await db.ref('users/' + uid).once('value');
+        const presenceSnap = await db.ref('presence/' + uid).once('value');
+        const chatRoomId = [currentUser.uid, uid].sort().join('_');
+        const lastMessage = await getLastMessage(chatRoomId);
+        return {
+          uid,
+          user: userSnap.val(),
+          presence: presenceSnap.val() || { isOnline: false, lastOnline: null },
+          lastMessage
+        };
+      }));
+      friendList.innerHTML = '';
+      friends.forEach(f => {
+        const { uid, user, presence, lastMessage } = f;
+        const unseen = unreadMap[uid] || 0;
+        const item = document.createElement('div');
+        item.className = 'friend-item';
+        item.innerHTML = `
+          <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${user.name}" />
+          <div class="info">
+            <div class="name">${user.name || 'Unnamed User'}</div>
+            <div class="last-message">${lastMessage || 'No messages yet'}</div>
+            <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
+          </div>
+          ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+        `;
+        item.addEventListener('click', () => openChatWithUser(uid, user));
+        friendList.appendChild(item);
+      });
     }
 
     function showFriendList() {
@@ -875,13 +806,12 @@
       document.getElementById('messageForm').style.display = 'none';
       document.getElementById('backBtn').style.display = 'none';
       document.getElementById('actionButtons').style.display = 'none';
-      document.getElementById('chatInfo').onclick = null; // Fix: Clear chat info click
       renderFriendList();
       closeDrawer();
     }
 
     function openChatWithUser(uid, user) {
-      unreadMap.set(uid, 0);
+      unreadMap[uid] = 0;
       renderFriendList();
       currentChatRoom = [currentUser.uid, uid].sort().join('_');
       currentChatUser = user;
@@ -893,7 +823,6 @@
       document.getElementById('backBtn').style.display = 'inline-block';
       document.getElementById('actionButtons').style.display = 'flex';
       document.getElementById('messages').innerHTML = '';
-      document.getElementById('chatInfo').onclick = () => window.location.href = `profile.html?uid=${uid}`; // Fix: Clickable chat info
       listenForMessages();
       closeDrawer();
     }
@@ -901,85 +830,72 @@
     // Emoji Picker
     document.addEventListener('DOMContentLoaded', () => {
       const inputPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
-      inputPicker.on('select', e => { // Fix: Use 'select' event
+      inputPicker.on('emoji', e => {
         const inp = document.getElementById('messageInput');
         const { selectionStart: s, selectionEnd: t } = inp;
-        inp.value = inp.value.slice(0, s) + e.emoji + inp.value.slice(t); // Fix: Use e.emoji
+        inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
         inp.focus();
-        inp.selectionStart = inp.selectionEnd = s + e.emoji.length;
+        inp.selectionStart = inp.selectionEnd = s + e.length;
       });
       document.getElementById('emojiButton').addEventListener('click', () => inputPicker.togglePicker(document.getElementById('emojiButton')));
 
       reactionPicker = new EmojiButton({ position: 'auto', theme: 'light' });
-      reactionPicker.on('select', async e => { // Fix: Use 'select' event
+      reactionPicker.on('emoji', async emoji => {
         if (!reactionPicker.messageKey) return;
-        try {
-          const reactionRef = db.ref(`chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`);
-          const snap = await reactionRef.once('value');
-          if (snap.val() === e.emoji) { // Fix: Use e.emoji
-            await reactionRef.remove();
-          } else {
-            await reactionRef.set(e.emoji);
-          }
-          reactionPicker.messageKey = null;
-        } catch (err) {
-          console.error('Error updating reaction:', err);
+        const reactionRef = db.ref(`chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`);
+        const snap = await reactionRef.once('value');
+        if (snap.val() === emoji) {
+          await reactionRef.remove();
+        } else {
+          await reactionRef.set(emoji);
         }
+        reactionPicker.messageKey = null;
       });
+
+      // Back Button Logic
+      document.getElementById('backBtn').addEventListener('click', showFriendList);
     });
 
     // Message Send
-    document.getElementById('messageForm').addEventListener('submit', async e => {
+    document.getElementById('messageForm').addEventListener('submit', e => {
       e.preventDefault();
       const text = document.getElementById('messageInput').value.trim();
       if (!text) return;
-      try {
-        const msg = {
-          uid: currentUser.uid,
-          name: currentUser.displayName || 'User',
-          photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
-          text,
-          timestamp: firebase.database.ServerValue.TIMESTAMP, // Fix: Use Firebase timestamp
-          status: 'delivered'
-        };
-        await db.ref(`chats/${currentChatRoom}`).push(msg);
-        sendSound.play().catch(err => console.error('Audio play error:', err));
+      const msg = {
+        uid: currentUser.uid,
+        name: currentUser.displayName || 'User',
+        photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
+        text,
+        timestamp: Date.now(),
+        status: 'delivered'
+      };
+      db.ref(`chats/${currentChatRoom}`).push(msg).then(() => {
+        sendSound.play().catch(err => console.error('Audio playback error:', err));
         document.getElementById('messageInput').value = '';
-      } catch (err) {
-        console.error('Error sending message:', err);
-        alert('Failed to send message');
-      }
+      });
     });
 
     // Auth
     auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'index.html';
-        return;
-      }
+      if (!user) return window.location.href = 'index.html';
       currentUser = user;
-      try {
-        db.ref(`users/${user.uid}`).update({
-          name: user.displayName || 'User',
-          email: user.email || '',
-          photoURL: user.photoURL || 'https://www.gravatar.com/avatar?d=mp'
-        });
-        document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-        document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
-        setupPresence(user);
-        bindUnreadListeners();
-        showFriendList();
-      } catch (err) {
-        console.error('Error initializing user:', err);
-        document.getElementById('friendList').innerHTML = '<div class="error">Failed to load data. Please try again.</div>'; // Fix: Show error state
-      }
+      db.ref(`users/${user.uid}`).update({
+        name: user.displayName || 'User',
+        email: user.email || '',
+        photoURL: user.photoURL || 'https://www.gravatar.com/avatar'
+      });
+      document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar/';
+      document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
+      setupPresence(user);
+      bindUnreadListeners();
+      showFriendList();
     });
 
     // Logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    document.querySelector('.drawer-link.text-red-500').addEventListener('click', () => {
       auth.signOut().then(() => {
         window.location.href = 'index.html';
-      }).catch(err => console.error('Logout error:', err));
+      });
     });
   </script>
 </body>
