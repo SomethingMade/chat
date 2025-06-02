@@ -3,121 +3,176 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Looper Chat</title>
+  <title>Messages - Loopa</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2/dist/index.min.js"></script>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
-      background: #ECE5DD;
-      color: #000;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      color: #262626;
       margin: 0;
-      padding-bottom: 80px;
-      padding-top: 80px;
+      padding-bottom: 70px;
     }
     ::-webkit-scrollbar {
       width: 6px;
     }
     ::-webkit-scrollbar-thumb {
-      background: #888;
+      background: #cccccc;
       border-radius: 6px;
     }
 
-    /* Floating Header */
+    /* Header */
     header {
-      background: #FFFFFF;
-      color: #000000;
-      height: 60px;
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
+      height: 54px;
       display: flex;
       align-items: center;
-      padding: 0 8px;
-      position: fixed;
+      justify-content: space-between;
+      padding: 0 16px;
+      position: sticky;
       top: 0;
-      width: 100%;
-      z-index: 1000;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 10;
     }
-    header .action-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      margin-right: 5px;
+    .logo {
+      font-family: 'Lobster', cursive;
+      font-size: 24px;
+      font-weight: 600;
     }
-    header .action-btn svg {
-      width: 20px;
-      height: 20px;
-      stroke-width: 2;
-      stroke: #000000;
-    }
-    header .action-btn:hover {
-      background: #F0F0F0;
-    }
-    header .back-btn, header .menu-btn {
-      width: 24px;
-      height: 24px;
-      margin-right: 8px;
-      color: #000000;
-    }
-    header .chat-info {
+    .chat-info {
       flex: 1;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    header .chat-info img {
-      width: 40px;
-      height: 40px;
+    .chat-info img {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       object-fit: cover;
     }
-    header .chat-info .name {
-      font-size: 17px;
+    .chat-info .name {
+      font-size: 16px;
       font-weight: 500;
-      color: #000000;
     }
-    header .action-btns {
+    .action-btn {
       display: flex;
-      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+    .action-btn:hover {
+      background: #f0f0f0;
+    }
+    .action-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: #333;
     }
 
     /* Drawer */
     #drawer {
       width: 280px;
       max-width: 80%;
-      background: #FFF;
-      z-index: 1000;
+      background: #fff;
+      border-right: 1px solid #dbdbdb;
+      z-index: 40;
     }
-    #overlay {
-      background: rgba(0, 0, 0, 0.5);
+    .drawer-link {
+      @apply flex items-center gap-3 py-2 px-4 rounded-lg text-base font-medium text-gray-900 hover:bg-gray-100 hover:text-blue-500 transition;
     }
-    .drawer-item {
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      border-top: 1px solid #dbdbdb;
+      height: 60px;
       display: flex;
+      justify-content: space-around;
       align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      font-size: 16px;
-      color: #333;
+      box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      z-index: 1;
     }
-    .drawer-item:hover {
-      background: #F0F0F0;
+    .bottom-nav a {
+      flex: 1;
+      text-align: center;
+      color: #555;
+      font-size: 12px;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: color 0.3s ease;
     }
-    .drawer-item svg {
+    .bottom-nav a svg {
       width: 24px;
       height: 24px;
+      fill: none;
+      stroke: #555;
+      stroke-width: 2;
+      margin-bottom: 2px;
+      transition: stroke 0.3s ease, transform 0.3s ease;
+    }
+    .bottom-nav a.active,
+    .bottom-nav a:hover {
+      color: #0095f6;
+    }
+    .bottom-nav a.active svg,
+    .bottom-nav a:hover svg {
+      stroke: #0095f6;
+      transform: scale(1.05);
+    }
+    .bottom-nav a.active svg {
+      animation: pulse 0.8s infinite;
+    }
+    .bottom-nav .fab {
+      background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584);
+      border-radius: 6px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      transform: translateY(-8px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+      padding: 0;
+    }
+    .bottom-nav .fab:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+    }
+    .bottom-nav .fab svg {
+      stroke: #fff;
+      width: 20px;
+      height: 20px;
+      margin: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
     }
 
     /* Friend List */
-    #friendList {
+    .friend-list {
       background: #fff;
-      min-height: calc(100vh - 80px);
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
       overflow-y: auto;
     }
     .friend-item {
@@ -125,15 +180,15 @@
       align-items: center;
       gap: 12px;
       padding: 12px 16px;
-      border-bottom: 1px solid #E0E0E0;
+      border-bottom: 1px solid #dbdbdb;
       cursor: pointer;
     }
     .friend-item:hover {
-      background: #F0F0F0;
+      background: #f5f5f5;
     }
     .friend-item img {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       object-fit: cover;
     }
@@ -143,27 +198,27 @@
       flex-direction: column;
     }
     .friend-item .name {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 500;
     }
     .friend-item .last-message {
-      font-size: 14px;
+      font-size: 13px;
       color: #666;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: 180px;
     }
     .friend-item .last-seen {
       font-size: 12px;
-      color: #25D366;
+      color: #0095f6;
     }
     .friend-item .badge {
-      background: #25D366;
+      background: #0095f6;
       color: #fff;
       font-size: 12px;
-      min-width: 24px;
-      height: 24px;
+      min-width: 20px;
+      height: 20px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -171,9 +226,12 @@
     }
 
     /* Chat Area */
-    #messages {
+    .messages {
       padding: 12px;
-      min-height: calc(100vh - 160px);
+      background: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      min-height: calc(100vh - 180px);
       overflow-y: auto;
       display: none;
     }
@@ -188,23 +246,32 @@
       position: relative;
     }
     .message.sent {
-      background: #DCF8C6;
+      background: #e6f3ff;
       margin-left: auto;
       border-radius: 8px 8px 2px 8px;
     }
     .message.received {
-      background: #FFF;
+      background: #f5f5f5;
       border-radius: 8px 8px 8px 2px;
     }
     .message .name {
       font-size: 12px;
       font-weight: 500;
       margin-bottom: 2px;
+      cursor: pointer;
+    }
+    .message .name:hover {
+      color: #0095f6;
     }
     .message .message-text {
       font-size: 14px;
       word-wrap: break-word;
       white-space: pre-line;
+    }
+    .message img {
+      max-width: 200px;
+      border-radius: 8px;
+      margin-top: 4px;
     }
     .message audio {
       width: 100%;
@@ -220,7 +287,7 @@
     }
     .message .delivered {
       font-size: 10px;
-      color: #FFD700;
+      color: #0095f6;
       margin-left: 4px;
     }
     .message .reactions {
@@ -231,7 +298,7 @@
       font-size: 12px;
     }
     .message .reaction {
-      background: #E0E0E0;
+      background: #e0e0e0;
       border-radius: 12px;
       padding: 2px 6px;
       display: flex;
@@ -239,21 +306,22 @@
       gap: 2px;
     }
 
-    /* Floating Input */
+    /* Message Input */
     #messageForm {
       position: fixed;
-      bottom: 16px;
+      bottom: 70px;
       left: 50%;
       transform: translateX(-50%);
-      max-width: 640px;
-      width: calc(100% - 20px);
+      max-width: 448px;
+      width: calc(100% - 32px);
       background: #fff;
+      border: 1px solid #dbdbdb;
       border-radius: 8px;
       padding: 8px 12px;
       display: none;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       z-index: 5;
     }
     #messageInput {
@@ -272,18 +340,18 @@
       border-radius: 50%;
     }
     #emojiButton:hover, #micButton:hover, #imageUploadBtn:hover {
-      background: #F0F0F0;
+      background: #f0f0f0;
     }
     #micButton.recording {
-      background: #FF3B30;
+      background: #ff3b30;
       color: #fff;
     }
     #sendButton {
-      background: #25D366;
+      background: #0095f6;
       color: #fff;
     }
     #sendButton:hover {
-      background: #1EBE57;
+      background: #007cd6;
     }
     #imageUpload {
       display: none;
@@ -291,16 +359,16 @@
   </style>
 </head>
 <body>
-  <!-- Floating Header -->
+  <!-- Header -->
   <header>
-    <button class="back-btn" id="backBtn" style="display: none;">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    <button id="burger" class="p-2 focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
     </button>
     <div class="chat-info">
-      <img id="chatAvatar" src="https://i.pravatar.cc/40" alt="Chat avatar" />
-      <span id="chatTitle" class="name">Looper Chat</span>
+      <img id="chatAvatar" src="https://www.gravatar.com/avatar?d=mp" alt="Chat avatar" />
+      <span id="chatTitle" class="name">Messages</span>
     </div>
     <div class="action-btns" id="actionButtons" style="display: none;">
       <button class="action-btn" id="callBtn" title="Call">
@@ -314,36 +382,79 @@
         </svg>
       </button>
     </div>
-    <button class="menu-btn" id="burger">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+    <button class="back-btn" id="backBtn" style="display: none;">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
       </svg>
     </button>
   </header>
 
   <!-- Drawer -->
-  <div id="overlay" class="fixed inset-0 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300 z-990"></div>
-  <aside id="drawer" class="fixed inset-y-0 right-0 w-64 max-w-[80%] translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-1000">
-    <div class="p-4 space-y-2">
-      <div class="drawer-item" onclick="window.location.href='search.html'">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z"/>
-        </svg>
-        Search
+  <div id="overlay" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
+  <aside id="drawer" class="fixed inset-y-0 left-0 w-64 max-w-[80%] -translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
+    <div class="p-4 space-y-6">
+      <div class="text-xl font-bold">Menu</div>
+      <div class="flex items-center space-x-3">
+        <img id="drawer-profile-img" src="https://www.gravatar.com/avatar?d=mp" alt="avatar" class="rounded-full w-10 h-10"/>
+        <div>
+          <p id="drawer-profile-name" class="font-medium">Hi, There!</p>
+          <a href="profile.html" class="text-sm text-blue-500">View profile</a>
+        </div>
       </div>
-      <div class="drawer-item" onclick="window.location.href='profile.html'">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10m0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
-        </svg>
-        Profile
-      </div>
+      <nav class="flex flex-col space-y-2">
+        <a href="home.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+          </svg>
+          Home
+        </a>
+        <a href="ride.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          Get a Ride
+        </a>
+        <a href="food.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3V3z"/>
+          </svg>
+          Order Food
+        </a>
+        <a href="study.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Study Materials
+        </a>
+        <a href="chat.html" class="drawer-link active">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
+          </svg>
+          Messages
+        </a>
+        <a href="requests.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+          </svg>
+          Requests
+        </a>
+        <hr class="border-gray-200"/>
+        <a href="settings.html" class="drawer-link">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+          </svg>
+          Settings
+        </a>
+        <button class="drawer-link text-red-500 text-left">Log out</button>
+      </nav>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="p-0">
-    <div id="friendList"></div>
-    <div id="messages" class="space-y-2"></div>
+  <main class="max-w-md mx-auto p-4">
+    <div id="friendList" class="friend-list"></div>
+    <div id="messages" class="messages space-y-2"></div>
     <form id="messageForm">
       <button type="button" id="emojiButton" aria-label="Emoji picker">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,8 +484,40 @@
     </form>
   </main>
 
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="navigation" aria-label="Bottom Navigation">
+    <a href="home.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9v9a3 3 0 01-3 3h-4v-6H10v6H6a3 3 0 01-3-3v-9z"/>
+      </svg>
+      Home
+    </a>
+    <a href="chat.html" class="active" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-2a4 4 0 014-4h6a4 4 0 014 4v2h-4"/>
+      </svg>
+      Messages
+    </a>
+    <a href="#create" class="fab">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+    </a>
+    <a href="requests.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+      </svg>
+      Requests
+    </a>
+    <a href="profile.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+      </svg>
+      Profile
+    </a>
+  </nav>
+
   <script>
-    // Firebase initialization
     const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
       authDomain: "fire-b-a8878.firebaseapp.com",
@@ -384,6 +527,7 @@
       messagingSenderId: "658673187627",
       appId: "1:658673187627:web:6e4c29af661785f0afa36e"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -397,7 +541,6 @@
     let audioChunks = [];
     let reactionPicker = null;
 
-    // Message sent sound
     const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c44.mp3');
 
     // Drawer Logic
@@ -406,24 +549,24 @@
     const overlay = document.getElementById('overlay');
     const drawer = document.getElementById('drawer');
     function openDrawer() {
-      drawer.classList.remove('translate-x-full');
+      drawer.classList.remove('-translate-x-full');
       overlay.classList.remove('opacity-0', 'pointer-events-none');
     }
     function closeDrawer() {
-      drawer.classList.add('translate-x-full');
+      drawer.classList.add('-translate-x-full');
       overlay.classList.add('opacity-0', 'pointer-events-none');
     }
     burger.addEventListener('click', openDrawer);
     overlay.addEventListener('click', closeDrawer);
-    backBtn.addEventListener('click', showFriendList);
+    drawer.querySelectorAll('.drawer-link').forEach(link => {
+      link.addEventListener('click', closeDrawer);
+    });
 
     // Call and Video Call Placeholders
     document.getElementById('callBtn').addEventListener('click', () => {
-      console.log(`Initiating call with ${currentChatUser?.name || 'unknown'}`);
       alert('Call feature not implemented. This is a placeholder.');
     });
     document.getElementById('videoCallBtn').addEventListener('click', () => {
-      console.log(`Initiating video call with ${currentChatUser?.name || 'unknown'}`);
       alert('Video call feature not implemented. This is a placeholder.');
     });
 
@@ -447,7 +590,7 @@
             const msg = {
               uid: currentUser.uid,
               name: currentUser.displayName || 'User',
-              avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+              photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
               audioUrl: downloadUrl,
               timestamp: Date.now(),
               status: 'delivered'
@@ -461,6 +604,30 @@
           console.error('Microphone access error:', err);
           alert('Failed to access microphone');
         }
+      }
+    });
+
+    // Image Upload
+    document.getElementById('imageUpload').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const storageRef = storage.ref(`chat_images/${currentChatRoom}/${Date.now()}_${file.name}`);
+      try {
+        await storageRef.put(file);
+        const downloadUrl = await storageRef.getDownloadURL();
+        const msg = {
+          uid: currentUser.uid,
+          name: currentUser.displayName || 'User',
+          photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
+          imageUrl: downloadUrl,
+          timestamp: Date.now(),
+          status: 'delivered'
+        };
+        await db.ref(`chats/${currentChatRoom}`).push(msg);
+        e.target.value = '';
+      } catch (err) {
+        console.error('Image upload error:', err);
+        alert('Failed to upload image');
       }
     });
 
@@ -493,7 +660,9 @@
       let lastMessage = '';
       snap.forEach(child => {
         const msg = child.val();
-        lastMessage = msg.audioUrl ? 'Voice note' : (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
+        if (msg.audioUrl) lastMessage = 'Voice note';
+        else if (msg.imageUrl) lastMessage = 'Image';
+        else lastMessage = (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
       });
       return lastMessage;
     }
@@ -546,11 +715,11 @@
       const div = document.createElement('div');
       div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
       const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
-      const content = msg.audioUrl
-        ? `<audio controls src="${msg.audioUrl}"></audio>`
-        : `<div class="message-text">${msg.text}</div>`;
+      let content = '';
+      if (msg.audioUrl) content = `<audio controls src="${msg.audioUrl}"></audio>`;
+      else if (msg.imageUrl) content = `<img src="${msg.imageUrl}" alt="Chat image" />`;
+      else content = `<div class="message-text">${msg.text}</div>`;
 
-      // Fetch reactions
       const reactionSnap = await db.ref(`chats/${currentChatRoom}/${key}/reactions`).once('value');
       const reactions = reactionSnap.val() || {};
       const reactionCounts = {};
@@ -563,7 +732,7 @@
 
       div.innerHTML = `
         <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
-          <div class="name">${msg.name}</div>
+          <div class="name" data-uid="${msg.uid}">${msg.name}</div>
           ${content}
           <div class="timestamp">
             ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -575,12 +744,16 @@
       wrap.appendChild(div);
       wrap.scrollTop = wrap.scrollHeight;
 
-      // Add reaction handler
       const messageEl = div.querySelector('.message');
       messageEl.addEventListener('contextmenu', e => {
         e.preventDefault();
         reactionPicker.togglePicker(messageEl);
         reactionPicker.messageKey = key;
+      });
+
+      const nameEl = div.querySelector('.name');
+      nameEl.addEventListener('click', () => {
+        window.location.href = `profile.html?uid=${msg.uid}`;
       });
     }
 
@@ -610,17 +783,16 @@
         const unseen = unreadMap[uid] || 0;
         const item = document.createElement('div');
         item.className = 'friend-item';
-        item.onclick = () => openChatWithUser(uid, user);
-        const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
         item.innerHTML = `
-          <img src="${avatarUrl}" alt="${user.name}" />
+          <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${user.name}" />
           <div class="info">
-            <div class="name">${user.name}</div>
+            <div class="name">${user.name || 'Unnamed User'}</div>
             <div class="last-message">${lastMessage || 'No messages yet'}</div>
             <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
           </div>
           ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
         `;
+        item.addEventListener('click', () => openChatWithUser(uid, user));
         friendList.appendChild(item);
       });
     }
@@ -628,8 +800,8 @@
     function showFriendList() {
       currentChatRoom = null;
       currentChatUser = null;
-      document.getElementById('chatTitle').textContent = 'Looper Chat';
-      document.getElementById('chatAvatar').src = 'https://i.pravatar.cc/40';
+      document.getElementById('chatTitle').textContent = 'Messages';
+      document.getElementById('chatAvatar').src = 'https://www.gravatar.com/avatar?d=mp';
       document.getElementById('friendList').style.display = 'block';
       document.getElementById('messages').style.display = 'none';
       document.getElementById('messageForm').style.display = 'none';
@@ -644,8 +816,8 @@
       renderFriendList();
       currentChatRoom = [currentUser.uid, uid].sort().join('_');
       currentChatUser = user;
-      document.getElementById('chatTitle').textContent = user.name;
-      document.getElementById('chatAvatar').src = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+      document.getElementById('chatTitle').textContent = user.name || 'Unnamed User';
+      document.getElementById('chatAvatar').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
       document.getElementById('friendList').style.display = 'none';
       document.getElementById('messages').style.display = 'block';
       document.getElementById('messageForm').style.display = 'flex';
@@ -656,7 +828,7 @@
       closeDrawer();
     }
 
-    // Emoji Picker for Input
+    // Emoji Picker
     document.addEventListener('DOMContentLoaded', () => {
       const inputPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
       inputPicker.on('emoji', e => {
@@ -668,7 +840,6 @@
       });
       document.getElementById('emojiButton').addEventListener('click', () => inputPicker.togglePicker(document.getElementById('emojiButton')));
 
-      // Reaction Picker
       reactionPicker = new EmojiButton({ position: 'auto', theme: 'light' });
       reactionPicker.on('emoji', async emoji => {
         if (!reactionPicker.messageKey) return;
@@ -691,7 +862,7 @@
       const msg = {
         uid: currentUser.uid,
         name: currentUser.displayName || 'User',
-        avatar: currentUser.photoURL || `https://i.pravatar.cc/150?u=${currentUser.uid}`,
+        photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
         text,
         timestamp: Date.now(),
         status: 'delivered'
@@ -706,13 +877,23 @@
     auth.onAuthStateChanged(user => {
       if (!user) return window.location.href = 'index.html';
       currentUser = user;
-      db.ref(`users/${user.uid}`).set({
+      db.ref(`users/${user.uid}`).update({
         name: user.displayName || 'User',
-        avatar: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`
+        email: user.email || '',
+        photoURL: user.photoURL || 'https://www.gravatar.com/avatar?d=mp'
       });
+      document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
+      document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
       setupPresence(user);
       bindUnreadListeners();
       showFriendList();
+    });
+
+    // Logout
+    document.querySelector('.drawer-link.text-red-500').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location.href = 'index.html';
+      });
     });
   </script>
 </body>
