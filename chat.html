@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Messages - Loopa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -56,10 +57,15 @@
       height: 36px;
       border-radius: 50%;
       object-fit: cover;
+      cursor: pointer;
     }
     .chat-info .name {
       font-size: 16px;
       font-weight: 500;
+      cursor: pointer;
+    }
+    .chat-info .name:hover {
+      color: #0095f6;
     }
     .action-btn {
       display: flex;
@@ -234,11 +240,23 @@
       min-height: calc(100vh - 180px);
       overflow-y: auto;
       display: none;
+      padding-bottom: 80px; /* Space for message input */
+    }
+    .message-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .message-wrap.sent {
+      flex-direction: row-reverse;
+    }
+    .message-wrap.received {
+      flex-direction: row;
     }
     .message {
       max-width: 70%;
       padding: 8px 12px;
-      margin-bottom: 12px;
       font-size: 14px;
       line-height: 1.4;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -247,7 +265,6 @@
     }
     .message.sent {
       background: #e6f3ff;
-      margin-left: auto;
       border-radius: 8px 8px 2px 8px;
     }
     .message.received {
@@ -305,6 +322,13 @@
       align-items: center;
       gap: 2px;
     }
+    .message-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+    }
 
     /* Message Input */
     #messageForm {
@@ -355,6 +379,18 @@
     }
     #imageUpload {
       display: none;
+    }
+
+    /* Loading and Error States */
+    .loading {
+      text-align: center;
+      padding: 16px;
+      color: #666;
+    }
+    .error {
+      text-align: center;
+      padding: 16px;
+      color: #ff3b30;
     }
   </style>
 </head>
@@ -446,7 +482,7 @@
           </svg>
           Settings
         </a>
-        <button class="drawer-link text-red-500 text-left">Log out</button>
+        <button id="logoutBtn" class="drawer-link text-red-500 text-left">Log out</button>
       </nav>
     </div>
   </aside>
@@ -505,13 +541,13 @@
     </a>
     <a href="requests.html">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8zM16 7a4 4 0 110 8"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H7a4 4 0 00-3 3.87M12 12a4 4 0 100-8 4px 4 0 0 0 8 0zM16 7a4 4 0 110 8"/>
       </svg>
       Requests
     </a>
     <a href="profile.html">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a5 5 0 100-10 5 5 0 100 10zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
       </svg>
       Profile
     </a>
@@ -519,13 +555,13 @@
 
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
-      authDomain: "fire-b-a8878.firebaseapp.com",
-      databaseURL: "https://fire-b-a8878.firebaseio.com",
-      projectId: "fire-b-a8878",
-      storageBucket: "fire-b-a8878.appspot.com",
-      messagingSenderId: "658673187627",
-      appId: "1:658673187627:web:6e4c29af661785f0afa36e"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      databaseURL: "YOUR_DATABASE_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -536,12 +572,12 @@
     let currentUser = null;
     let currentChatRoom = null;
     let currentChatUser = null;
-    const unreadMap = {};
+    const unreadMap = new Map();
     let mediaRecorder = null;
     let audioChunks = [];
     let reactionPicker = null;
 
-    const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c44.mp3');
+    const sendSound = new Audio('https://cdn.pixabay.com/audio/2023/03/13/audio_5d2a2d4c64.mp3');
 
     // Drawer Logic
     const burger = document.getElementById('burger');
@@ -558,16 +594,19 @@
     }
     burger.addEventListener('click', openDrawer);
     overlay.addEventListener('click', closeDrawer);
-    drawer.querySelectorAll('.drawer-link').forEach(link => {
+    document.querySelectorAll('.drawer-link').forEach(link => {
       link.addEventListener('click', closeDrawer);
     });
 
+    // Back Button Logic
+    backBtn.addEventListener('click', showFriendList);
+
     // Call and Video Call Placeholders
     document.getElementById('callBtn').addEventListener('click', () => {
-      alert('Call feature not implemented. This is a placeholder.');
+      alert('Call feature not implemented.');
     });
     document.getElementById('videoCallBtn').addEventListener('click', () => {
-      alert('Video call feature not implemented. This is a placeholder.');
+      alert('Video call feature not implemented.');
     });
 
     // Voice Note Recording
@@ -583,20 +622,25 @@
           audioChunks = [];
           mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
           mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            const storageRef = storage.ref(`voice_notes/${currentChatRoom}/${Date.now()}.wav`);
-            await storageRef.put(audioBlob);
-            const downloadUrl = await storageRef.getDownloadURL();
-            const msg = {
-              uid: currentUser.uid,
-              name: currentUser.displayName || 'User',
-              photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
-              audioUrl: downloadUrl,
-              timestamp: Date.now(),
-              status: 'delivered'
-            };
-            await db.ref(`chats/${currentChatRoom}`).push(msg);
-            stream.getTracks().forEach(track => track.stop());
+            try {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              const storageRef = storage.ref(`voice_notes/${currentChatRoom}/${Date.now()}.wav`);
+              await storageRef.put(audioBlob);
+              const downloadUrl = await storageRef.getDownloadURL();
+              const msg = {
+                uid: currentUser.uid,
+                name: currentUser.displayName || 'User',
+                photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
+                audioUrl: downloadUrl,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                status: 'delivered'
+              };
+              await db.ref(`chats/${currentChatRoom}`).push(msg);
+              stream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+              console.error('Error uploading audio:', err);
+              alert('Failed to upload voice note');
+            }
           };
           mediaRecorder.start();
           micButton.classList.add('recording');
@@ -611,8 +655,8 @@
     document.getElementById('imageUpload').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
-      const storageRef = storage.ref(`chat_images/${currentChatRoom}/${Date.now()}_${file.name}`);
       try {
+        const storageRef = storage.ref(`chat_images/${currentChatRoom}/${Date.now()}_${file.name}`);
         await storageRef.put(file);
         const downloadUrl = await storageRef.getDownloadURL();
         const msg = {
@@ -620,19 +664,19 @@
           name: currentUser.displayName || 'User',
           photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
           imageUrl: downloadUrl,
-          timestamp: Date.now(),
+          timestamp: firebase.database.ServerValue.TIMESTAMP,
           status: 'delivered'
         };
         await db.ref(`chats/${currentChatRoom}`).push(msg);
         e.target.value = '';
       } catch (err) {
         console.error('Image upload error:', err);
-        alert('Failed to upload image');
+        alert('Error uploading image');
       }
     });
 
     // Manage User Presence
-    function setupPresence(user) {
+    function setupPresence() {
       const presenceRef = db.ref(`presence/${user.uid}`);
       const connectedRef = db.ref('.info/connected');
       connectedRef.on('value', snap => {
@@ -646,7 +690,7 @@
     // Format Last Seen
     function formatLastSeen(isOnline, lastOnline) {
       if (isOnline) return 'Online';
-      if (!lastOnline) return '';
+      if (!lastOnline) return 'Offline';
       const date = new Date(lastOnline);
       const now = new Date();
       const diffMinutes = Math.floor((now - date) / (1000 * 60));
@@ -656,15 +700,20 @@
 
     // Get Last Message
     async function getLastMessage(chatRoomId) {
-      const snap = await db.ref(`chats/${chatRoomId}`).orderByChild('timestamp').limitToLast(1).once('value');
-      let lastMessage = '';
-      snap.forEach(child => {
-        const msg = child.val();
-        if (msg.audioUrl) lastMessage = 'Voice note';
-        else if (msg.imageUrl) lastMessage = 'Image';
-        else lastMessage = (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
-      });
-      return lastMessage;
+      try {
+        const snap = await db.ref(`chats/${chatRoomId}`).orderByChild('timestamp').limitToLast(1).once('value');
+        let lastMessage = '';
+        snap.forEach(child => {
+          const msg = child.val();
+          if (msg.audioUrl) lastMessage = 'Voice note';
+          else if (msg.imageUrl) lastMessage = 'Image';
+          else lastMessage = (msg.text || '').slice(0, 30) + (msg.text?.length > 30 ? '...' : '');
+        });
+        return lastMessage;
+      } catch (error) {
+        console.error('Error fetching last message:', error);
+        return '';
+      }
     }
 
     // Unread Messages
@@ -675,13 +724,17 @@
         roomSnap.ref.on('value', snap => {
           const friendUid = roomId.split('_').find(id => id !== currentUser.uid);
           let unseen = 0;
-          snap.forEach(c => {
-            const m = c.val();
-            if (m.uid !== currentUser.uid && m.status !== 'seen') unseen++;
+          snap.forEach(child => {
+            const msg = child.val();
+            if (msg.uid !== currentUser.uid && msg.status !== 'seen') unseen++;
           });
-          unreadMap[friendUid] = unseen;
+          unreadMap.set(friendUid, unseen);
           renderFriendList();
+        }, error => {
+          console.error('Error reading chat room:', error);
         });
+      }, error => {
+        console.error('Error reading chats:', error);
       });
     }
 
@@ -690,17 +743,19 @@
       if (!currentChatRoom) return;
       const ref = db.ref(`chats/${currentChatRoom}`);
       ref.off();
-      ref.on('child_added', s => {
-        const msg = s.val();
-        const key = s.key;
+      ref.on('child_added', (snap) => {
+        const msg = snap.val();
+        const key = snap.key;
         displayMessage(key, msg);
         if (msg.uid !== currentUser.uid && currentChatRoom) {
-          s.ref.update({ status: 'seen' });
+          snap.ref.update({ status: 'seen' });
         }
+      }, error => {
+        console.error('Error listening to messages:', error);
       });
-      ref.on('child_changed', s => {
-        const msg = s.val();
-        const key = s.key;
+      ref.on('child_changed', (snap) => {
+        const msg = snap.val();
+        const key = snap.key;
         const existing = document.querySelector(`.message[data-key="${key}"]`);
         if (existing) {
           existing.parentElement.remove();
@@ -711,90 +766,121 @@
 
     async function displayMessage(key, msg) {
       const wrap = document.getElementById('messages');
+      if (!wrap) {
+        console.error('Messages container not found');
+        return;
+      }
       const me = msg.uid === currentUser.uid;
       const div = document.createElement('div');
-      div.className = `flex ${me ? 'justify-end' : 'justify-start'}`;
+      div.className = `message-wrap ${me ? 'sent' : 'received'}`;
       const deliveredText = msg.status === 'delivered' || msg.status === 'seen' ? `<span class="delivered">${msg.status === 'seen' ? 'Seen' : 'Delivered'}</span>` : '';
       let content = '';
       if (msg.audioUrl) content = `<audio controls src="${msg.audioUrl}"></audio>`;
-      else if (msg.imageUrl) content = `<img src="${msg.imageUrl}" alt="Chat image" />`;
-      else content = `<div class="message-text">${msg.text}</div>`;
+      else if (msg.imageUrl) content = `<img src="${msg.imageUrl}" alt="Image" />`;
+      else content = `<div class="message-text">${msg.text || msg.content}</div>`;
 
-      const reactionSnap = await db.ref(`chats/${currentChatRoom}/${key}/reactions`).once('value');
-      const reactions = reactionSnap.val() || {};
-      const reactionCounts = {};
-      Object.values(reactions).forEach(emoji => {
-        reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
-      });
-      const reactionHtml = Object.entries(reactionCounts).map(([emoji, count]) => `
-        <span class="reaction">${emoji}${count > 1 ? ` ${count}` : ''}</span>
-      `).join('');
+      try {
+        const reactionSnap = await db.ref(`chats/${currentChatRoom}/${key}/reactions`).once('value');
+        const reactions = reactionSnap.val() || {};
+        const reactionCounts = {};
+        Object.values(reactions).forEach(emoji => {
+          reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
+        });
+        const reactionHtml = Object.entries(reactionCounts).map(([emoji, count]) => `
+          <span class="reaction">${emoji}${count > 1 ? ` ${count}` : ''}</span>
+        `).join('');
 
-      div.innerHTML = `
-        <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
-          <div class="name" data-uid="${msg.uid}">${msg.name}</div>
-          ${content}
-          <div class="timestamp">
-            ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            ${me ? deliveredText : ''}
+        div.innerHTML = `
+          <img src="${msg.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${msg.name || 'User'}" class="message-avatar" data-uid="${msg.uid}" />
+          <div class="message ${me ? 'sent' : 'received'}" data-key="${key}">
+            <div class="name" data-uid="${msg.uid}">${msg.name || 'User'}</div>
+            ${content}
+            <div class="timestamp">
+              ${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              ${me ? deliveredText : ''}
+            </div>
+            ${reactionHtml ? `<div class="reactions">${reactionHtml}</div>` : ''}
           </div>
-          ${reactionHtml ? `<div class="reactions">${reactionHtml}</div>` : ''}
-        </div>
-      `;
-      wrap.appendChild(div);
-      wrap.scrollTop = wrap.scrollHeight;
+        `;
+        wrap.appendChild(div);
+        wrap.scrollTop = wrap.scrollHeight;
 
-      const messageEl = div.querySelector('.message');
-      messageEl.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        reactionPicker.togglePicker(messageEl);
-        reactionPicker.messageKey = key;
-      });
+        const messageEl = div.querySelector('.message');
+        messageEl.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          reactionPicker.showPicker(messageEl);
+          reactionPicker.messageKey = key;
+        });
 
-      const nameEl = div.querySelector('.name');
-      nameEl.addEventListener('click', () => {
-        window.location.href = `profile.html?uid=${msg.uid}`;
-      });
+        const nameEl = div.querySelector('.name');
+        const avatarEl = div.querySelector('.message-avatar');
+        [nameEl, avatarEl].forEach(el => {
+          el.addEventListener('click', () => {
+            window.location.href = `profile.html?uid=${msg.uid}`;
+          });
+        });
+      } catch (error) {
+        console.error('Error displaying message:', error);
+      }
     }
 
     async function renderFriendList() {
       const friendList = document.getElementById('friendList');
-      const snap = await db.ref('friends/' + currentUser.uid).once('value');
-      const friendUIDs = Object.keys(snap.val() || {});
-      if (friendUIDs.length === 0) {
-        friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
+      if (!friendList) {
+        console.error('FriendList container not found');
         return;
       }
-      const friends = await Promise.all(friendUIDs.map(async uid => {
-        const userSnap = await db.ref('users/' + uid).once('value');
-        const presenceSnap = await db.ref('presence/' + uid).once('value');
-        const chatRoomId = [currentUser.uid, uid].sort().join('_');
-        const lastMessage = await getLastMessage(chatRoomId);
-        return {
-          uid,
-          user: userSnap.val(),
-          presence: presenceSnap.val() || { isOnline: false, lastOnline: null },
-          lastMessage
-        };
-      }));
-      friendList.innerHTML = '';
-      friends.forEach(f => {
-        const { uid, user, presence, lastMessage } = f;
-        const unseen = unreadMap[uid] || 0;
-        const item = document.createElement('div');
-        item.className = 'friend-item';
-        item.innerHTML = `
-          <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${user.name}" />
-          <div class="info">
-            <div class="name">${user.name || 'Unnamed User'}</div>
-            <div class="last-message">${lastMessage || 'No messages yet'}</div>
-            <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
-          </div>
-          ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
-        `;
-        item.addEventListener('click', () => openChatWithUser(uid, user));
-        friendList.appendChild(item);
-      });
+      friendList.innerHTML = '<div class="loading">Loading friends...</div>';
+
+      try {
+        const snap = await db.ref('friends/' + currentUser.uid).once('value');
+        const friendUIDs = snap.val() ? Object.keys(snap.val()) : [];
+        if (friendUIDs.length === 0) {
+          friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends yet. Add some friends to start chatting!</div>';
+          return;
+        }
+
+        const friends = await Promise.all(friendUIDs.map(async uid => {
+          const userSnap = await db.ref('users/' + uid).once('value');
+          const presenceSnap = await db.ref('presence/' + uid).once('value');
+          const chatRoomId = [currentUser.uid, uid].sort().join('_');
+          const lastMessage = await getLastMessage(chatRoomId);
+          return {
+            uid,
+            user: userSnap.val() || { name: 'Unknown', photoURL: 'https://www.gravatar.com/avatar?d=mp' },
+            presence: presenceSnap.val() || { isOnline: false, lastOnline: null },
+            lastMessage
+          };
+        }));
+
+        friendList.innerHTML = '';
+        friends.forEach(f => {
+          const { uid, user, presence, lastMessage } = f;
+          const unseen = unreadMap.get(uid) || 0;
+          const item = document.createElement('div');
+          item.className = 'friend-item';
+          item.innerHTML = `
+            <img src="${user.photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${user.name || 'User'}" />
+            <div class="info">
+              <div class="name">${user.name || 'User'}</div>
+              <div class="last-message">${lastMessage || 'No messages yet'}</div>
+              <div class="last-seen">${formatLastSeen(presence.isOnline, presence.lastOnline)}</div>
+            </div>
+            ${unseen > 0 ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}
+          `;
+          item.addEventListener('click', () => openChatWithUser(uid, user));
+          friendList.appendChild(item);
+
+          const avatarEl = item.querySelector('img');
+          avatarEl.addEventListener('click', e => {
+            e.stopPropagation();
+            window.location.href = `profile.html?uid=${uid}`;
+          });
+        });
+      } catch (error) {
+        console.error('Error rendering friend list:', error);
+        friendList.innerHTML = '<div class="error">Failed to load friends. Please try again.</div>';
+      }
     }
 
     function showFriendList() {
@@ -812,87 +898,111 @@
     }
 
     function openChatWithUser(uid, user) {
-      unreadMap[uid] = 0;
-      renderFriendList();
+      unreadMap.set(uid, 0);
       currentChatRoom = [currentUser.uid, uid].sort().join('_');
       currentChatUser = user;
-      document.getElementById('chatTitle').textContent = user.name || 'Unnamed User';
+      document.getElementById('chatTitle').textContent = user.name || 'User';
       document.getElementById('chatAvatar').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
       document.getElementById('friendList').style.display = 'none';
       document.getElementById('messages').style.display = 'block';
       document.getElementById('messageForm').style.display = 'flex';
-      document.getElementById('backBtn').style.display = 'inline-block';
+      document.getElementById('backBtn').style.display = 'block';
       document.getElementById('actionButtons').style.display = 'flex';
       document.getElementById('messages').innerHTML = '';
       listenForMessages();
       closeDrawer();
+
+      const chatInfoEls = [document.getElementById('chatAvatar'), document.getElementById('chatTitle')];
+      chatInfoEls.forEach(el => {
+        el.addEventListener('click', () => {
+          window.location.href = `profile.html?uid=${uid}`;
+        });
+      });
     }
 
     // Emoji Picker
     document.addEventListener('DOMContentLoaded', () => {
       const inputPicker = new EmojiButton({ position: 'top-start', theme: 'light' });
-      inputPicker.on('emoji', e => {
+      inputPicker.on('select', e => {
         const inp = document.getElementById('messageInput');
         const { selectionStart: s, selectionEnd: t } = inp;
-        inp.value = inp.value.slice(0, s) + e + inp.value.slice(t);
+        inp.value = inp.value.slice(0, s) + e.emoji + inp.value.slice(t);
         inp.focus();
-        inp.selectionStart = inp.selectionEnd = s + e.length;
+        inp.selectionStart = inp.selectionEnd = s + e.emoji.length;
       });
       document.getElementById('emojiButton').addEventListener('click', () => inputPicker.togglePicker(document.getElementById('emojiButton')));
 
       reactionPicker = new EmojiButton({ position: 'auto', theme: 'light' });
-      reactionPicker.on('emoji', async emoji => {
+      reactionPicker.on('select', async e => {
         if (!reactionPicker.messageKey) return;
-        const reactionRef = db.ref(`chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`);
-        const snap = await reactionRef.once('value');
-        if (snap.val() === emoji) {
-          await reactionRef.remove();
-        } else {
-          await reactionRef.set(emoji);
+        try {
+          const reactionRef = db.ref(`chats/${currentChatRoom}/${reactionPicker.messageKey}/reactions/${currentUser.uid}`);
+          const snap = await reactionRef.once('value');
+          if (snap.val() === e.emoji) {
+            await reactionRef.remove();
+          } else {
+            await reactionRef.set(e.emoji);
+          }
+          reactionPicker.messageKey = null;
+        } catch (error) {
+          console.error('Error updating reaction:', error);
         }
-        reactionPicker.messageKey = null;
       });
     });
 
     // Message Send
-    document.getElementById('messageForm').addEventListener('submit', e => {
+    document.getElementById('messageForm').addEventListener('submit', async e => {
       e.preventDefault();
       const text = document.getElementById('messageInput').value.trim();
       if (!text) return;
-      const msg = {
-        uid: currentUser.uid,
-        name: currentUser.displayName || 'User',
-        photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
-        text,
-        timestamp: Date.now(),
-        status: 'delivered'
-      };
-      db.ref(`chats/${currentChatRoom}`).push(msg).then(() => {
+      try {
+        const msg = {
+          uid: currentUser.uid,
+          name: currentUser.displayName || 'User',
+          photoURL: currentUser.photoURL || 'https://www.gravatar.com/avatar?d=mp',
+          text,
+          timestamp: firebase.database.ServerValue.TIMESTAMP,
+          status: 'delivered'
+        };
+        await db.ref(`chats/${currentChatRoom}`).push(msg);
         sendSound.play().catch(err => console.error('Audio play error:', err));
         document.getElementById('messageInput').value = '';
-      });
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message');
+      }
     });
 
     // Auth
     auth.onAuthStateChanged(user => {
-      if (!user) return window.location.href = 'index.html';
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
       currentUser = user;
-      db.ref(`users/${user.uid}`).update({
-        name: user.displayName || 'User',
-        email: user.email || '',
-        photoURL: user.photoURL || 'https://www.gravatar.com/avatar?d=mp'
-      });
-      document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-      document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
-      setupPresence(user);
-      bindUnreadListeners();
-      showFriendList();
+      try {
+        db.ref(`users/${user.uid}`).update({
+          name: user.displayName || 'User',
+          email: user.email || '',
+          photoURL: user.photoURL || 'https://www.gravatar.com/avatar?d=mp'
+        });
+        document.getElementById('drawer-profile-img').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
+        document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
+        setupPresence();
+        bindUnreadListeners();
+        showFriendList();
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        document.getElementById('friendList').innerHTML = '<div class="error">Failed to load. Please try again.</div>';
+      }
     });
 
     // Logout
-    document.querySelector('.drawer-link.text-red-500').addEventListener('click', () => {
+    document.getElementById('logoutBtn').addEventListener('click', () => {
       auth.signOut().then(() => {
         window.location.href = 'index.html';
+      }).catch(error => {
+        console.error('Logout error:', error);
       });
     });
   </script>
