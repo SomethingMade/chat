@@ -78,6 +78,21 @@
       stroke: #333;
     }
 
+    /* Tab Bar */
+    .tab-bar {
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
+    }
+    .tab-bar button {
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+    .tab-bar button.active {
+      @apply text-blue-500 border-blue-500;
+    }
+    .tab-bar button:hover {
+      @apply text-blue-500 border-blue-500;
+    }
+
     /* Drawer */
     #drawer {
       width: 280px;
@@ -231,9 +246,8 @@
       background: #fff;
       border: 1px solid #dbdbdb;
       border-radius: 12px;
-      min-height: calc(100vh - 180px);
+      min-height: calc(100vh - 240px);
       overflow-y: auto;
-      display: none;
     }
     .message {
       max-width: 70%;
@@ -309,7 +323,7 @@
     /* Message Input */
     #messageForm {
       position: fixed;
-      bottom: 70px;
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
       max-width: 448px;
@@ -318,7 +332,6 @@
       border: 1px solid #dbdbdb;
       border-radius: 8px;
       padding: 8px 12px;
-      display: none;
       align-items: center;
       gap: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -419,6 +432,14 @@
     </div>
   </header>
 
+  <!-- Tab Bar -->
+  <div class="tab-bar max-w-md mx-auto bg-white border-b border-gray-200">
+    <div class="flex">
+      <button id="friendsTab" class="flex-1 py-3 text-center text-sm font-medium text-blue-500 border-b-2 border-blue-500 active">Friends</button>
+      <button id="chatsTab" class="flex-1 py-3 text-center text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-blue-500 hover:border-blue-500 transition">Chats</button>
+    </div>
+  </div>
+
   <!-- Drawer -->
   <div id="overlay" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity duration-300 z-30"></div>
   <aside id="drawer" class="fixed inset-y-0 left-0 w-64 max-w-[80%] -translate-x-full bg-white shadow-lg overflow-y-auto transition-transform duration-300 z-40">
@@ -496,35 +517,37 @@
 
   <!-- Main Content -->
   <main class="max-w-md mx-auto p-4">
-    <div id="friendList" class="friend-list"></div>
-    <div id="messages" class="messages space-y-2"></div>
-    <form id="messageForm">
-      <button type="button" id="emojiButton" aria-label="Emoji picker">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-          <line x1="9" y1="9" x2="9.01" y2="9" />
-          <line x1="15" y1="9" x2="15.01" y2="9" />
-        </svg>
-      </button>
-      <input id="messageInput" type="text" placeholder="Type a message" />
-      <button type="button" id="micButton" aria-label="Record voice note">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-        </svg>
-      </button>
-      <label id="imageUploadBtn" for="imageUpload" class="cursor-pointer">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-      </label>
-      <input id="imageUpload" type="file" accept="image/*" class="hidden" />
-      <button id="sendButton" type="submit">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-        </svg>
-      </button>
-    </form>
+    <div id="tabContent">
+      <div id="friendList" class="friend-list"></div>
+      <div id="messages" class="messages space-y-2 hidden"></div>
+      <form id="messageForm" class="hidden">
+        <button type="button" id="emojiButton" aria-label="Emoji picker">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+            <line x1="9" y1="9" x2="9.01" y2="9" />
+            <line x1="15" y1="9" x2="15.01" y2="9" />
+          </svg>
+        </button>
+        <input id="messageInput" type="text" placeholder="Type a message" />
+        <button type="button" id="micButton" aria-label="Record voice note">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+          </svg>
+        </button>
+        <label id="imageUploadBtn" for="imageUpload" class="cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+        </label>
+        <input id="imageUpload" type="file" accept="image/*" class="hidden" />
+        <button id="sendButton" type="submit">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </form>
+    </div>
   </main>
 
   <!-- Bottom Navigation -->
@@ -604,6 +627,48 @@
     drawer.querySelectorAll('.drawer-link').forEach(link => {
       link.addEventListener('click', closeDrawer);
     });
+
+    // Tab Logic
+    const friendsTab = document.getElementById('friendsTab');
+    const chatsTab = document.getElementById('chatsTab');
+
+    function showFriendsTab() {
+      friendsTab.classList.add('active');
+      chatsTab.classList.remove('active');
+      document.getElementById('friendList').style.display = 'block';
+      document.getElementById('messages').style.display = 'none';
+      document.getElementById('messageForm').style.display = 'none';
+      document.getElementById('chatTitle').textContent = 'Messages';
+      document.getElementById('chatAvatar').src = 'https://www.gravatar.com/avatar?d=mp';
+      document.getElementById('backBtn').style.display = 'none';
+      document.getElementById('actionButtons').style.display = 'none';
+      currentChatRoom = null;
+      currentChatUser = null;
+      db.ref(`chats/${currentChatRoom}`).off();
+      db.ref(`group_messages/${currentChatRoom}`).off();
+      renderFriendList();
+    }
+
+    function showChatsTab() {
+      friendsTab.classList.remove('active');
+      chatsTab.classList.add('active');
+      document.getElementById('friendList').style.display = 'none';
+      document.getElementById('messages').style.display = 'block';
+      document.getElementById('messageForm').style.display = 'flex';
+      document.getElementById('backBtn').style.display = 'inline-block';
+      document.getElementById('actionButtons').style.display = 'flex';
+    }
+
+    friendsTab.addEventListener('click', showFriendsTab);
+    chatsTab.addEventListener('click', () => {
+      if (currentChatRoom) {
+        showChatsTab();
+      } else {
+        showFriendsTab();
+      }
+    });
+
+    backBtn.addEventListener('click', showFriendsTab);
 
     // Call and Video Call Placeholders
     document.getElementById('callBtn').addEventListener('click', () => {
@@ -778,7 +843,6 @@
 
     // Unread Messages
     function bindUnreadListeners() {
-      // One-on-one chats
       db.ref('chats').on('child_added', roomSnap => {
         const roomId = roomSnap.key;
         if (!roomId.includes(currentUser.uid)) return;
@@ -794,7 +858,6 @@
         });
       });
 
-      // Group chats
       db.ref('group_messages').on('child_added', groupSnap => {
         const groupId = groupSnap.key;
         db.ref(`group_chats/${groupId}/members/${currentUser.uid}`).once('value').then(snap => {
@@ -939,14 +1002,12 @@
 
     // Friend List Rendering
     async function renderFriendList() {
-      console.log('Rendering friend list for user:', currentUser?.uid);
       const friendList = document.getElementById('friendList');
       friendList.innerHTML = '';
 
       // Fetch one-on-one friends
       const friendSnap = await db.ref('friends/' + currentUser.uid).once('value');
       const friendUIDs = Object.keys(friendSnap.val() || {});
-      console.log('Friend UIDs:', friendUIDs);
 
       const friends = await Promise.all(friendUIDs.map(async uid => {
         const userSnap = await db.ref('users/' + uid).once('value');
@@ -961,7 +1022,6 @@
           lastMessage
         };
       }));
-      console.log('Friends:', friends);
 
       // Fetch group chats
       const groupSnap = await db.ref('group_chats').orderByChild(`members/${currentUser.uid}`).equalTo(true).once('value');
@@ -974,12 +1034,10 @@
           lastMessage: getLastMessage(group.key, true)
         });
       });
-      console.log('Groups:', groups);
 
       // Combine and render
       const combinedList = [...friends, ...groups];
       if (combinedList.length === 0) {
-        console.log('No friends or groups to display');
         friendList.innerHTML = '<div class="p-4 text-center text-gray-500">No friends or groups yet. Add some friends or create a group to start chatting!</div>';
         return;
       }
@@ -1002,7 +1060,7 @@
           itemDiv.addEventListener('click', () => openChatWithUser(uid, user));
         } else {
           const { groupId, name, photoURL } = item;
-          const lastMessage = await item.lastMessage; // Resolve promise
+          const lastMessage = await item.lastMessage;
           const unseen = unreadMap[groupId] || 0;
           itemDiv.innerHTML = `
             <img src="${photoURL || 'https://www.gravatar.com/avatar?d=mp'}" alt="${name}" />
@@ -1026,12 +1084,8 @@
       currentChatUser = user;
       document.getElementById('chatTitle').textContent = user.name || 'Unnamed User';
       document.getElementById('chatAvatar').src = user.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-      document.getElementById('friendList').style.display = 'none';
-      document.getElementById('messages').style.display = 'block';
-      document.getElementById('messageForm').style.display = 'flex';
-      document.getElementById('backBtn').style.display = 'inline-block';
-      document.getElementById('actionButtons').style.display = 'flex';
       document.getElementById('messages').innerHTML = '';
+      showChatsTab();
       listenForMessages();
       closeDrawer();
     }
@@ -1043,30 +1097,9 @@
       currentChatUser = null;
       document.getElementById('chatTitle').textContent = group.name;
       document.getElementById('chatAvatar').src = group.photoURL || 'https://www.gravatar.com/avatar?d=mp';
-      document.getElementById('friendList').style.display = 'none';
-      document.getElementById('messages').style.display = 'block';
-      document.getElementById('messageForm').style.display = 'flex';
-      document.getElementById('backBtn').style.display = 'inline-block';
-      document.getElementById('actionButtons').style.display = 'flex';
       document.getElementById('messages').innerHTML = '';
+      showChatsTab();
       listenForGroupMessages();
-      closeDrawer();
-    }
-
-    // Show Friend List
-    function showFriendList() {
-      currentChatRoom = null;
-      currentChatUser = null;
-      document.getElementById('chatTitle').textContent = 'Messages';
-      document.getElementById('chatAvatar').src = 'https://www.gravatar.com/avatar?d=mp';
-      document.getElementById('friendList').style.display = 'block';
-      document.getElementById('messages').style.display = 'none';
-      document.getElementById('messageForm').style.display = 'none';
-      document.getElementById('backBtn').style.display = 'none';
-      document.getElementById('actionButtons').style.display = 'none';
-      db.ref(`chats/${currentChatRoom}`).off();
-      db.ref(`group_messages/${currentChatRoom}`).off();
-      renderFriendList();
       closeDrawer();
     }
 
@@ -1103,7 +1136,7 @@
       document.getElementById('drawer-profile-name').textContent = user.displayName || 'Hi, There!';
       setupPresence(user);
       bindUnreadListeners();
-      showFriendList();
+      showFriendsTab();
     });
 
     // Logout
