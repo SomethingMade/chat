@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Menu - My Two Minutes Food</title>
+  <title>Customer Menu - My Two Minutes</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -47,7 +47,7 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin {
-      0% { transform: rotate(0deg); }
+      0% {/transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
     /* Button Hover Effect */
@@ -61,6 +61,16 @@
     }
     .drawer-enter-active {
       transform: translateX(0);
+    }
+    /* Tab Styles */
+    .tab {
+      @apply px-4 py-2 text-sm font-medium transition duration-200 ease-in-out;
+    }
+    .tab-active {
+      @apply bg-orange-500 text-white rounded-t-lg;
+    }
+    .tab-inactive {
+      @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
     }
   </style>
 </head>
@@ -106,11 +116,21 @@
   <!-- Backdrop -->
   <div id="drawerBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
 
+  <!-- Tabs -->
+  <div class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="container mx-auto px-4 sm:px-6 py-2">
+      <div class="flex space-x-2">
+        <button id="restaurantTab" class="tab tab-active"><i class="fas fa-utensils mr-2"></i>Restaurants</button>
+        <button id="shoppingTab" class="tab tab-inactive"><i class="fas fa-shopping-bag mr-2"></i>Shopping</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Banner -->
   <div class="relative">
-    <img src="cover.png" alt="Delicious Food" class="w-full h-48 object-cover">
+    <img id="bannerImage" src="cover.png" alt="Banner" class="w-full h-48 object-cover">
     <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-      <h2 class="text-2xl sm:text-3xl font-bold text-white">Explore Restaurants</h2>
+      <h2 id="bannerTitle" class="text-2xl sm:text-3xl font-bold text-white">Explore Restaurants</h2>
     </div>
   </div>
 
@@ -119,7 +139,7 @@
     <input
       type="text"
       id="searchInput"
-      placeholder="Search restaurants..."
+      placeholder="Search..."
       class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
     />
   </div>
@@ -129,16 +149,16 @@
     <div id="categoryList" class="flex space-x-3 overflow-x-auto scrollbar-hide"></div>
   </div>
 
-  <!-- Restaurant List -->
+  <!-- Item List -->
   <section class="container mx-auto px-4 sm:px-6 py-8">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">Restaurants</h2>
+    <h2 id="sectionTitle" class="text-2xl font-bold text-gray-800 mb-6">Restaurants</h2>
     <div id="spinner" class="spinner hidden">
       <svg class="animate-spin h-10 w-10 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
       </svg>
     </div>
-    <div id="restaurantMenuList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <div id="itemList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
   </section>
 
   <!-- Firebase Script -->
@@ -162,7 +182,7 @@
     const db = getDatabase(app);
     const auth = getAuth();
 
-    const restaurantMenuList = document.getElementById('restaurantMenuList');
+    const itemList = document.getElementById('itemList');
     const categoryList = document.getElementById('categoryList');
     const searchInput = document.getElementById('searchInput');
     const userName = document.getElementById('userName');
@@ -175,15 +195,51 @@
     const menuBtn = document.getElementById('menuBtn');
     const drawer = document.getElementById('drawer');
     const backdrop = document.getElementById('drawerBackdrop');
+    const restaurantTab = document.getElementById('restaurantTab');
+    const shoppingTab = document.getElementById('shoppingTab');
+    const bannerImage = document.getElementById('bannerImage');
+    const bannerTitle = document.getElementById('bannerTitle');
+    const sectionTitle = document.getElementById('sectionTitle');
 
-    const categories = [
+    const restaurantCategories = [
       "All", "Hot Deals", "Chicken", "Pizza", "Sushi", "Burgers",
       "Asian", "Seafood", "African", "Health", "Grilled", "Kotas"
     ];
+    const shoppingCategories = [
+      "All", "Hot Deals", "Clothing", "Beauty", "Accessories", "Shoes",
+      "Jewelry", "Bags", "Sportswear", "Cosmetics", "Skincare", "Fragrances"
+    ];
+
+    const categoryIcons = {
+      "All": "fa-utensils",
+      "Hot Deals": "fa-fire",
+      "Chicken": "fa-drumstick-bite",
+      "Pizza": "fa-pizza-slice",
+      "Sushi": "fa-fish",
+      "Burgers": "fa-hamburger",
+      "Asian": "fa-bowl-rice",
+      "Seafood": "fa-shrimp",
+      "African": "fa-pepper-hot",
+      "Health": "fa-leaf",
+      "Grilled": "fa-hotdog",
+      "Kotas": "fa-bread-slice",
+      "Clothing": "fa-tshirt",
+      "Beauty": "fa-spa",
+      "Accessories": "fa-glasses",
+      "Shoes": "fa-shoe-prints",
+      "Jewelry": "fa-gem",
+      "Bags": "fa-shopping-bag",
+      "Sportswear": "fa-running",
+      "Cosmetics": "fa-paint-brush",
+      "Skincare": "fa-hand-holding-water",
+      "Fragrances": "fa-spray-can"
+    };
 
     let allRestaurants = [];
+    let allStores = [];
     let cart = [];
     let activeCategory = "All";
+    let activeTab = "restaurants";
     let userId = null;
 
     function showToast(message) {
@@ -195,21 +251,7 @@
     }
 
     function createCategoryButtons() {
-      const categoryIcons = {
-        "All": "fa-utensils",
-        "Hot Deals": "fa-fire",
-        "Chicken": "fa-drumstick-bite",
-        "Pizza": "fa-pizza-slice",
-        "Sushi": "fa-fish",
-        "Burgers": "fa-hamburger",
-        "Asian": "fa-bowl-rice",
-        "Seafood": "fa-shrimp",
-        "African": "fa-pepper-hot",
-        "Health": "fa-leaf",
-        "Grilled": "fa-hotdog",
-        "Kotas": "fa-bread-slice"
-      };
-
+      const categories = activeTab === "restaurants" ? restaurantCategories : shoppingCategories;
       categoryList.innerHTML = "";
       categories.forEach(category => {
         const isActive = category === activeCategory;
@@ -220,28 +262,28 @@
         btn.innerHTML = `<i class="fas ${categoryIcons[category] || 'fa-utensils'} mr-2"></i>${category}`;
         btn.onclick = () => {
           activeCategory = category;
-          filterRestaurants(category);
+          filterItems(activeCategory);
           createCategoryButtons();
         };
         categoryList.appendChild(btn);
       });
     }
 
-    function renderRestaurants(data) {
-      restaurantMenuList.innerHTML = '';
-      data.forEach(({ id, restaurant }) => {
+    function renderItems(data, type) {
+      itemList.innerHTML = '';
+      data.forEach(({ id, item }) => {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300 cursor-pointer';
         card.innerHTML = `
-          <img src="${restaurant.image || 'https://via.placeholder.com/300x200'}" class="w-full h-48 object-cover" alt="${restaurant.name}">
+          <img src="${item.image || 'https://via.placeholder.com/300x200'}" class="w-full h-48 object-cover" alt="${item.name}">
           <div class="p-4">
-            <h4 class="text-lg font-semibold text-gray-800">${restaurant.name}</h4>
-            <p class="text-gray-600 text-sm mt-1 line-clamp-2">${restaurant.description}</p>
+            <h4 class="text-lg font-semibold text-gray-800">${item.name}</h4>
+            <p class="text-gray-600 text-sm mt-1 line-clamp-2">${item.description}</p>
             <div class="flex items-center mt-2">
-              <span class="text-yellow-500">${renderStars(restaurant.rating || 0)}</span>
+              <span class="text-yellow-500">${renderStars(item.rating || 0)}</span>
             </div>
             <div class="flex justify-between items-center mt-3">
-              <span class="text-sm text-gray-500">Favorites: <span id="favoriteCount-${id}">${restaurant.favorites || 0}</span></span>
+              <span class="text-sm text-gray-500">Favorites: <span id="favoriteCount-${id}">${item.favorites || 0}</span></span>
               <button id="favoriteBtn-${id}" class="text-red-500 hover:text-red-600 focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -251,13 +293,13 @@
           </div>
         `;
         card.addEventListener('click', () => {
-          window.location.href = `restaurant_menu.html?restaurantId=${id}`;
+          window.location.href = `${type === "restaurants" ? 'restaurant_menu.html' : 'store_menu.html'}?${type === "restaurants" ? 'restaurantId' : 'storeId'}=${id}`;
         });
         card.querySelector(`#favoriteBtn-${id}`).addEventListener('click', (e) => {
           e.stopPropagation();
-          toggleFavorite(id);
+          toggleFavorite(id, type);
         });
-        restaurantMenuList.appendChild(card);
+        itemList.appendChild(card);
       });
     }
 
@@ -273,12 +315,12 @@
       return stars;
     }
 
-    function toggleFavorite(id) {
-      const restaurantRef = ref(db, `restaurants/${id}`);
-      onValue(restaurantRef, snapshot => {
-        const restaurant = snapshot.val();
-        const newFavoritesCount = (restaurant.favorites || 0) + 1;
-        update(restaurantRef, { favorites: newFavoritesCount })
+    function toggleFavorite(id, type) {
+      const itemRef = ref(db, `${type}/${id}`);
+      onValue(itemRef, snapshot => {
+        const item = snapshot.val();
+        const newFavoritesCount = (item.favorites || 0) + 1;
+        update(itemRef, { favorites: newFavoritesCount })
           .then(() => {
             document.getElementById(`favoriteCount-${id}`).textContent = newFavoritesCount;
             showToast("Added to favorites!");
@@ -290,42 +332,53 @@
       }, { onlyOnce: true });
     }
 
-    function filterRestaurants(category) {
+    function filterItems(category) {
       const keyword = searchInput.value.toLowerCase().trim();
-      let filtered = allRestaurants;
+      const data = activeTab === "restaurants" ? allRestaurants : allStores;
+      let filtered = data;
 
       if (category !== "All") {
         filtered = filtered.filter(item =>
-          (item.restaurant.category || "").toLowerCase().includes(category.toLowerCase())
+          (item[activeTab.slice(0, -1)].category || "").toLowerCase().includes(category.toLowerCase())
         );
       }
 
       if (keyword) {
         filtered = filtered.filter(item =>
-          (item.restaurant.name || "").toLowerCase().includes(keyword)
+          (item[activeTab.slice(0, -1)].name || "").toLowerCase().includes(keyword)
         );
       }
 
-      renderRestaurants(filtered);
+      renderItems(filtered, activeTab);
     }
 
-    function loadRestaurants() {
-      const restaurantsRef = ref(db, 'restaurants');
+    function loadItems(type) {
+      const itemsRef = ref(db, type);
       spinner.classList.remove('hidden');
-      onValue(restaurantsRef, snapshot => {
+      onValue(itemsRef, snapshot => {
         const data = snapshot.val();
-        allRestaurants = [];
-        if (data) {
-          for (let id in data) {
-            allRestaurants.push({ id, restaurant: data[id] });
+        if (type === 'restaurants') {
+          allRestaurants = [];
+          if (data) {
+            for (let id in data) {
+              allRestaurants.push({ id, restaurant: data[id] });
+            }
           }
+          if (activeTab === 'restaurants') renderItems(allRestaurants, 'restaurants');
+        } else {
+          allStores = [];
+          if (data) {
+            for (let id in data) {
+              allStores.push({ id, store: data[id] });
+            }
+          }
+          if (activeTab === 'stores') renderItems(allStores, 'stores');
         }
-        renderRestaurants(allRestaurants);
         spinner.classList.add('hidden');
       }, (error) => {
-        console.error("Error loading restaurants:", error);
+        console.error(`Error loading ${type}:`, error);
         spinner.classList.add('hidden');
-        showToast("Failed to load restaurants.");
+        showToast(`Failed to load ${type}.`);
       });
     }
 
@@ -343,6 +396,21 @@
       cartBtn.classList.toggle('bg-orange-600', count > 0);
     }
 
+    function switchTab(tab) {
+      activeTab = tab;
+      activeCategory = "All";
+      restaurantTab.classList.toggle('tab-active', tab === 'restaurants');
+      restaurantTab.classList.toggle('tab-inactive', tab !== 'restaurants');
+      shoppingTab.classList.toggle('tab-active', tab === 'stores');
+      shoppingTab.classList.toggle('tab-inactive', tab !== 'stores');
+      bannerImage.src = tab === 'restaurants' ? 'cover.png' : 'shopping_cover.png'; // Assume a different banner for shopping
+      bannerTitle.textContent = tab === 'restaurants' ? 'Explore Restaurants' : 'Explore Shopping';
+      sectionTitle.textContent = tab === 'restaurants' ? 'Restaurants' : 'Stores';
+      searchInput.placeholder = tab === 'restaurants' ? 'Search restaurants...' : 'Search stores...';
+      createCategoryButtons();
+      filterItems(activeCategory);
+    }
+
     // Authentication
     onAuthStateChanged(auth, (user) => {
       spinner.classList.remove('hidden');
@@ -353,6 +421,8 @@
         signOutBtn.style.display = "inline-block";
         signOutDrawer.style.display = "block";
         loadCart();
+        loadItems('restaurants');
+        loadItems('stores');
         spinner.classList.add('hidden');
       } else {
         spinner.classList.add('hidden');
@@ -401,21 +471,25 @@
         showToast('Your cart is empty.');
         return;
       }
-      const restaurantId = cart[0].restaurantId;
-      window.location.href = `checkout.html?restaurantId=${restaurantId}&cart=${encodeURIComponent(JSON.stringify(cart))}`;
+      const itemId = cart[0].restaurantId || cart[0].storeId;
+      const type = cart[0].restaurantId ? 'restaurantId' : 'storeId';
+      window.location.href = `checkout.html?${type}=${itemId}&cart=${encodeURIComponent(JSON.stringify(cart))}`;
     });
+
+    // Tab Switching
+    restaurantTab.addEventListener('click', () => switchTab('restaurants'));
+    shoppingTab.addEventListener('click', () => switchTab('stores'));
 
     // Search with Debounce
     let debounceTimeout;
     searchInput.addEventListener('input', () => {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
-        filterRestaurants(activeCategory);
+        filterItems(activeCategory);
       }, 300);
     });
 
     createCategoryButtons();
-    loadRestaurants();
   </script>
 </body>
 </html>
