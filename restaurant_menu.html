@@ -42,6 +42,17 @@
     .add-btn {
       @apply rounded-full p-2 w-10 h-10 flex items-center justify-center;
     }
+    /* Availability styling */
+    .available {
+      @apply text-green-500 font-semibold;
+    }
+    .not-available {
+      @apply text-red-500 font-semibold;
+    }
+    /* Disabled button */
+    .btn-disabled {
+      @apply bg-gray-300 text-gray-500 cursor-not-allowed;
+    }
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -100,6 +111,7 @@
       <h3 id="itemName" class="text-2xl font-semibold text-gray-800 mb-2"></h3>
       <p id="itemDescription" class="text-gray-600 mb-4"></p>
       <p id="itemPrice" class="text-orange-500 font-bold text-lg mb-4"></p>
+      <p id="itemAvailability" class="text-lg mb-4"></p>
       <input id="quantity" type="number" class="border p-2 rounded-lg w-full mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500" value="1" min="1">
       <button id="addToCartBtn" class="bg-orange-500 text-white py-3 px-6 rounded-lg w-full btn-orange">Add to Cart</button>
     </div>
@@ -139,10 +151,11 @@
     const quantityInput = document.getElementById('quantity');
     const cartDrawer = document.getElementById('cartDrawer');
     const cartItemsContainer = document.getElementById('cartItems');
-    const closeCartWordpressBtn = document.getElementById('closeCartBtn');
+    const closeCartBtn = document.getElementById('closeCartBtn');
     const clearCartBtn = document.getElementById('clearCartBtn');
     const totalAmountEl = document.getElementById('totalAmount');
     const proceedBtn = document.getElementById('proceedBtn');
+    const itemAvailability = document.getElementById('itemAvailability');
 
     let userId = null;
     let cart = [];
@@ -216,16 +229,18 @@
     function renderMenuItems(items) {
       restaurantMenu.innerHTML = '';
       items.forEach(item => {
+        const isAvailable = item.isAvailable !== false; // Default to true if isAvailable is undefined
         const el = document.createElement('div');
-        el.className = 'bg-white rounded-lg shadow-lg overflow-hidden transition duration-300 cursor-pointer flex flex-col sm:flex-row';
+        el.className = `bg-white rounded-lg shadow-lg overflow-hidden transition duration-300 flex flex-col sm:flex-row ${isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`;
         el.innerHTML = `
           <div class="flex-1 p-4 flex flex-col justify-between">
             <div>
               <h3 class="text-lg font-semibold text-gray-800">${item.name}</h3>
               <p class="text-gray-600 text-sm mt-1 line-clamp-2">${item.description}</p>
               <p class="text-orange-500 font-bold text-lg mt-2">R${item.price.toFixed(2)}</p>
+              <p class="${isAvailable ? 'available' : 'not-available'} text-sm mt-1">${isAvailable ? 'Available' : 'Not Available'}</p>
             </div>
-            <button class="btn-orange add-btn self-end mt-2">
+            <button class="btn-orange add-btn self-end mt-2 ${isAvailable ? '' : 'btn-disabled'}" ${isAvailable ? '' : 'disabled'}>
               <i class="fas fa-plus"></i>
             </button>
           </div>
@@ -233,21 +248,32 @@
             <img src="${item.image || 'https://via.placeholder.com/300x200'}" alt="${item.name}" class="w-full h-48 sm:h-full object-cover">
           </div>
         `;
-        el.querySelector('button').addEventListener('click', (e) => {
-          e.stopPropagation();
-          openItemModal(item);
-        });
-        el.addEventListener('click', () => openItemModal(item));
+        if (isAvailable) {
+          el.querySelector('button').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openItemModal(item);
+          });
+          el.addEventListener('click', () => openItemModal(item));
+        }
         restaurantMenu.appendChild(el);
       });
     }
 
     function openItemModal(item) {
+      if (item.isAvailable === false) {
+        showToast(`${item.name} is not available.`);
+        return;
+      }
       currentItem = item;
       document.getElementById('itemName').textContent = item.name;
       document.getElementById('itemDescription').textContent = item.description;
       document.getElementById('itemPrice').textContent = `R${item.price.toFixed(2)}`;
       document.getElementById('itemImage').src = item.image || 'https://via.placeholder.com/300x200';
+      itemAvailability.textContent = item.isAvailable !== false ? 'Available' : 'Not Available';
+      itemAvailability.className = item.isAvailable !== false ? 'available' : 'not-available';
+      addToCartBtn.disabled = item.isAvailable === false;
+      addToCartBtn.className = `bg-orange-500 text-white py-3 px-6 rounded-lg w-full ${item.isAvailable !== false ? 'btn-orange' : 'btn-disabled'}`;
+      quantityInput.disabled = item.isAvailable === false;
       quantityInput.value = 1;
       itemModal.classList.remove('hidden');
       setTimeout(() => itemModal.querySelector('.modal-enter').classList.add('modal-enter-active'), 10);
@@ -261,6 +287,10 @@
     closeModalBtn.addEventListener('click', closeModal);
 
     function addToCart(item) {
+      if (item.isAvailable === false) {
+        showToast(`${item.name} is not available.`);
+        return;
+      }
       const quantity = parseInt(quantityInput.value);
       if (!quantity || quantity < 1) {
         showToast('Please select a valid quantity.');
