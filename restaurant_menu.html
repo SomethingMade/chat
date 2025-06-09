@@ -74,10 +74,16 @@
     <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
       <div class="text-center text-white">
         <h1 id="restaurantName" class="text-3xl sm:text-4xl font-bold">Restaurant Name</h1>
-        <p id="restaurantLocation" class="flex items-center justify-center gap-2 text-sm sm:text-base mt-2">
-          <i class="fas fa-map-marker-alt"></i>
-          <span id="locationText">Restaurant Location</span>
-        </p>
+        <div id="restaurantLocation" class="flex flex-col items-center text-sm sm:text-base mt-2">
+          <p class="flex items-center justify-center gap-2">
+            <i class="fas fa-map-marker-alt"></i>
+            <span id="locationText">Restaurant Location</span>
+          </p>
+          <p class="flex items-center justify-center gap-2 mt-1">
+            <i class="fas fa-motorcycle"></i>
+            <span>Delivery: R20.00</span>
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -159,7 +165,7 @@
     const cartCountText = document.getElementById('cartCountText');
     const itemModal = document.getElementById('itemModal');
     const addToCartBtn = document.getElementById('addToCartBtn');
-    const closeModal MOdalBtn = document.getElementById('closeModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
     const quantityInput = document.getElementById('quantity');
     const cartDrawer = document.getElementById('cartDrawer');
     const cartItemsContainer = document.getElementById('cartItems');
@@ -195,7 +201,7 @@
 
     function renderSkeletonCards() {
       restaurantMenu.innerHTML = '';
-      for (let i = 0; i < 6; i++) { // Display 6 skeleton cards
+      for (let i = 0; i < 6; i++) {
         const el = document.createElement('div');
         el.className = 'bg-white rounded-lg shadow-lg overflow-hidden flex flex-col sm:flex-row';
         el.innerHTML = `
@@ -218,13 +224,13 @@
     }
 
     function loadRestaurantMenu() {
-      renderSkeletonCards(); // Show skeleton cards while loading
+      renderSkeletonCards();
       const restaurantRef = ref(db, `restaurants/${restaurantId}`);
       onValue(restaurantRef, (snapshot) => {
         const restaurant = snapshot.val();
         if (!restaurant) {
           showToast('Restaurant not found.');
-          restaurantMenu.innerHTML = ''; // Clear skeleton cards
+          restaurantMenu.innerHTML = '';
           return;
         }
         restaurantName.textContent = restaurant.name;
@@ -236,7 +242,7 @@
       }, (error) => {
         console.error('Error loading restaurant:', error);
         showToast('Failed to load menu.');
-        restaurantMenu.innerHTML = ''; // Clear skeleton cards on error
+        restaurantMenu.innerHTML = '';
       });
     }
 
@@ -268,7 +274,7 @@
     function renderMenuItems(items) {
       restaurantMenu.innerHTML = '';
       items.forEach(item => {
-        const isAvailable = item.isAvailable !== false; // Default to true if isAvailable is undefined
+        const isAvailable = item.isAvailable !== false;
         const el = document.createElement('div');
         el.className = `bg-white rounded-lg shadow-lg overflow-hidden transition duration-300 flex flex-col sm:flex-row ${isAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`;
         el.innerHTML = `
