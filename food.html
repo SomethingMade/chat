@@ -62,6 +62,10 @@
     .drawer-enter-active {
       transform: translateX(0);
     }
+    /* Tag Styling */
+    .tag {
+      @apply inline-block bg-gray-200 text-gray-700 text-xs font-semibold px-2 py-1 rounded-full mr-1;
+    }
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -114,14 +118,34 @@
     </div>
   </div>
 
-  <!-- Search Bar -->
+  <!-- Search and Filters -->
   <div class="container mx-auto px-4 sm:px-6 py-4">
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search restaurants..."
-      class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
-    />
+    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+      <div class="relative flex-1">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search restaurants..."
+          class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+        />
+        <button id="clearSearchBtn Selection" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="flex space-x-4 mt-2 sm:mt-0">
+        <select id="sortSelect" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+          <option value="name">Sort by Name</option>
+          <option value="rating">Sort by Rating</option>
+          <option value="favorites">Sort by Favorites</option>
+        </select>
+        <select id="distanceFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+          <option value="all">All Distances</option>
+          <option value="5">Within 5 km</option>
+          <option value="10">Within 10 km</option>
+          <option value="20">Within 20 km</option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <!-- Categories -->
@@ -165,6 +189,9 @@
     const restaurantMenuList = document.getElementById('restaurantMenuList');
     const categoryList = document.getElementById('categoryList');
     const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const sortSelect = document.getElementById('sortSelect');
+    const distanceFilter = document.getElementById('distanceFilter');
     const userName = document.getElementById('userName');
     const userProfilePic = document.getElementById('userProfilePic');
     const signOutBtn = document.getElementById('signOutBtn');
@@ -220,7 +247,7 @@
         btn.innerHTML = `<i class="fas ${categoryIcons[category] || 'fa-utensils'} mr-2"></i>${category}`;
         btn.onclick = () => {
           activeCategory = category;
-          filterRestaurants(category);
+          filterRestaurants();
           createCategoryButtons();
         };
         categoryList.appendChild(btn);
@@ -236,11 +263,16 @@
           <img src="${restaurant.image || 'https://via.placeholder.com/300x200'}" class="w-full h-48 object-cover" alt="${restaurant.name}">
           <div class="p-4">
             <h4 class="text-lg font-semibold text-gray-800">${restaurant.name}</h4>
+            <p class="text-gray-600 text-sm mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${restaurant.location || 'Unknown Location'}</p>
             <p class="text-gray-600 text-sm mt-1 line-clamp-2">${restaurant.description}</p>
             <div class="flex items-center mt-2">
               <span class="text-yellow-500">${renderStars(restaurant.rating || 0)}</span>
             </div>
+            <div class="flex flex-wrap gap-1 mt-2">
+              ${restaurant.tags ? restaurant.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
+            </div>
             <div class="flex justify-between items-center mt-3">
+              <span class="text-sm text-gray-500"><i class="fas fa-clock mr-1"></i>${restaurant.deliveryTime || 'N/A'}</span>
               <span class="text-sm text-gray-500">Favorites: <span id="favoriteCount-${id}">${restaurant.favorites || 0}</span></span>
               <button id="favoriteBtn-${id}" class="text-red-500 hover:text-red-600 focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -290,21 +322,45 @@
       }, { onlyOnce: true });
     }
 
-    function filterRestaurants(category) {
+    function filterRestaurants() {
       const keyword = searchInput.value.toLowerCase().trim();
+      const sortBy = sortSelect.value;
+      const distance = distanceFilter.value;
       let filtered = allRestaurants;
 
-      if (category !== "All") {
+      // Category Filter
+      if (activeCategory !== "All") {
         filtered = filtered.filter(item =>
-          (item.restaurant.category || "").toLowerCase().includes(category.toLowerCase())
+          (item.restaurant.category || "").toLowerCase().includes(activeCategory.toLowerCase())
         );
       }
 
+      // Search Filter
       if (keyword) {
         filtered = filtered.filter(item =>
-          (item.restaurant.name || "").toLowerCase().includes(keyword)
+          (item.restaurant.name || "").toLowerCase().includes(keyword) ||
+          (item.restaurant.location || "").toLowerCase().includes(keyword)
         );
       }
+
+      // Distance Filter (Mock - assumes distance in km is available)
+      if (distance !== "all") {
+        filtered = filtered.filter(item => {
+          const dist = item.restaurant.distance || 0; // Replace with actual distance calculation if available
+          return dist <= parseInt(distance);
+        });
+      }
+
+      // Sorting
+      filtered.sort((a, b) => {
+        if (sortBy === "rating") {
+          return (b.restaurant.rating || 0) - (a.restaurant.rating || 0);
+        } else if (sortBy === "favorites") {
+          return (b.restaurant.favorites || 0) - (a.restaurant.favorites || 0);
+        } else {
+          return a.restaurant.name.localeCompare(b.restaurant.name);
+        }
+      });
 
       renderRestaurants(filtered);
     }
@@ -320,7 +376,7 @@
             allRestaurants.push({ id, restaurant: data[id] });
           }
         }
-        renderRestaurants(allRestaurants);
+        filterRestaurants();
         spinner.classList.add('hidden');
       }, (error) => {
         console.error("Error loading restaurants:", error);
@@ -411,9 +467,23 @@
     searchInput.addEventListener('input', () => {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
-        filterRestaurants(activeCategory);
+        filterRestaurants();
       }, 300);
     });
+
+    // Clear Search
+    clearSearchBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      activeCategory = "All";
+      sortSelect.value = "name";
+      distanceFilter.value = "all";
+      createCategoryButtons();
+      filterRestaurants();
+    });
+
+    // Sort and Distance Filter
+    sortSelect.addEventListener('change', filterRestaurants);
+    distanceFilter.addEventListener('change', filterRestaurants);
 
     createCategoryButtons();
     loadRestaurants();
