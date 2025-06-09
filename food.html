@@ -128,10 +128,10 @@
           placeholder="Search restaurants..."
           class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
         />
-        <button id="clearSearchBtn Selection" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+        <button id="clearSearchBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
           <i class="fas fa-times"></i>
         </button>
-      </div>
+        </div>
       <div class="flex space-x-4 mt-2 sm:mt-0">
         <select id="sortSelect" class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
           <option value="name">Sort by Name</option>
@@ -212,6 +212,7 @@
     let cart = [];
     let activeCategory = "All";
     let userId = null;
+    let isInitialLoad = true;
 
     function showToast(message) {
       const toast = document.createElement('div');
@@ -247,6 +248,7 @@
         btn.innerHTML = `<i class="fas ${categoryIcons[category] || 'fa-utensils'} mr-2"></i>${category}`;
         btn.onclick = () => {
           activeCategory = category;
+          isInitialLoad = false; // Disable initial load flag on user interaction
           filterRestaurants();
           createCategoryButtons();
         };
@@ -323,44 +325,48 @@
     }
 
     function filterRestaurants() {
-      const keyword = searchInput.value.toLowerCase().trim();
-      const sortBy = sortSelect.value;
-      const distance = distanceFilter.value;
       let filtered = allRestaurants;
 
-      // Category Filter
-      if (activeCategory !== "All") {
-        filtered = filtered.filter(item =>
-          (item.restaurant.category || "").toLowerCase().includes(activeCategory.toLowerCase())
-        );
-      }
+      // Skip filtering on initial load to show all restaurants
+      if (!isInitialLoad) {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const sortBy = sortSelect.value;
+        const distance = distanceFilter.value;
 
-      // Search Filter
-      if (keyword) {
-        filtered = filtered.filter(item =>
-          (item.restaurant.name || "").toLowerCase().includes(keyword) ||
-          (item.restaurant.location || "").toLowerCase().includes(keyword)
-        );
-      }
+        // Category Filter
+        if (activeCategory !== "All") {
+          filtered = filtered.filter(item =>
+            (item.restaurant.category || "").toLowerCase().includes(activeCategory.toLowerCase())
+          );
+        }
 
-      // Distance Filter (Mock - assumes distance in km is available)
-      if (distance !== "all") {
-        filtered = filtered.filter(item => {
-          const dist = item.restaurant.distance || 0; // Replace with actual distance calculation if available
-          return dist <= parseInt(distance);
+        // Search Filter
+        if (keyword) {
+          filtered = filtered.filter(item =>
+            (item.restaurant.name || "").toLowerCase().includes(keyword) ||
+            (item.restaurant.location || "").toLowerCase().includes(keyword)
+          );
+        }
+
+        // Distance Filter (Mock - assumes distance in km is available)
+        if (distance !== "all") {
+          filtered = filtered.filter(item => {
+            const dist = item.restaurant.distance || 0; // Replace with actual distance calculation if available
+            return dist <= parseInt(distance);
+          });
+        }
+
+        // Sorting
+        filtered.sort((a, b) => {
+          if (sortBy === "rating") {
+            return (b.restaurant.rating || 0) - (a.restaurant.rating || 0);
+          } else if (sortBy === "favorites") {
+            return (b.restaurant.favorites || 0) - (a.restaurant.favorites || 0);
+          } else {
+            return a.restaurant.name.localeCompare(b.restaurant.name);
+          }
         });
       }
-
-      // Sorting
-      filtered.sort((a, b) => {
-        if (sortBy === "rating") {
-          return (b.restaurant.rating || 0) - (a.restaurant.rating || 0);
-        } else if (sortBy === "favorites") {
-          return (b.restaurant.favorites || 0) - (a.restaurant.favorites || 0);
-        } else {
-          return a.restaurant.name.localeCompare(b.restaurant.name);
-        }
-      });
 
       renderRestaurants(filtered);
     }
@@ -466,6 +472,7 @@
     let debounceTimeout;
     searchInput.addEventListener('input', () => {
       clearTimeout(debounceTimeout);
+      isInitialLoad = false; // Disable initial load flag on user interaction
       debounceTimeout = setTimeout(() => {
         filterRestaurants();
       }, 300);
@@ -477,13 +484,20 @@
       activeCategory = "All";
       sortSelect.value = "name";
       distanceFilter.value = "all";
+      isInitialLoad = false; // Reset filters but don't trigger initial load
       createCategoryButtons();
       filterRestaurants();
     });
 
     // Sort and Distance Filter
-    sortSelect.addEventListener('change', filterRestaurants);
-    distanceFilter.addEventListener('change', filterRestaurants);
+    sortSelect.addEventListener('change', () => {
+      isInitialLoad = false; // Disable initial load flag on user interaction
+      filterRestaurants();
+    });
+    distanceFilter.addEventListener('change', () => {
+      isInitialLoad = false; // Disable initial load flag on user interaction
+      filterRestaurants();
+    });
 
     createCategoryButtons();
     loadRestaurants();
