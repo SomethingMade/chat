@@ -7,6 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
+    /* Hide Scrollbar */
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
     /* Toast Notification */
     .toast {
       position: fixed;
@@ -21,26 +29,17 @@
       font-size: 14px;
       z-index: 1000;
     }
-    /* Spinner */
-    .spinner {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
+    /* Shimmering Effect */
+    .skeleton {
+      @apply bg-gray-200 rounded animate-pulse;
     }
-    .spinner.hidden {
-      display: none;
+    @keyframes pulse {
+      0% { background-color: #f0f0f0; }
+      50% { background-color: #e0e0e0; }
+      100% { background-color: #f0f0f0; }
     }
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .animate-pulse {
+      animation: pulse 1.5s infinite ease-in-out;
     }
     /* Button Hover Effect */
     .btn-orange {
@@ -81,14 +80,6 @@
 
   <!-- Main Content -->
   <div class="container mx-auto px-4 sm:px-6 py-8">
-    <!-- Spinner -->
-    <div id="spinner" class="spinner">
-      <svg class="animate-spin h-10 w-10 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-      </svg>
-    </div>
-
     <!-- Current Order -->
     <section id="currentOrderSection" class="mb-6 hidden">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Current Order</h2>
@@ -128,7 +119,6 @@
     const db = getDatabase(app);
     const auth = getAuth();
 
-    const spinner = document.getElementById('spinner');
     const userName = document.getElementById('userName');
     const userProfilePic = document.getElementById('userProfilePic');
     const currentOrderSection = document.getElementById('currentOrderSection');
@@ -155,12 +145,58 @@
       });
     }
 
+    // Render skeleton order cards
+    function renderSkeletonOrders(container, count = 3) {
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'order-card';
+        el.innerHTML = `
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <div class="skeleton h-6 w-32 mb-2"></div>
+              <div class="skeleton h-4 w-24"></div>
+            </div>
+            <div class="skeleton h-6 w-20 rounded-full"></div>
+          </div>
+          <div class="mb-4">
+            <div class="skeleton h-5 w-24 mb-2"></div>
+            <div class="skeleton h-4 w-full mb-1"></div>
+            <div class="skeleton h-4 w-5/6 mb-1"></div>
+          </div>
+          <div class="flex justify-between items-center mb-4">
+            <div class="skeleton h-5 w-16"></div>
+            <div class="skeleton h-5 w-20"></div>
+          </div>
+          <div class="mb-4">
+            <div class="skeleton h-5 w-24 mb-2"></div>
+            <div class="skeleton h-4 w-3/4 mb-1"></div>
+            <div class="skeleton h-4 w-2/3 mb-1"></div>
+            <div class="skeleton h-4 w-5/6"></div>
+          </div>
+        `;
+        container.appendChild(el);
+      }
+    }
+
     // Render a single order
-    function renderOrder(order, container, isCurrent = false) {
+    async function renderOrder(order, container, isCurrent = false) {
+      // Fetch restaurant details
+      const restaurantRef = ref(db, `restaurants/${order.restaurantId}`);
+      let restaurant = { name: 'Unknown', category: 'General', deliveryFee: 20.00 };
+      try {
+        const snapshot = await new Promise(resolve => onValue(restaurantRef, resolve, { onlyOnce: true }));
+        if (snapshot.val()) {
+          restaurant = snapshot.val();
+        }
+      } catch (error) {
+        console.error('Error fetching restaurant:', error);
+      }
+
       const statusText = order.status === 'out-for-delivery' ? 'Out for Delivery' : order.status.charAt(0).toUpperCase() + order.status.slice(1);
-      let total = 0;
+      let itemsTotal = 0;
       const itemsHtml = order.items.map(item => {
-        total += item.item.price * item.quantity;
+        itemsTotal += item.item.price * item.quantity;
         return `
           <div class="flex justify-between items-center mb-2">
             <span>${item.item.name} (x${item.quantity})</span>
@@ -169,11 +205,15 @@
         `;
       }).join('');
 
+      const deliveryFee = restaurant.deliveryFee || 20.00;
+      const total = itemsTotal + deliveryFee;
+
       const orderHtml = `
         <div>
           <div class="flex justify-between items-center mb-4">
             <div>
               <h3 class="text-lg font-semibold text-gray-800">Order #${order.id}</h3>
+              <p class="text-sm text-gray-500">${restaurant.name} (${restaurant.category})</p>
               <p class="text-sm text-gray-500">${formatDate(order.timestamp)}</p>
             </div>
             <span class="status-badge status-${order.status}">${statusText}</span>
@@ -181,6 +221,10 @@
           <div class="mb-4">
             <h4 class="text-md font-semibold text-gray-800 mb-2">Items</h4>
             ${itemsHtml}
+            <div class="flex justify-between items-center mt-2">
+              <span>Delivery Fee</span>
+              <span class="text-orange-500 font-semibold">R${deliveryFee.toFixed(2)}</span>
+            </div>
           </div>
           <div class="flex justify-between items-center mb-4">
             <span class="font-semibold">Total:</span>
@@ -194,7 +238,7 @@
             <p><strong>Notes:</strong> ${order.deliveryDetails.notes || 'None'}</p>
           </div>
           ${isCurrent ? `
-            <a href="order-status.html?restaurantId=${order.restaurantId}" class="btn-orange py-2 px-4 rounded-lg font-semibold inline-block">
+            <a href="order-status.html?restaurantId=${order.restaurantId}&orderId=${order.id}" class="btn-orange py-2 px-4 rounded-lg font-semibold inline-block">
               View Order Status
             </a>
           ` : ''}
@@ -203,11 +247,13 @@
       container.innerHTML = orderHtml;
     }
 
-    function loadOrders() {
+    async function loadOrders() {
       if (!userId) return;
       const ordersRef = ref(db, `orders/${userId}`);
-      spinner.classList.remove('hidden');
-      onValue(ordersRef, (snapshot) => {
+      renderSkeletonOrders(currentOrder, 1);
+      renderSkeletonOrders(orderHistory, 3);
+      try {
+        const snapshot = await new Promise(resolve => onValue(ordersRef, resolve, { onlyOnce: true }));
         const orders = snapshot.val();
         currentOrderSection.classList.add('hidden');
         orderHistory.innerHTML = '';
@@ -215,62 +261,55 @@
 
         if (!orders) {
           noOrders.classList.remove('hidden');
-          spinner.classList.add('hidden');
           return;
         }
 
         // Convert orders to array and sort by timestamp (newest first)
         const orderArray = Object.entries(orders)
-          .map(([id, order]) => ({ id, ...წ 0.0.0.0: order.id, ...order }))
+          .map(([id, order]) => ({ id, ...order }))
           .sort((a, b) => b.timestamp - a.timestamp);
 
         // Separate current and past orders
         const currentStatuses = ['pending', 'accepted', 'preparing', 'out-for-delivery'];
-        const currentOrder = orderArray.find(order => currentStatuses.includes(order.status));
+        const currentOrderData = orderArray.find(order => currentStatuses.includes(order.status));
         const pastOrders = orderArray.filter(order => order.status === 'delivered');
 
         // Render current order (if any)
-        if (currentOrder) {
+        if (currentOrderData) {
           currentOrderSection.classList.remove('hidden');
-          renderOrder(currentOrder, currentOrder, true);
+          await renderOrder(currentOrderData, currentOrder, true);
         }
 
         // Render past orders
         if (pastOrders.length === 0) {
           orderHistory.innerHTML = '<p class="text-gray-500">No past orders.</p>';
         } else {
-          pastOrders.forEach(order => {
+          for (const order of pastOrders) {
             const orderEl = document.createElement('div');
             orderEl.className = 'order-card';
-            renderOrder(order, orderEl);
+            await renderOrder(order, orderEl);
             orderHistory.appendChild(orderEl);
-          });
+          }
         }
-
-        spinner.classList.add('hidden');
-      }, (error) => {
+      } catch (error) {
         console.error('Error loading orders:', error);
         showToast('Failed to load orders.');
-        spinner.classList.add('hidden');
-      });
+      }
     }
 
     // Authentication
-    onAuthStateChanged(auth, (user) => {
-      spinner.classList.remove('hidden');
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         userId = user.uid;
         userName.textContent = user.displayName || 'User';
         userProfilePic.src = user.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
-        loadOrders();
+        await loadOrders();
       } else {
-        spinner.classList.add('hidden');
         window.location.href = 'login.html';
       }
     }, (error) => {
       console.error('Auth error:', error);
       showToast('Failed to authenticate. Please try again.');
-      spinner.classList.add('hidden');
     });
   </script>
 </body>
